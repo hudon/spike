@@ -9,28 +9,28 @@ import numpy
 #  Matrix B is D2xD3
 #  result is D1xD3
 
-D1=5
-D2=5
-D3=5
-pstc=0.01
-dt=0.001
+D1 = 5
+D2 = 5
+D3 = 5
+pstc = 0.01
+dt = 0.001
 
 
-A=[nef.ScalarNode() for i in range(D1*D2)]
-B=[nef.ScalarNode() for i in range(D2*D3)]
+A = [nef.ScalarNode() for i in range(D1*D2)]
+B = [nef.ScalarNode() for i in range(D2*D3)]
 for n in A+B:
-    n.configure(neurons=50)
-    n.configure_spikes(pstc=pstc,dt=dt)
+    n.configure(neurons = 50)
+    n.configure_spikes(pstc = pstc,dt = dt)
 
 
 
 # the C matrix holds the intermediate product calculations
 #  need to compute D1*D2*D3 products to multiply 2 matrices together
 
-C=[nef.VectorNode(2) for i in range(D1*D2*D3)]
+C = [nef.VectorNode(2) for i in range(D1*D2*D3)]
 for n in C:
-    n.configure(neurons=200)
-    n.configure_spikes(pstc=pstc,dt=dt)
+    n.configure(neurons = 200)
+    n.configure_spikes(pstc = pstc,dt = dt)
     
 
 # determine the transformation matrices to get the correct pairwise
@@ -44,15 +44,15 @@ for n in C:
 for i in range(D1):
     for j in range(D2):
         for k in range(D3):            
-            A[j+i*D2].connect(C[(j+k*D2+i*D2*D3)],weight=[1,0])
-            B[k+j*D3].connect(C[(j+k*D2+i*D2*D3)],weight=[0,1])
+            A[j+i*D2].connect(C[(j+k*D2+i*D2*D3)],weight = [1,0])
+            B[k+j*D3].connect(C[(j+k*D2+i*D2*D3)],weight = [0,1])
                         
             
 
-D=[nef.ScalarNode() for i in range(D1*D2)]
+D = [nef.ScalarNode() for i in range(D1*D2)]
 for n in D:
-    n.configure(neurons=50)
-    n.configure_spikes(pstc=pstc,dt=dt)
+    n.configure(neurons = 50)
+    n.configure_spikes(pstc = pstc,dt = dt)
 
 
 def product(x):
@@ -61,13 +61,13 @@ def product(x):
 # combine D2 pairs of elements (we sum D2 products together)    
 
 for i in range(D1*D2*D3):
-    C[i].connect(D[i/D2],func=product)
+    C[i].connect(D[i/D2],func = product)
 
 print 'neurons:',50*(D1*D2+D2*D3+D1*D3)+200*(D1*D2*D3)
-A[0].tick(dt=dt)
+A[0].tick(dt = dt)
 import time
-start=time.time()
+start = time.time()
 for i in range(5000):
-    A[0].tick(dt=dt)
+    A[0].tick(dt = dt)
     print "time per tick:",(time.time()-start)/(i+1)
 
