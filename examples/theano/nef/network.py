@@ -60,23 +60,20 @@ class Network:
         post.add_filtered_input(value,pstc)
 
     def make_tick(self):
-        updates={}
+        updates = {}
         for e in self.node.values():
             if hasattr(e,'update'):
-                updates.update(e.update())    
-        return theano.function([],[],updates=updates)
-        
-    run_time=0.0    
-    def run(self,time):
-        if self.theano_tick is None: self.theano_tick=self.make_tick()
-        for i in range(int(time/self.dt)):
-            t=self.run_time+i*self.dt
+                updates.update(e.update())
+        return theano.function([], [], updates = updates)
+
+    run_time = 0.0
+    def run(self, time):
+        if self.theano_tick is None: self.theano_tick = self.make_tick()
+        for i in range(int(time / self.dt)):
+            t = self.run_time + i * self.dt
             for node in self.tick_nodes:    # run the non-theano nodes
-                node.t=t
+                node.t = t
                 node.tick()
             self.theano_tick()               # run the theano nodes
-        self.run_time+=time   
-            
-        
-       
+        self.run_time += time
 

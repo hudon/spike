@@ -48,11 +48,11 @@ for i in range(D1):
         for k in range(D3):
             transformA[(j + k * D2 + i * D2 * D3) * 2][j + i * D2] = 1
             transformB[(j + k * D2 + i * D2 * D3) * 2 + 1][k + j * D3] = 1
-            
-net.connect('A', 'C', transform = numpy.array(transformA).T)            
-net.connect('B', 'C', transform = numpy.array(transformB).T)            
-            
-            
+
+net.connect('A', 'C', transform = numpy.array(transformA).T)
+net.connect('B', 'C', transform = numpy.array(transformB).T)
+
+
 # now compute the products and do the appropriate summing
 net.make_array('D', 50, D1 * D3, type = 'lif-rate')
 
