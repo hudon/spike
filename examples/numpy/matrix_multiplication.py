@@ -56,18 +56,18 @@ for n in D:
 
 
 def product(x):
-    return x[0]*x[1]
+    return x[0] * x[1]
 # the mapping for this transformation is much easier, since we want to
 # combine D2 pairs of elements (we sum D2 products together)    
 
-for i in range(D1*D2*D3):
+for i in range(D1 * D2 * D3):
     C[i].connect(D[i/D2],func = product)
 
-print 'neurons:',50*(D1*D2+D2*D3+D1*D3)+200*(D1*D2*D3)
+print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 A[0].tick(dt = dt)
 import time
 start = time.time()
 for i in range(5000):
     A[0].tick(dt = dt)
-    print "time per tick:",(time.time()-start)/(i+1)
+    print "time per tick:", (time.time() - start) / (i + 1)
 
