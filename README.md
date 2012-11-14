@@ -13,5 +13,7 @@ To run examples:
   examples/numpy/matrix_multiplication.py`
 * theano: Get `python-pip`, `python-nose`, `blas`. Then, run `sudo pip install
   Theano`. Then, run `python examples/theano/matrix_multiplication.py`
+* core.py: This is a stripped down example (not a real model). It uses numpy,
+  so run as `python core.py` once numpy is installed
 
 
