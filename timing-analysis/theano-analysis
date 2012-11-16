@@ -77,8 +77,31 @@ time per tick: 0.00429339680672
     20	      264    1.096    0.004   12.089    0.046 opt.py:1435(apply)
 
 CONCLUSION:
-At the moment it looks like a significant fraction of the time is taken inside the function_module.py:555(__call__) function about (50%).  If we were able to decrease the time required by this function by an order of magnitude, the provided example would in about half the time.  Since it seems likely that the value of this model comes from running it for a large number of ticks, it is important to note that the call in function_module.py accounts for an ever increasing fraction of the total time needed, since there is an unavoidable amount of setup time taken.  In the case where tick is changed from 5000 to 50000, function_module.py accounts for 204 of 247 involved in the run time.  That is about 82%.
+At the moment it looks like a significant fraction of the time is taken inside the function_module.py:555(__call__) function about (50%).  If we were able to decrease the time required by this function by an order of magnitude, the provided example would in about half the time.  Since it seems likely that the value of this model comes from running it for a large number of ticks, it is important to note that the call in function_module.py accounts for an ever increasing fraction of the total time needed as the number of ticks increases.  This is because there is an unavoidable amount of setup time taken.  In the case where tick is changed from 5000 to 50000, function_module.py accounts for 204 of 247 involved in the run time.  That is about 82%.  Running this model for about 40 minutes with 500000 ticks shows that this function accounts for about 89% of the time taken.
+Output from time command:
 
+real	36m49.260s
+user	39m27.928s
+sys	32m33.454s
+
+Functions with most time spent:
+         24120487 function calls (24075764 primitive calls) in 2208.297 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   500014 1980.285    0.004 2128.543    0.004 function_module.py:555(__call__)
+  1500028   92.036    0.000   92.036    0.000 {numpy.core._dotblas.dot}
+        1   39.488   39.488 2208.300 2208.300 matrix_multiplication.py:3(<module>)
+   500001   16.299    0.000 2151.352    0.004 network.py:70(run)
+  1500024   16.018    0.000  137.526    0.000 op.py:600(rval)
+  1500003   12.178    0.000  121.506    0.000 basic.py:6459(perform)
+  1518752   10.152    0.000   10.152    0.000 {numpy.core.multiarray.array}
+        5    8.625    1.725   13.543    2.709 neuron.py:15(accumulate)
+  1508045    7.300    0.000   17.353    0.000 numeric.py:167(asarray)
+  1158017    6.518    0.000    6.521    0.000 {getattr}
+  2954551    2.241    0.000    2.241    0.000 {time.time}
+  1000002    2.053    0.000    2.053    0.000 input.py:19(tick)
 
 The file function_module.py appears to be part of theano and not the project we have on github.  On my computer the file function_module.py is located at:
 /usr/local/lib/python2.7/dist-packages/theano/compile/function_module.py
@@ -92,7 +115,8 @@ In the best case scenario we could do improvements to all 3 of these.
 
 With respect to focusing on (1), I think it is worth investigating exactly why this function runs slowly.  Looking at this function shows that there are many branch conditions and extra checks which we might be able to work with.  It may very well be that this function is slow because it is being passed a closure function which does the main matrix calculation grunt work, or it may be some of the other checks and branch conditions which exist in this function are very slow and unnecessary.  This function looks very general, and perhaps we could write an optimized version specifically for this project?  Since we have a theano expert at our disposal we could ask him to help us review this function.
 
-It is also reassuring that there is a comment in this function which hints at the possibility of a speed up:
+It is also reassuring that there is a comment in this function which hints at the possibility that it has some relatively simple speed improvement left undone:
 
-#TODO: provide a Param option for skipping the filter if we
-#      really want speed.
+ 575             for arg in args:
+ 576                 #TODO: provide a Param option for skipping the filter if we
+ 577                 #      really want speed.
