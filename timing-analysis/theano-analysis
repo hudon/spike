@@ -1,0 +1,37 @@
+*****Profile test sorted by the amount of time spent in each function not including sub-routine calls ******
+Command used:
+robert@robert-ubuntu:~/spike/examples/theano$ time python -m cProfile --sort time matrix_multiplication.py >> ../../timing-analysis/theano-analysis 
+real	0m44.933s
+user	0m45.999s
+sys	0m21.561s
+
+Output:
+
+neurons: 28750
+time per tick: 0.00440788269043
+[...snip...]
+time per tick: 0.00435146999359
+         7785650 function calls (7740929 primitive calls) in 44.290 seconds
+
+   Top 20 slowest functions ordered by: internal time
+
+     1	   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     2	     5014   19.875    0.004   21.423    0.004 function_module.py:555(__call__)
+     3	        5    8.880    1.776   13.109    2.622 neuron.py:15(accumulate)
+     4	    15028    0.980    0.000    0.980    0.000 {numpy.core._dotblas.dot}
+     5	      264    0.826    0.003    8.812    0.033 opt.py:1435(apply)
+     6	    15303    0.561    0.000    1.489    0.000 traceback.py:280(extract_stack)
+     7	   160827    0.542    0.000    0.841    0.000 elemwise.py:567(__eq__)
+     8	     5637    0.440    0.000    1.146    0.000 graph.py:492(stack_search)
+     9	   226400    0.429    0.000    6.809    0.000 opt.py:1211(process_node)
+    10	    77414    0.390    0.000    0.390    0.000 {posix.stat}
+    11	     4548    0.348    0.000    1.527    0.000 graph.py:723(general_toposort)
+    12	   650940    0.345    0.000    0.345    0.000 {isinstance}
+    13	   463347    0.315    0.000    0.436    0.000 opt.py:686(__hash__)
+    14	   610009    0.282    0.000    0.282    0.000 {hasattr}
+    15	    33752    0.271    0.000    0.271    0.000 {numpy.core.multiarray.array}
+    16	    80036    0.259    0.000    0.362    0.000 graph.py:796(deps)
+    17	     1345    0.256    0.000    0.256    0.000 {method 'sort' of 'numpy.ndarray' objects}
+    18	    76515    0.244    0.000    0.630    0.000 linecache.py:43(checkcache)
+    19	13603/5743    0.229    0.000    0.864    0.000 opt.py:982(match)
+    20	     8829    0.226    0.000    0.879    0.000 fg.py:494(execute_callbacks)
