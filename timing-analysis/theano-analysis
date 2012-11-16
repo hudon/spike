@@ -35,3 +35,64 @@ time per tick: 0.00435146999359
     18	    76515    0.244    0.000    0.630    0.000 linecache.py:43(checkcache)
     19	13603/5743    0.229    0.000    0.864    0.000 opt.py:982(match)
     20	     8829    0.226    0.000    0.879    0.000 fg.py:494(execute_callbacks)
+
+
+*****Profile test sorted by the amount of time spent in each function including sub-routine calls ******
+Command used:
+robert@robert-ubuntu:~/spike/examples/theano$ time python -m cProfile --sort cumulativ matrix_multiplication.py >> ../../timing-analysis/theano-analysis
+real	0m57.984s
+user	0m57.668s
+sys	0m21.377s
+
+Output:
+
+neurons: 28750
+time per tick: 0.00443410873413
+[...snip...]
+time per tick: 0.00429339680672
+
+         7785619 function calls (7740896 primitive calls) in 57.341 seconds
+
+   Top 20 slowest functions ordered by: cumulative time
+
+     1	   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     2	        1    0.146    0.146   57.343   57.343 matrix_multiplication.py:3(<module>)
+     3	     5001    0.144    0.000   27.965    0.006 network.py:70(run)
+     4	        5    0.001    0.000   25.897    5.179 origin.py:21(__init__)
+     5	        5    0.020    0.004   25.895    5.179 origin.py:32(compute_decoder)
+     6	        5   17.172    3.434   24.396    4.879 neuron.py:15(accumulate)
+     7	     5014   19.519    0.004   21.151    0.004 function_module.py:555(__call__)
+     8	       24    0.001    0.000   17.042    0.710 function.py:16(function)
+     9	       24    0.004    0.000   17.038    0.710 pfunc.py:333(pfunc)
+    10	       24    0.002    0.000   16.946    0.706 function_module.py:1318(orig_function)
+    11	        4    0.000    0.000   16.413    4.103 network.py:30(make_array)
+    12	        4    0.000    0.000   16.413    4.103 network.py:22(make)
+    13	        4    0.001    0.000   16.413    4.103 ensemble.py:36(__init__)
+    14	       24    0.004    0.000   16.109    0.671 function_module.py:1012(__init__)
+    15	       24    0.000    0.000   15.587    0.649 opt.py:80(__call__)
+    16	  1186/24    0.008    0.000   15.587    0.649 opt.py:71(optimize)
+    17	    72/24    0.006    0.000   15.587    0.649 opt.py:158(apply)
+    18	        5    0.000    0.000   12.218    2.444 network.py:43(connect)
+    19	        1    0.000    0.000   12.170   12.170 ensemble.py:62(add_origin)
+    20	      264    1.096    0.004   12.089    0.046 opt.py:1435(apply)
+
+CONCLUSION:
+At the moment it looks like a significant fraction of the time is taken inside the function_module.py:555(__call__) function about (50%).  If we were able to decrease the time required by this function by an order of magnitude, the provided example would in about half the time.  Since it seems likely that the value of this model comes from running it for a large number of ticks, it is important to note that the call in function_module.py accounts for an ever increasing fraction of the total time needed, since there is an unavoidable amount of setup time taken.  In the case where tick is changed from 5000 to 50000, function_module.py accounts for 204 of 247 involved in the run time.  That is about 82%.
+
+
+The file function_module.py appears to be part of theano and not the project we have on github.  On my computer the file function_module.py is located at:
+/usr/local/lib/python2.7/dist-packages/theano/compile/function_module.py
+
+There are 3 main fronts upon which we can investigate how to make this program go faster:
+1)  Increase the speed of the serialized version of the program.
+2)  Parallelize parts of the serialized version on a single computer.
+3)  Use distributed computation to paralellize on multiple computers.
+
+In the best case scenario we could do improvements to all 3 of these.
+
+With respect to focusing on (1), I think it is worth investigating exactly why this function runs slowly.  Looking at this function shows that there are many branch conditions and extra checks which we might be able to work with.  It may very well be that this function is slow because it is being passed a closure function which does the main matrix calculation grunt work, or it may be some of the other checks and branch conditions which exist in this function are very slow and unnecessary.  This function looks very general, and perhaps we could write an optimized version specifically for this project?  Since we have a theano expert at our disposal we could ask him to help us review this function.
+
+It is also reassuring that there is a comment in this function which hints at the possibility of a speed up:
+
+#TODO: provide a Param option for skipping the filter if we
+#      really want speed.
