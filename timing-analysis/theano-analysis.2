@@ -1,0 +1,32 @@
+So I did some quick research to see how feasible the idea of distributing the computation is and the results look positive.
+
+One very important piece of information is the inter-node latency on the shark network, and conveniently I found a shark network setup article where someone did a ping test and the result was 0.036ms
+
+Hopefully this is the same network we were talking about (https://humgenprojects.lumc.nl/trac/shark/wiki/Shark_setup)
+
+With the current set of parameters (D1 = D2 = D3 = 5) that we were given in the sample code, each tick runs on my computer in about 1.5 ms.  If we got the project to the point where the communication latency was the bottleneck this would give a speed up of about 1.5/0.036 = 41x with an arbitrarly large number of nodes.  In reality the speedup will likely be a bit less because this assumes a lot of best case scenarios.  If the ping changes a lot then this would change the results significantly.
+
+At the moment it looks like the bottleneck might be with the non-parallelizable part of the alorithm.  Based on the rough profiling numbers (with ticks = 500,000 D1=D2=D3=5) it looks like about 90% of the time taken is in part of the code that is the compiled c code that theano creates.  I have made the (possibly wrong) assumption that the part of the algo that we can make parallel is the entire section that theano runs as c code (the 90%).  If this was parallelized to take 0% of the time with a large number of nodes, then the maximun speedup would then only be 10x unless we can make the last 10% be about 2.5%
+
+
+Anyway, I ran the model again with (ticks = 100 D1=D2=D3=37).  This was the largest model I could run that would make my computer still usable.  This model has 10,335,950 neurons.  This paints a very different picture(results below), and represents a much more realistic case for a useful model.  From this profile it looks like we might be able to get a large gain out of breaking up the work on different nodes.  The network latency would (naively based on ping results) only be an issue if we got past 10,000x speedup.  If all the mathy stuff was paralellized to 0% the bottleneck looks like it would be the serial code running the whole thing, and give us a 100x speedup.  Making the serial code faster could give us a factor of several hundred times speed up.
+
+         7735363 function calls (7690603 primitive calls) in 544.080 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      328  305.759    0.932  305.759    0.932 {numpy.core._dotblas.dot}
+      114   80.066    0.702  385.829    3.384 function_module.py:555(__call__)
+    19052   45.907    0.002   45.907    0.002 {numpy.core.multiarray.array}
+     1345   36.836    0.027   36.836    0.027 {method 'sort' of 'numpy.ndarray' objects}
+     1345   11.089    0.008   54.516    0.041 arraysetops.py:90(unique)
+        1    9.822    9.822  544.082  544.082 matrix_multiplication.py:3(<module>)
+     2547    9.031    0.004    9.031    0.004 {method 'copy' of 'numpy.ndarray' objects}
+     3534    8.791    0.002    8.791    0.002 {_hashlib.openssl_md5}
+        5    8.420    1.684   15.951    3.190 neuron.py:15(accumulate)
+     1345    5.821    0.004    5.821    0.004 {method 'flatten' of 'numpy.ndarray' objects}
+13603/5743    3.801    0.000    4.258    0.001 opt.py:982(match)
+
+
+
