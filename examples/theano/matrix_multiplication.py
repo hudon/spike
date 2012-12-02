@@ -71,7 +71,7 @@ print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 net.run(0.001)
 import time
 start = time.time()
-for i in range(5000):
+for i in range(50000):
     net.run(0.001)
     print "time per tick:", (time.time() - start) / (i + 1)
 
