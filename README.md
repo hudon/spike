@@ -26,4 +26,10 @@ bindings be installed (on top of the `theano` requirements above). <del>It will
 also require Python 3.x (but not yet).</del> It requires Python 2.x because Theano
 is not fully 3.x compatible yet
 
+This version takes the simple system described here
+[](http://nengo.ca/docs/html/nef_algorithm.html) and attemps to parallelize it
+using 0MQ. The theano model is also used for reference and might be the second
+system we attempt to parallelize when generalizing the system that distributes
+the work.
+
 

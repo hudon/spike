@@ -5,6 +5,9 @@ import numpy
 import zmq
 
 context = zmq.Context()
+# TODO get make_array to distribute 'a', 'b', 'c'
+# TODO get connect() to setup the 0MQ connections
+# TODO get update() to do the communication
 
 net = nef.Network('Matrix Multiplication', seed = 1) #Create the network object
 
