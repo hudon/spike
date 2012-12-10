@@ -2,6 +2,9 @@
 
 import nef
 import numpy
+import zmq
+
+context = zmq.Context()
 
 net = nef.Network('Matrix Multiplication', seed = 1) #Create the network object
 

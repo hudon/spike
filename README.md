@@ -16,4 +16,11 @@ To run examples:
 * core.py: This is a stripped down example (not a real model). It uses numpy,
   so run as `python core.py` once numpy is installed
 
+Python 0MQ Version
+------------------
+
+The distributed parallel prototype in src/distribute-proto requires 0MQ Python
+bindings be installed (on top of the `theano` requirements above). It will
+also require Python 3.x (but not yet).
+
 

@@ -26,7 +26,7 @@ class Network:
             self.random.seed(seed)
             
     # make an ensemble,  Note that all ensembles are actually arrays of length 1        
-    def make(self, name, neurons, dimensions,array_count = 1,
+    def make(self, name, neurons, dimensions, array_count = 1,
             intercept= (-1, 1), seed = None, type = 'lif',
             encoders = None):
         if seed is None:
@@ -64,14 +64,21 @@ class Network:
                         
         pre = self.node[pre]
         post = self.node[post]
-        if hasattr(pre,'value'):   # used for Input objects now, could also be used for SimpleNode origins when they are written
+
+        # used for Input objects now, could also be used for SimpleNode
+        # origins when they are written
+        if hasattr(pre,'value'):
             assert func is None
             value=pre.value
-        else:  # this should only be used for ensembles (maybe reorganize this if statement to check if it is an ensemble?)          
+        else:
+          # this should only be used for ensembles (maybe reorganize this
+          # if statement to check if it is an ensemble?)          
             if func is not None:
-                if origin_name is None: origin_name=func.__name__   #TODO: better analysis to see if we need to build a new origin (rather than just relying on the name)
+                #TODO: better analysis to see if we need to build a new
+                # origin (rather than just relying on the name)
+                if origin_name is None: origin_name = func.__name__
                 if origin_name not in pre.origin:
-                    pre.add_origin(origin_name,func)                
+                    pre.add_origin(origin_name, func)                
                 value=pre.origin[origin_name].value
             else:                     
                 value=pre.origin['X'].value
@@ -80,6 +87,7 @@ class Network:
 
     def make_tick(self):
         updates = {}
+        # values() gets all the ensembles added
         for e in self.node.values():
             if hasattr(e,'update'):
                 updates.update(e.update())

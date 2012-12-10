@@ -7,3 +7,4 @@ from neuron import accumulate
 names={'lif':LIFNeuron,
        'lif-rate':LIFRateNeuron,
       }
+

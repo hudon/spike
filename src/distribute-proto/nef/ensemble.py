@@ -72,24 +72,29 @@ class Ensemble:
         
     # compute the set of theano updates needed for this ensemble        
     def update(self):
-        input=numpy.tile(self.bias,(self.count,1))      # apply the bias to all neurons in the array
+        # apply the bias to all neurons in the array
+        input = numpy.tile(self.bias, (self.count, 1))
         
         # increase the input by the total of all the accumulators times the encoders
-        if len(self.accumulator)>0:
-            X=sum(a.new_value for a in self.accumulator.values())
-            X=X.reshape((self.count,self.dimensions))
-            input = input + TT.dot(X,self.encoders.T)
+        # accumulator: group of terminations (inputs) that share the same low
+        # pass filter. The group produces one result to feed into the
+        # ensemble.
+        if len(self.accumulator) > 0:
+            X = sum(a.new_value for a in self.accumulator.values())
+            X = X.reshape((self.count, self.dimensions))
+            input = input + TT.dot(X, self.encoders.T)
         
         # pass that total into the neuron model to produce the main theano computation
-        updates=self.neuron.update(input)
+        updates = self.neuron.update(input)
         
         # also update the filter values in the accumulators
         for a in self.accumulator.values():            
-            updates[a.value]=a.new_value.astype('float32')
+            updates[a.value] = a.new_value.astype('float32')
             
         # and compute the decoded origin values from the neuron output
         for o in self.origin.values():
             updates.update(o.update(updates[self.neuron.output]))
+
         return updates    
         
         
