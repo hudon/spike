@@ -1,6 +1,8 @@
 paranengo
 =========
 
+[![Build Status](https://secure.travis-ci.org/Hudon/spike.png)](http://travis-ci.org/Hudon/spike)
+
 Parallelizing Nengo
 
 Examples
