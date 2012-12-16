@@ -1,5 +1,5 @@
-paranengo
-=========
+Brain Simulator Parallelization
+===============================
 
 [![Build Status](https://travis-ci.org/Hudon/spike.png)](https://travis-ci.org/Hudon/spike)
 
