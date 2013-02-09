@@ -1,3 +1,6 @@
+## SPIKE: this is an extension of the minimal example, we add two ensembles C
+## and D
+
 # A Minimal Example of the Neural Engineering Framework
 #
 # The NEF is a method for building large-scale neural models using realistic
@@ -41,21 +44,24 @@
 
 import random
 import math
-from  multiprocessing import Process, Pipe, Queue
 
 #################################################
 # Parameters
 #################################################
 
-dt = 0.5       # simulation time step  
+dt = 0.1       # simulation time step  
 t_rc = 0.02      # membrane RC time constant
 t_ref = 0.002    # refractory period
 t_pstc = 0.1     # post-synaptic time constant
-N_A = 1200         # number of neurons in first population
-N_B = 1200        # number of neurons in second population
+N_A = 620        # number of neurons in first population
+N_B = 610        # number of neurons in second population
+N_C = 630        # number of neurons in third population
+N_D = 620        # number of neurons in fourth population
 N_samples = 100  # number of sample points to use when finding decoders
 rate_A = 25, 75  # range of maximum firing rates for population A
 rate_B = 50, 100 # range of maximum firing rates for population B
+rate_C = 50, 90 # range of maximum firing rates for population C
+rate_D = 30, 80 # range of maximum firing rates for population D
 
 # the input to the system over time
 def input(t):
@@ -71,9 +77,11 @@ def function(x):
 #################################################
 
 
-# create random encoders for the two populations
+# create random encoders for the four populations
 encoder_A = [random.choice([-1, 1]) for i in range(N_A)]
 encoder_B = [random.choice([-1, 1]) for i in range(N_B)]
+encoder_C = [random.choice([-1, 1]) for i in range(N_C)]
+encoder_D = [random.choice([-1, 1]) for i in range(N_D)]
 
 def generate_gain_and_bias(count, intercept_low, intercept_high, rate_low, rate_high):
     gain = []
@@ -94,9 +102,11 @@ def generate_gain_and_bias(count, intercept_low, intercept_high, rate_low, rate_
         bias.append(b)
     return gain, bias
 
-# random gain and bias for the two populations
+# random gain and bias for the four populations
 gain_A, bias_A = generate_gain_and_bias(N_A, -1, 1, rate_A[0], rate_A[1])
 gain_B, bias_B = generate_gain_and_bias(N_B, -1, 1, rate_B[0], rate_B[1])    
+gain_C, bias_C = generate_gain_and_bias(N_C, -1, 1, rate_C[0], rate_C[1])    
+gain_D, bias_D = generate_gain_and_bias(N_D, -1, 1, rate_D[0], rate_D[1])    
 
 # a simple leaky integrate-and-fire model, scaled so that v=0 is resting 
 #  voltage and v=1 is the firing threshold
@@ -168,22 +178,40 @@ def compute_decoder(encoder, gain, bias, function=lambda x:x):
     Gamma = numpy.dot(A, A.T)
     Upsilon = numpy.dot(A, value)
     Ginv = numpy.linalg.pinv(Gamma)        
-    decoder = numpy.dot(Ginv,Upsilon) / dt
+    decoder = numpy.dot(Ginv,Upsilon)/dt
     return decoder
 
-# find the decoders for A and B
-decoder_A = compute_decoder(encoder_A, gain_A, bias_A, function=function)
-decoder_B = compute_decoder(encoder_B, gain_B, bias_B)
+# find the decoders for A, B, C and D
+decoder_A = compute_decoder(encoder_A, gain_A, bias_A)
+decoder_B = compute_decoder(encoder_B, gain_B, bias_B, function=function)
+decoder_C = compute_decoder(encoder_C, gain_C, bias_C)
+decoder_D = compute_decoder(encoder_D, gain_D, bias_D)
 
-# compute the weight matrix
-weights = numpy.dot(decoder_A, [encoder_B])
+# compute the weight matrices
+weights_AB=numpy.dot(decoder_A, [encoder_B])
+weights_BC=numpy.dot(decoder_B, [encoder_C])
+weights_CD=numpy.dot(decoder_C, [encoder_D])
 
 
 #################################################
 # Step 2: Running the simulation
 #################################################
 
+v_A = [0.0] * N_A       # voltage for population A
+ref_A = [0.0] * N_A     # refractory period for population A
+input_A = [0.0] * N_A   # input for population A
 
+v_B = [0.0] * N_B       # voltage for population B     
+ref_B = [0.0] * N_B     # refractory period for population B
+input_B = [0.0] * N_B   # input for population B
+
+v_C = [0.0] * N_C       # voltage for population C     
+ref_C = [0.0] * N_C     # refractory period for population C
+input_C = [0.0] * N_C   # input for population C
+
+v_D = [0.0] * N_D       # voltage for population D     
+ref_D = [0.0] * N_D     # refractory period for population D
+input_D = [0.0] * N_D   # input for population D
 
 # scaling factor for the post-synaptic filter
 pstc_scale = 1.0 - math.exp(-dt / t_pstc)  
@@ -195,117 +223,71 @@ pstc_scale = 1.0 - math.exp(-dt / t_pstc)
 #outputs = []
 #ideal = []
 
+output = 0.0            # the decoded output value from population B
+t = 0
+while t < 10.0:
+    # call the input function to determine the input value
+    x = input(t)   
+    
+    # convert the INPUT value into an input for each neuron
+    for i in range(N_A):
+        input_A[i] = x * encoder_A[i] * gain_A[i] + bias_A[i]
+    # RUN POPULATION A and determine which neurons spike
+    spikes_A = run_neurons(input_A, v_A, ref_A)
+    # decay all of the inputs (implementing the post-synaptic filter)            
+    for j in range(N_B):
+        input_B[j] *= (1.0 - pstc_scale)
+    # for each neuron that spikes, increase the input current
+    #  of all the neurons it is connected to by the synaptic
+    #  connection weight
+    for i,s in enumerate(spikes_A):
+        if s:
+            for j in range(N_B):
+                input_B[j] += weights_AB[i][j] * pstc_scale
+    
+    # compute the total input into each neuron in population B
+    #  (taking into account gain and bias)    
+    total_B = [0] * N_B
+    for j in range(N_B):
+        total_B[j] = gain_B[j] * input_B[j] + bias_B[j]    
+    # run population B and determine which neurons spike
+    spikes_B = run_neurons(total_B, v_B, ref_B)
+    for j in range(N_C):
+        input_C[j] *= (1.0 - pstc_scale)
+    for i,s in enumerate(spikes_B):
+        if s:
+            for j in range(N_C):
+                input_C[j] += weights_BC[i][j] * pstc_scale
 
-# We run A and B in parallel using subprocesses
-def ensemble_simulation_A(neuron_q):#node_conn, ticker_conn):
-    v_A = [0.0] * N_A       # voltage for population A
-    ref_A = [0.0] * N_A     # refractory period for population A
-    input_A = [0.0] * N_A   # input for population A
+    total_C = [0] * N_C
+    for j in range(N_C):
+        total_C[j] = gain_C[j] * input_C[j] + bias_C[j]
+    spikes_C = run_neurons(total_C, v_C, ref_C)
+    for j in range(N_D):
+        input_D[j] *= (1.0 - pstc_scale)
+    for i,s in enumerate(spikes_C):
+        if s:
+            for j in range(N_D):
+                input_D[j] += weights_CD[i][j] * pstc_scale
 
-    input_B = [0.0] * N_B   # input for population B
-    t = 0
-    while t < 10.0:
-        #print "start of A"
+    total_D = [0] * N_D
+    for j in range(N_D):
+        total_D[j] = gain_D[j] * input_D[j] + bias_D[j]
+    spikes_D = run_neurons(total_D, v_D, ref_D)
+    # for each neuron in D that spikes, update our decoded value
+    #  (also applying the same post-synaptic filter)
+    output *= (1.0 - pstc_scale)
+    for j,s in enumerate(spikes_D):
+        if s:
+            output += decoder_D[j][0] * pstc_scale
+    
+    print t, output
+    #times.append(t)
+    #inputs.append(x)
+    #outputs.append(output)
+    #ideal.append(function(x))
+    t+=dt    
 
-        # call the input function to determine the input value
-        x = input(t)   
-        #inputs.append(x)
-        #ideal.append(function(x))
-        
-        # convert the input value into an input for each neuron
-        for i in range(N_A):
-            input_A[i] = x * encoder_A[i] * gain_A[i] + bias_A[i]
-        
-        # run population A and determine which neurons spike
-        spikes_A = run_neurons(input_A, v_A, ref_A)
-        
-        # decay all of the inputs (implementing the post-synaptic filter)            
-        for j in range(N_B):
-            input_B[j] *= (1.0 - pstc_scale)
-        
-        #print "end of A -- before put"
-
-        #t = ticker_conn.recv()
-        #node_conn.send(input_B)
-        neuron_q.put([t, input_B, spikes_A], block=True)
-        #print "end of A -- after put"
-        
-        t += dt
-    neuron_q.put(False, block=True)
-
-def ensemble_simulation_B(neuron_q):#node_conn, ticker_conn):
-    v_B = [0.0] * N_B       # voltage for population B     
-    ref_B = [0.0] * N_B     # refractory period for population B
-    output = 0.0            # the decoded output value from population B
-    while True:
-        #print "start of B"
-
-        #input_B = node_conn.recv()
-        recv = neuron_q.get(block=True)
-        if (recv == False):
-            break
-        input_B = recv[1]
-        spikes_A = recv[2]
-
-        # for each neuron that spikes, increase the input current
-        #  of all the neurons it is connected to by the synaptic
-        #  connection weight
-        for i,s in enumerate(spikes_A):
-            if s:
-                for j in range(N_B):
-                    input_B[j] += weights[i][j] * pstc_scale
-
-        # compute the total input into each neuron in population B
-        #  (taking into account gain and bias)    
-        total_B = [0] * N_B
-        for j in range(N_B):
-            total_B[j] = gain_B[j] * input_B[j] + bias_B[j]    
-
-        # run population B and determine which neurons spike
-        spikes_B = run_neurons(total_B, v_B, ref_B)
-        
-        # for each neuron in B that spikes, update our decoded value
-        #  (also applying the same post-synaptic filter)
-        output *= (1.0 - pstc_scale)
-        for j,s in enumerate(spikes_B):
-            if s:
-                output += decoder_B[j][0] * pstc_scale
-
-        #print "end of B"
-
-        t = recv[0]
-        print t, output
-        #ticker_conn.send(output)
-
-# One pipe to send ticks to nodes
-timer_conn, ensemble_conn = Pipe()
-# Another pipe for the nodes to send eachother output
-#parent_conn, child_conn = Pipe()
-neuron_q = Queue()
-
-proc_A = Process(target=ensemble_simulation_A, args=(neuron_q,))#parent_conn, ensemble_conn, ))
-proc_B = Process(target=ensemble_simulation_B, args=(neuron_q,))
-    #ensemble_conn, ))
-
-proc_A.start()
-proc_B.start()
-#
-## the ticker
-#t = 0
-#while t < 10.0:
-#    timer_conn.send(t)
-#    output = timer_conn.recv()
-#
-#    #print t, output
-#    #times.append(t)
-#    #outputs.append(output)
-#
-#    t += dt    
-
-#proc_A.terminate()
-#proc_B.terminate()
-proc_A.join()
-proc_B.join()
 
 #################################################
 # Step 3: Plot the results
