@@ -212,7 +212,7 @@ pstc_scale = 1.0 - math.exp(-dt / t_pstc)
 #outputs = []
 #ideal = []
 
-def ensemble_simulation_A(node_q, ticker_conn):
+def ensemble_simulation_A(node_conn, ticker_conn):
     v_A = [0.0] * N_A       # voltage for population A
     ref_A = [0.0] * N_A     # refractory period for population A
     input_A = [0.0] * N_A   # input for population A
@@ -222,6 +222,7 @@ def ensemble_simulation_A(node_q, ticker_conn):
     t = 0
 
     while True:
+
         # call the input function to determine the input value
         x = input(t)   
         
@@ -242,10 +243,10 @@ def ensemble_simulation_A(node_q, ticker_conn):
                     input_B[j] += weights_AB[i][j] * pstc_scale
 
         t = ticker_conn.recv()
-        node_q.put(input_B)
+        node_conn.send(input_B)
         ticker_conn.send(t)
 
-def ensemble_simulation_B(parent_q, child_q, ticker_conn):
+def ensemble_simulation_B(parent_conn, child_conn, ticker_conn):
     v_B = [0.0] * N_B       # voltage for population B     
     ref_B = [0.0] * N_B     # refractory period for population B
 
@@ -254,9 +255,9 @@ def ensemble_simulation_B(parent_q, child_q, ticker_conn):
     while True:
 
         t = ticker_conn.recv()
-        try:
-            input_B = parent_q.get(block=False)
-        except:
+        if parent_conn.poll():
+            input_B = parent_conn.recv()
+        else:
             ticker_conn.send(t)
             continue
 
@@ -274,10 +275,10 @@ def ensemble_simulation_B(parent_q, child_q, ticker_conn):
                 for j in range(N_C):
                     input_C[j] += weights_BC[i][j] * pstc_scale
 
-        child_q.put(input_C)
+        child_conn.send(input_C)
         ticker_conn.send(t)
 
-def ensemble_simulation_C(parent_q, child_q, ticker_conn):
+def ensemble_simulation_C(parent_conn, child_conn, ticker_conn):
     v_C = [0.0] * N_C       # voltage for population C     
     ref_C = [0.0] * N_C     # refractory period for population C
 
@@ -286,9 +287,9 @@ def ensemble_simulation_C(parent_q, child_q, ticker_conn):
     while True:
 
         t = ticker_conn.recv()
-        try:
-            input_C = parent_q.get(block=False)
-        except:
+        if parent_conn.poll():
+            input_C = parent_conn.recv()
+        else:
             ticker_conn.send(t)
             continue
 
@@ -303,19 +304,19 @@ def ensemble_simulation_C(parent_q, child_q, ticker_conn):
                 for j in range(N_D):
                     input_D[j] += weights_CD[i][j] * pstc_scale
 
-        child_q.put(input_D)
+        child_conn.send(input_D)
         ticker_conn.send(t)
 
-def ensemble_simulation_D(node_q, ticker_conn):
+def ensemble_simulation_D(node_conn, ticker_conn):
     v_D = [0.0] * N_D       # voltage for population D     
     ref_D = [0.0] * N_D     # refractory period for population D
     output = 0.0            # the decoded output value from population D
     while True:
 
         t = ticker_conn.recv()
-        try:
-            input_D = node_q.get(block=False)
-        except:
+        if node_conn.poll():
+            input_D = node_conn.recv()
+        else:
             ticker_conn.send(t)
             continue
 
@@ -339,14 +340,14 @@ timerA_conn, ensembleA_conn = Pipe()
 timerB_conn, ensembleB_conn = Pipe()
 timerC_conn, ensembleC_conn = Pipe()
 timerD_conn, ensembleD_conn = Pipe()
-AB_q = Queue()
-BC_q = Queue()
-CD_q = Queue()
+AB_conn, BA_conn = Pipe()
+BC_conn, CB_conn = Pipe()
+CD_conn, DC_conn = Pipe()
 
-proc_A = Process(target=ensemble_simulation_A, args=(AB_q, ensembleA_conn,))
-proc_B = Process(target=ensemble_simulation_B, args=(AB_q, BC_q, ensembleB_conn,))
-proc_C = Process(target=ensemble_simulation_C, args=(BC_q, CD_q, ensembleC_conn,))
-proc_D = Process(target=ensemble_simulation_D, args=(CD_q, ensembleD_conn,))
+proc_A = Process(target=ensemble_simulation_A, args=(AB_conn, ensembleA_conn,))
+proc_B = Process(target=ensemble_simulation_B, args=(BA_conn, BC_conn, ensembleB_conn,))
+proc_C = Process(target=ensemble_simulation_C, args=(CB_conn, CD_conn, ensembleC_conn,))
+proc_D = Process(target=ensemble_simulation_D, args=(DC_conn, ensembleD_conn,))
 
 proc_A.start()
 proc_B.start()
