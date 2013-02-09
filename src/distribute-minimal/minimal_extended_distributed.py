@@ -246,65 +246,34 @@ def ensemble_simulation_A(node_conn, ticker_conn):
         node_conn.send(input_B)
         ticker_conn.send(t)
 
-def ensemble_simulation_B(parent_conn, child_conn, ticker_conn):
-    v_B = [0.0] * N_B       # voltage for population B     
-    ref_B = [0.0] * N_B     # refractory period for population B
+def ensemble_simulation_intermediate(parent_conn, child_conn, ticker_conn, N_neurons,
+        N_next, gain, bias, weights):
+    volt = [0.0] * N_neurons       # voltage for population
+    ref = [0.0] * N_neurons     # refractory period for population
 
-    input_C = [0.0] * N_C   # input for population C
-
-    while True:
-
-        t = ticker_conn.recv()
-        if parent_conn.poll():
-            input_B = parent_conn.recv()
-        else:
-            ticker_conn.send(t)
-            continue
-
-        # compute the total input into each neuron in population B
-        #  (taking into account gain and bias)    
-        total_B = [0] * N_B
-        for j in range(N_B):
-            total_B[j] = gain_B[j] * input_B[j] + bias_B[j]    
-        # run population B and determine which neurons spike
-        spikes_B = run_neurons(total_B, v_B, ref_B)
-        for j in range(N_C):
-            input_C[j] *= (1.0 - pstc_scale)
-        for i,s in enumerate(spikes_B):
-            if s:
-                for j in range(N_C):
-                    input_C[j] += weights_BC[i][j] * pstc_scale
-
-        child_conn.send(input_C)
-        ticker_conn.send(t)
-
-def ensemble_simulation_C(parent_conn, child_conn, ticker_conn):
-    v_C = [0.0] * N_C       # voltage for population C     
-    ref_C = [0.0] * N_C     # refractory period for population C
-
-    input_D = [0.0] * N_D   # input for population D
+    input_next = [0.0] * N_next   # input for next population
 
     while True:
 
         t = ticker_conn.recv()
         if parent_conn.poll():
-            input_C = parent_conn.recv()
+            input = parent_conn.recv()
         else:
             ticker_conn.send(t)
             continue
 
-        total_C = [0] * N_C
-        for j in range(N_C):
-            total_C[j] = gain_C[j] * input_C[j] + bias_C[j]
-        spikes_C = run_neurons(total_C, v_C, ref_C)
-        for j in range(N_D):
-            input_D[j] *= (1.0 - pstc_scale)
-        for i,s in enumerate(spikes_C):
+        total = [0] * N_neurons
+        for j in range(N_neurons):
+            total[j] = gain[j] * input[j] + bias[j]
+        spikes = run_neurons(total, volt, ref)
+        for j in range(N_next):
+            input_next[j] *= (1.0 - pstc_scale)
+        for i,s in enumerate(spikes):
             if s:
-                for j in range(N_D):
-                    input_D[j] += weights_CD[i][j] * pstc_scale
+                for j in range(N_next):
+                    input_next[j] += weights[i][j] * pstc_scale
 
-        child_conn.send(input_D)
+        child_conn.send(input_next)
         ticker_conn.send(t)
 
 def ensemble_simulation_D(node_conn, ticker_conn):
@@ -345,8 +314,10 @@ BC_conn, CB_conn = Pipe()
 CD_conn, DC_conn = Pipe()
 
 proc_A = Process(target=ensemble_simulation_A, args=(AB_conn, ensembleA_conn,))
-proc_B = Process(target=ensemble_simulation_B, args=(BA_conn, BC_conn, ensembleB_conn,))
-proc_C = Process(target=ensemble_simulation_C, args=(CB_conn, CD_conn, ensembleC_conn,))
+proc_B = Process(target=ensemble_simulation_intermediate, args=(BA_conn, BC_conn,
+    ensembleB_conn, N_B, N_C, gain_B, bias_B, weights_BC,), name="B ensemble")
+proc_C = Process(target=ensemble_simulation_intermediate, args=(CB_conn, CD_conn,
+    ensembleC_conn, N_C, N_D, gain_C, bias_C, weights_CD,), name="C ensemble")
 proc_D = Process(target=ensemble_simulation_D, args=(DC_conn, ensembleD_conn,))
 
 proc_A.start()
