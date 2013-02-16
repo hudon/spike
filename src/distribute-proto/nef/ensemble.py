@@ -36,21 +36,21 @@ class Ensemble:
     def __init__(self, neurons, dimensions, count = 1, max_rate = (200, 300),
             intercept = (-1.0, 1.0), t_ref = 0.002, t_rc = 0.02, seed = None,
             type = 'lif', dt = 0.001, encoders = None):
-        self.seed=seed
-        self.neurons=neurons
-        self.dimensions=dimensions
-        self.count=count
+        self.seed = seed
+        self.neurons = neurons
+        self.dimensions = dimensions
+        self.count = count
         
         # create the neurons
         # TODO: handle different neuron types, which may have different parameters to pass in
-        self.neuron=neuron.names[type]((count,self.neurons),t_rc=t_rc,t_ref=t_ref,dt=dt)
+        self.neuron = neuron.names[type]((count, self.neurons), t_rc = t_rc, t_ref = t_ref, dt = dt)
         
         # compute alpha and bias
         srng = RandomStreams(seed=seed)
-        max_rates=srng.uniform([neurons],low=max_rate[0],high=max_rate[1])
-        threshold=srng.uniform([neurons],low=intercept[0],high=intercept[1])
-        alpha,self.bias=theano.function([],self.neuron.make_alpha_bias(max_rates,threshold))()
-        self.bias=self.bias.astype('float32')
+        max_rates = srng.uniform([neurons], low=max_rate[0], high=max_rate[1])
+        threshold = srng.uniform([neurons], low=intercept[0], high=intercept[1])
+        alpha, self.bias = theano.function([], self.neuron.make_alpha_bias(max_rates,threshold))()
+        self.bias = self.bias.astype('float32')
                 
         # compute encoders
         self.encoders=make_encoders(neurons,dimensions,srng,encoders=encoders)

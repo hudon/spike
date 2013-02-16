@@ -2,9 +2,10 @@
 
 import nef
 import numpy
-import zmq
 
-context = zmq.Context()
+## 0MQ stuff (for when we port from threading to cluster distributing
+#import zmq
+#context = zmq.Context()
 # TODO get make_array to distribute 'a', 'b', 'c'
 # TODO get connect() to setup the 0MQ connections
 # TODO get update() to do the communication
@@ -22,6 +23,8 @@ D3 = 5
 
 # make 2 matrices to store the input (ensembles?)
 # NOTE: the 50 is hardcoded here, shouldn't it depend on D1 * D2?
+# NOTE: answer: no, neurons is the number of neurons per ensemble, count is
+# the number of arrays in the ensemble array (which is called "Ensemble" here)
 net.make_array(name = 'A', neurons = 50, count = D1 * D2)
 net.make_array(name = 'B', neurons = 50, count = D2 * D3)
 

@@ -13,7 +13,7 @@ class Network:
         self.seed = seed        
 
         # all the nodes in the network, indexed by name
-        self.node = {}
+        self.nodes = {}
 
         # the function to call to run the theano protions of the model
         # ahead one timestep
@@ -39,7 +39,7 @@ class Network:
         e = ensemble.Ensemble(neurons, dimensions, count = array_count,
                 intercept = intercept, dt = self.dt, seed = seed,
                 type = type, encoders = encoders)        
-        self.node[name] = e
+        self.nodes[name] = e
 
     def make_array(self, name, neurons, count, dimensions = 1, **args):
         return self.make(name = name, neurons = neurons, dimensions = dimensions,
@@ -52,8 +52,8 @@ class Network:
     # add an arbitrary non-theano node (used for Input now, should be used for
     # SimpleNodes when those get implemented
     def add(self, node):
-        self.tick_nodes.append(node)        
-        self.node[node.name]=node
+        self.tick_nodes.append(node)
+        self.nodes[node.name] = node
     
         
     def connect(self, pre, post, transform = None, pstc = 0.01, func = None,
@@ -62,14 +62,14 @@ class Network:
         # node means we have to rebuild the theano function
         self.theano_tick=None
                         
-        pre = self.node[pre]
-        post = self.node[post]
+        pre = self.nodes[pre]
+        post = self.nodes[post]
 
         # used for Input objects now, could also be used for SimpleNode
         # origins when they are written
-        if hasattr(pre,'value'):
+        if hasattr(pre, 'value'):
             assert func is None
-            value=pre.value
+            value = pre.value
         else:
           # this should only be used for ensembles (maybe reorganize this
           # if statement to check if it is an ensemble?)          
@@ -79,16 +79,16 @@ class Network:
                 if origin_name is None: origin_name = func.__name__
                 if origin_name not in pre.origin:
                     pre.add_origin(origin_name, func)                
-                value=pre.origin[origin_name].value
+                value = pre.origin[origin_name].value
             else:                     
-                value=pre.origin['X'].value
-        if transform is not None: value=TT.dot(value,transform)
+                value = pre.origin['X'].value
+        if transform is not None: value = TT.dot(value,transform)
         post.add_filtered_input(value,pstc)
 
     def make_tick(self):
         updates = {}
         # values() gets all the ensembles added
-        for e in self.node.values():
+        for e in self.nodes.values():
             if hasattr(e,'update'):
                 updates.update(e.update())
         return theano.function([], [], updates = updates)
