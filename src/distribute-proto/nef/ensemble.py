@@ -64,10 +64,11 @@ class Ensemble:
     def add_origin(self,name,func):
         self.origin[name]=origin.Origin(self,func)    
     
-    # create a new termination that takes the given input (a theano object) and filters it with the given tau
+    # create a new termination that takes the given input (a theano object)
+    # and filters it with the given tau
     def add_filtered_input(self,input,tau):
         if tau not in self.accumulator:  # make sure there's an accumulator for that tau
-            self.accumulator[tau]=Accumulator(self,tau)
+            self.accumulator[tau] = Accumulator(self, tau)
         self.accumulator[tau].add(input)
         
     # compute the set of theano updates needed for this ensemble        

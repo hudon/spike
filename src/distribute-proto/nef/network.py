@@ -15,7 +15,7 @@ class Network:
         # all the nodes in the network, indexed by name
         self.nodes = {}
 
-        # the function to call to run the theano protions of the model
+        # the function to call to run the theano portions of the model
         # ahead one timestep
         self.theano_tick = None
         # the list of nodes who have non-theano code that must be run
@@ -26,12 +26,11 @@ class Network:
             self.random.seed(seed)
             
     # make an ensemble,  Note that all ensembles are actually arrays of length 1        
-    def make(self, name, neurons, dimensions, array_count = 1,
-            intercept= (-1, 1), seed = None, type = 'lif',
-            encoders = None):
+    def make(self, name, neurons, dimensions, array_count=1,
+            intercept=(-1, 1), seed=None, type='lif', encoders=None):
         if seed is None:
             if self.seed is not None: 
-                seed=self.random.randrange(0x7fffffff)
+                seed = self.random.randrange(0x7fffffff)
     
         # just in case the model has been run previously, as adding a new
         # node means we have to rebuild the theano function
@@ -47,7 +46,7 @@ class Network:
     
     # create an input
     def make_input(self, name, value, zero_after = None):
-        self.add(input.Input(name,value,zero_after=zero_after))
+        self.add(input.Input(name, value, zero_after=zero_after))
             
     # add an arbitrary non-theano node (used for Input now, should be used for
     # SimpleNodes when those get implemented
@@ -71,8 +70,8 @@ class Network:
             assert func is None
             value = pre.value
         else:
-          # this should only be used for ensembles (maybe reorganize this
-          # if statement to check if it is an ensemble?)          
+          # this else should only be used for ensembles (maybe reorganize this
+          # outer if statement to check if it is an ensemble?)          
             if func is not None:
                 #TODO: better analysis to see if we need to build a new
                 # origin (rather than just relying on the name)
@@ -82,8 +81,8 @@ class Network:
                 value = pre.origin[origin_name].value
             else:                     
                 value = pre.origin['X'].value
-        if transform is not None: value = TT.dot(value,transform)
-        post.add_filtered_input(value,pstc)
+        if transform is not None: value = TT.dot(value, transform)
+        post.add_filtered_input(value, pstc)
 
     def make_tick(self):
         updates = {}
