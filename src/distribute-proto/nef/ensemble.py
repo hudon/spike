@@ -26,16 +26,25 @@ class Accumulator:
         self.value=theano.shared(numpy.zeros(self.ensemble.dimensions*self.ensemble.count).astype('float32'))  # the current filtered value
         self.decay=numpy.exp(-self.ensemble.neuron.dt/tau)   # time constant for filter
         self.total=None   # the theano object representing the sum of the inputs to this filter
-    def add(self,input):
-        if self.total is None: self.total=input
-        else: self.total=self.total+input
-        self.new_value=self.decay*self.value+(1-self.decay)*self.total   # the theano object representing the filtering operation        
+    def add(self, input):
+        if self.total is None:
+            self.total = input
+        else:
+            self.total = self.total + input
+
+        print "val size:", self.value.get_value().size
+        if hasattr(self.total, 'get_value'):
+            print "total size", self.total.eval().size#get_value()
+        else:
+            print "total size", self.total.eval().size#value.get_value()
+
+        self.new_value = self.decay * self.value + (1 - self.decay) * self.total   # the theano object representing the filtering operation        
             
         
 class Ensemble:
-    def __init__(self, neurons, dimensions, count = 1, max_rate = (200, 300),
-            intercept = (-1.0, 1.0), t_ref = 0.002, t_rc = 0.02, seed = None,
-            type = 'lif', dt = 0.001, encoders = None):
+    def __init__(self, neurons, dimensions, count=1, max_rate=(200, 300),
+            intercept=(-1.0, 1.0), t_ref=0.002, t_rc=0.02, seed=None,
+            type='lif', dt=0.001, encoders=None):
         self.seed = seed
         self.neurons = neurons
         self.dimensions = dimensions
@@ -53,20 +62,20 @@ class Ensemble:
         self.bias = self.bias.astype('float32')
                 
         # compute encoders
-        self.encoders=make_encoders(neurons,dimensions,srng,encoders=encoders)
-        self.encoders=(self.encoders.T*alpha).T
+        self.encoders = make_encoders(neurons, dimensions, srng, encoders=encoders)
+        self.encoders = (self.encoders.T * alpha).T
         
         # make default origin
-        self.origin=dict(X=origin.Origin(self))
-        self.accumulator={}
+        self.origin = dict(X=origin.Origin(self))
+        self.accumulator = {}
     
     # create a new origin that computes a given function
-    def add_origin(self,name,func):
-        self.origin[name]=origin.Origin(self,func)    
+    def add_origin(self, name, func):
+        self.origin[name] = origin.Origin(self,func)    
     
     # create a new termination that takes the given input (a theano object)
     # and filters it with the given tau
-    def add_filtered_input(self,input,tau):
+    def add_filtered_input(self, input, tau):
         if tau not in self.accumulator:  # make sure there's an accumulator for that tau
             self.accumulator[tau] = Accumulator(self, tau)
         self.accumulator[tau].add(input)

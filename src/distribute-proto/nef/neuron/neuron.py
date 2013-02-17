@@ -20,8 +20,8 @@ def accumulate(input,neuron,time=1.0,init_time=0.05):
     tick = theano.function([], [], updates=updates)
     
     # makea  variant that also includes computing the total output
-    updates[total]=total+neuron.output
-    accumulate=theano.function([],[],updates=updates)
+    updates[total] = total + neuron.output
+    accumulate = theano.function([], [], updates=updates)
     
     tick.fn(n_calls=int(init_time/neuron.dt))    # call the standard one a few times to get some startup transients out of the way
     accumulate.fn(n_calls=int(time/neuron.dt))   # call the accumulator version a bunch of times
