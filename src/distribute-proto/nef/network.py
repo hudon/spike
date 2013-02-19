@@ -40,7 +40,7 @@ class Network:
         self.theano_tick = None
         e = ensemble.Ensemble(neurons, dimensions, count = array_count,
                 intercept = intercept, dt = self.dt, seed = seed,
-                type = type, encoders = encoders)
+                type = type, encoders = encoders, name=name)
         self.nodes[name] = e
 
         timer_conn, node_conn = Pipe()
@@ -111,7 +111,10 @@ class Network:
 
             next_conn, prev_conn = Pipe()
             pre.add_output(next_conn)
-            post.add_input(prev_conn, pstc)
+            value_size = len(pre.value)
+            print "dim", len(pre.value)
+
+            # post.add_input(prev_conn, pstc, value_size)
         else:
             next_conn, prev_conn = Pipe()
 
@@ -122,11 +125,15 @@ class Network:
                 if origin_name not in pre.origin:
                     pre.add_origin(origin_name, func)
 
-                pre.origin[origin_name].add_output(next_conn, transform)
+                pre.origin[origin_name].add_output(next_conn)
+                value_size = len(pre.origin[origin_name].value.eval())
+                print "dimo1", len(pre.origin[origin_name].value.eval())
             else:
-                pre.origin['X'].add_output(next_conn, transform)
+                pre.origin['X'].add_output(next_conn)
+                value_size = len(pre.origin['X'].value.eval())
+                print "dimo2", len(pre.origin['X'].value.eval())
 
-            post.add_input(prev_conn, pstc)
+        post.add_input(prev_conn, pstc, value_size, transform)
 
     def make_tick(self):
         updates = {}

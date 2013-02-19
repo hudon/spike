@@ -44,6 +44,8 @@ class Input:
         for pipe in self.output_pipes:
             pipe.send(self.value)
 
+        print "TICKED", self.name
+
     def reset(self):
         self.zeroed = False
 

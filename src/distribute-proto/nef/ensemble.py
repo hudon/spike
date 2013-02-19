@@ -27,7 +27,7 @@ class Accumulator:
         self.value = theano.shared(numpy.zeros(self.ensemble.dimensions * self.ensemble.count).astype('float32'))  # the current filtered value
 
         self.decay = numpy.exp(-self.ensemble.neuron.dt / tau)   # time constant for filter
-        self.total = None # theano.shared(numpy.array([0] * 25).astype('float32')) # None   # the theano object representing the sum of the inputs to this filter
+        self.total = None   # the theano object representing the sum of the inputs to this filter
 
         # parallel lists
         self.input_pipes = []
@@ -39,16 +39,22 @@ class Accumulator:
 
     #     self.new_value = self.decay * self.value + (1 - self.decay) * self.total   # the theano object representing the filtering operation
 
-    def add(self, input_pipe):
+    def add(self, input_pipe, value_size, transform=None):
         self.input_pipes.append(input_pipe)
 
-        val = theano.shared(numpy.array([0] * 25).astype('float32'))
+        val = theano.shared(numpy.zeros(self.value.eval().size).astype('float32'))
         self.vals.append(val)
+
+        if transform is not None:
+            val = TT.dot(val, transform)
 
         if self.total is None:
             self.total = val
         else:
             self.total = self.total + val
+
+        # print "VALS", self.vals
+        # print "total", self.total.eval()
 
         self.new_value = self.decay * self.value + (1 - self.decay) * self.total
 
@@ -60,6 +66,7 @@ class Accumulator:
 
         for i, pipe in enumerate(self.input_pipes):
             val = pipe.recv()
+            # print "Val", val
             self.vals[i].set_value(val)
 
         return True
@@ -67,11 +74,12 @@ class Accumulator:
 class Ensemble:
     def __init__(self, neurons, dimensions, count = 1, max_rate = (200, 300),
             intercept = (-1.0, 1.0), t_ref = 0.002, t_rc = 0.02, seed = None,
-            type = 'lif', dt = 0.001, encoders = None):
+            type = 'lif', dt = 0.001, encoders = None, name = None):
         self.seed = seed
         self.neurons = neurons
         self.dimensions = dimensions
         self.count = count
+        self.name = name
 
         # create the neurons
         # TODO: handle different neuron types, which may have different parameters to pass in
@@ -104,11 +112,11 @@ class Ensemble:
 
     #     self.accumulator[tau].add(input_value)
 
-    def add_input(self, input_pipe, tau):
+    def add_input(self, input_pipe, tau, value_size, transform):
         if tau not in self.accumulator:
             self.accumulator[tau] = Accumulator(self, tau)
 
-        self.accumulator[tau].add(input_pipe)
+        self.accumulator[tau].add(input_pipe, value_size, transform)
 
     def make_tick(self):
         updates = {}
@@ -119,9 +127,13 @@ class Ensemble:
     def tick(self):
         for a in self.accumulator.values():
             if not a.tick():
+                print "NO_DATA", self.name
                 return
 
+        print "CALLING theano_tick", self.name
         self.theano_tick()
+
+        print "TICKED", self.name
 
         for o in self.origin.values():
             o.tick()

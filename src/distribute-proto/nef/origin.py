@@ -29,11 +29,12 @@ class Origin:
 
         self.value = theano.shared(numpy.zeros(self.dimensions).astype('float32'))
 
-        self.transform = None
+        # self.transform = None
         self.input_pipes = []
 
-    def add_output(self, input_pipe, transform):
-        self.transform = transform
+    def add_output(self, input_pipe):#, transform):
+        # self.transform = transform
+        # if transform is not None: self.value = TT.dot(self.value, transform)
         self.input_pipes.append(input_pipe)
 
     def tick(self):
@@ -46,7 +47,7 @@ class Origin:
 
         # TODO: get this to work with the transform funciton
         # if self.transform is not None:
-        #     return { self.value: TT.dot(new_val, self.transform) }
+            # return { self.value: TT.dot(new_val, self.transform) }
         # else:
         return { self.value: new_val }
 
