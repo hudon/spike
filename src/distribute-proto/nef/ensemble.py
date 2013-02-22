@@ -33,16 +33,10 @@ class Accumulator:
         self.input_pipes = []
         self.vals = []
 
-    # def add(self, input_value):
-    #     if self.total is None: self.total = input_value
-    #     else: self.total = self.total + input_value
-
-    #     self.new_value = self.decay * self.value + (1 - self.decay) * self.total   # the theano object representing the filtering operation
-
     def add(self, input_pipe, value_size, transform=None):
         self.input_pipes.append(input_pipe)
 
-        val = theano.shared(numpy.zeros(self.value.eval().size).astype('float32'))
+        val = theano.shared(numpy.zeros(value_size).astype('float32'))
         self.vals.append(val)
 
         if transform is not None:
@@ -52,9 +46,6 @@ class Accumulator:
             self.total = val
         else:
             self.total = self.total + val
-
-        # print "VALS", self.vals
-        # print "total", self.total.eval()
 
         self.new_value = self.decay * self.value + (1 - self.decay) * self.total
 
@@ -66,7 +57,6 @@ class Accumulator:
 
         for i, pipe in enumerate(self.input_pipes):
             val = pipe.recv()
-            # print "Val", val
             self.vals[i].set_value(val)
 
         return True
@@ -106,12 +96,6 @@ class Ensemble:
 
     # create a new termination that takes the given input (a theano object)
     # and filters it with the given tau
-    # def add_filtered_input(self, input_value, tau):
-    #     if tau not in self.accumulator:  # make sure there's an accumulator for that tau
-    #         self.accumulator[tau] = Accumulator(self, tau)
-
-    #     self.accumulator[tau].add(input_value)
-
     def add_input(self, input_pipe, tau, value_size, transform):
         if tau not in self.accumulator:
             self.accumulator[tau] = Accumulator(self, tau)
@@ -120,21 +104,17 @@ class Ensemble:
 
     def make_tick(self):
         updates = {}
-
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates = updates)
 
     def tick(self):
+        # start the tick in the accumulators
         for a in self.accumulator.values():
             if not a.tick():
-                print "NO_DATA", self.name
+                # no data was in the pipe
                 return
-
-        print "CALLING theano_tick", self.name
         self.theano_tick()
-
-        print "TICKED", self.name
-
+        # continue the tick in the origins
         for o in self.origin.values():
             o.tick()
 

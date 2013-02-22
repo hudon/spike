@@ -31,8 +31,8 @@ net.make_array(name = 'B', neurons = 50, count = D2 * D3)
 # connect inputs to them so we can set their value
 net.make_input(name = 'input A', value = [0] * D1 * D2)
 net.make_input(name = 'input B', value = [0] * D2 * D3)
-net.connect2(pre = 'input A', post = 'A')
-net.connect2(pre = 'input B', post = 'B')
+net.connect(pre = 'input A', post = 'A')
+net.connect(pre = 'input B', post = 'B')
 
 
 # the C matrix holds the intermediate product calculations
@@ -59,8 +59,8 @@ for i in range(D1):
             transformA[(j + k * D2 + i * D2 * D3) * 2][j + i * D2] = 1
             transformB[(j + k * D2 + i * D2 * D3) * 2 + 1][k + j * D3] = 1
 
-net.connect2('A', 'C', transform = numpy.array(transformA).T)
-net.connect2('B', 'C', transform = numpy.array(transformB).T)
+net.connect('A', 'C', transform = numpy.array(transformA).T)
+net.connect('B', 'C', transform = numpy.array(transformB).T)
 
 
 # now compute the products and do the appropriate summing
@@ -75,7 +75,7 @@ transform = [[0] * (D1 * D3) for i in range(D1 * D2 * D3)]
 for i in range(D1 * D2 * D3):
     transform[i][i / D2] = 1
 
-net.connect2('C', 'D', transform = transform, func = product)
+net.connect('C', 'D', transform = transform, func = product)
 
 print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 net.run(0.001)
@@ -84,4 +84,4 @@ start = time.time()
 for i in range(5000):
     net.run(0.001)
     print "time per tick:", (time.time() - start) / (i + 1)
-
+net.clean_up()

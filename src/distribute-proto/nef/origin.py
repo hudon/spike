@@ -15,11 +15,6 @@ def make_samples(neurons, dimensions, srng):
 
     return theano.function([],samples)()
 
-
-
-# TODO: ADD somewhere
-# if transform is not None: value = TT.dot(value, transform)
-
 class Origin:
     def __init__(self, ensemble, func=None):
         self.ensemble = ensemble
@@ -29,26 +24,18 @@ class Origin:
 
         self.value = theano.shared(numpy.zeros(self.dimensions).astype('float32'))
 
-        # self.transform = None
-        self.input_pipes = []
+        self.output_pipes = []
 
-    def add_output(self, input_pipe):#, transform):
-        # self.transform = transform
-        # if transform is not None: self.value = TT.dot(self.value, transform)
-        self.input_pipes.append(input_pipe)
+    def add_output(self, output_pipe):
+        self.output_pipes.append(output_pipe)
 
     def tick(self):
-        for pipe in self.input_pipes:
+        for pipe in self.output_pipes:
             pipe.send(self.value.get_value())
 
     # the theano computation for converting neuron output into a decoded value
     def update(self, spikes):
         new_val = TT.unbroadcast(TT.dot(spikes, self.decoder).reshape([self.dimensions]), 0)
-
-        # TODO: get this to work with the transform funciton
-        # if self.transform is not None:
-            # return { self.value: TT.dot(new_val, self.transform) }
-        # else:
         return { self.value: new_val }
 
     def compute_decoder(self):
@@ -57,7 +44,7 @@ class Origin:
         #TODO: have this be more for higher dimensions?  5000 maximum (like Nengo)?
         S=500
 
-        samples=make_samples(S,self.ensemble.dimensions,srng)
+        samples = make_samples(S,self.ensemble.dimensions,srng)
 
         # compute the target values (which are the same as the sample points for the 'X' origin)
         if self.func is None:
