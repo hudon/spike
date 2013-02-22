@@ -6,7 +6,7 @@ Brain Simulator Parallelization
 This project aims to bring performance enhancements to the [nengo project](http://www.nengo.ca/) through parallelization.
 The model for concurrency here is to run ensembles concurrently and to split up ensembles to evenly distribute CPU load.
 Concurrent ensembles and sub-ensembles can then run on different cores and communicate through pipes, or placed
-on different nodes and communicate through a fast transport protocol such as 0MQ.
+on different nodes and communicate through a fast transport protocol such as [0MQ](http://www.zeromq.org/).
 
 The main contributors of this project are:
 * [Greta Cutulenco](https://github.com/gretac)
