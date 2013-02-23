@@ -17,7 +17,7 @@ net = nef.Network('Matrix Multiplication', seed=1)  # Create the network object
 #  Matrix B is D2xD3
 #  result is D1xD3
 
-D1 = 5
+D1 = 1
 D2 = 5
 D3 = 5
 
@@ -26,7 +26,7 @@ D3 = 5
 # NOTE: answer: no, neurons is the number of neurons per ensemble, count is
 # the number of arrays in the ensemble array (which is called "Ensemble" here)
 net.make_array(name='A', neurons=50, count=D1 * D2)
-net.make_array(name='B', neurons=50, count=D2 * D3)
+net.make_array(name='B', neurons=200, count=D2 * D3)
 
 # connect inputs to them so we can set their value
 net.make_input(name='input A', value=[0] * D1 * D2)

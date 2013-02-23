@@ -10,13 +10,13 @@ net = nef.Network('Matrix Multiplication', seed = 1) #Create the network object
 #  Matrix B is D2xD3
 #  result is D1xD3
 
-D1 = 5
+D1 = 1
 D2 = 5
 D3 = 5
 
 # make 2 matrices to store the input
 net.make_array('A', 50, D1 * D2)
-net.make_array('B', 50, D2 * D3)
+net.make_array('B', 200, D2 * D3)
 
 # connect inputs to them so we can set their value
 net.make_input('input A', [0] * D1 * D2)
