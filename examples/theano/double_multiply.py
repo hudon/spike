@@ -84,4 +84,3 @@ start = time.time()
 for i in range(5000):
     net.run(0.001)
     print "time per tick:", (time.time() - start) / (i + 1)
-net.clean_up()
