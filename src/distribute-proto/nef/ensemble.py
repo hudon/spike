@@ -36,7 +36,7 @@ def make_encoders(neurons,dimensions,srng,encoders=None):
         encoders=numpy.tile(encoders,(neurons/len(encoders)+1,1))[:neurons,:dimensions]
 
     #  I don't understand how you can square the encoders here, because the dimensions don't match up
-    #  Thus, I don't the shape of the result
+    #  Thus, I don't know what the shape of the result is
     norm=TT.sum(encoders*encoders,axis=[1],keepdims=True)
     encoders=encoders/TT.sqrt(norm)
     return theano.function([],encoders)()
