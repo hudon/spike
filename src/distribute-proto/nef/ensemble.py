@@ -6,6 +6,21 @@ import numpy
 import neuron
 import origin
 
+#  TODO:  Split Up Ensembles
+#  One method for splitting up ensembles would be to come up with a second concept of
+#  EnsemblePartitions.  The Ensemble class would retain the same exernal interface and 
+#  be responsible for partitioning the required Ensemble into EnsemblePartitions, when
+#  the Ensemble class is initialized, and consolidating the output from each EnseblePartition
+#  into the the output required by the external Enseble interface.
+#  An EnsemblePartiton would essentially be what an ensemble is now.  The ensemble class would
+#  be responsible for deciding how to represent the larger enseble in terms of a series of
+#  smaller ones.
+#  Implementing this requires understanding the intimate details of the mathematical operations 
+#  that calculate the output.  Clearly, many of the calculations involve matrix operations, so 
+#  it is not as simple as dividing all arrays in half.  Dimension and cardinality of involved
+#  data structures must be known exactly.  I have attempted to document these specifics where 
+#  I can.
+
 # generates a set of encoders
 def make_encoders(neurons,dimensions,srng,encoders=None):
     if encoders is None:
@@ -31,6 +46,7 @@ def make_encoders(neurons,dimensions,srng,encoders=None):
 class Accumulator:
     def __init__(self, ensemble, tau):
         self.ensemble = ensemble   # the ensemble this set of terminations is attached to
+
 
         self.value = theano.shared(numpy.zeros(self.ensemble.dimensions * self.ensemble.count).astype('float32'))  # the current filtered value
 
@@ -162,7 +178,13 @@ class Ensemble:
 	#  I have no idea how to split this up while keeping it mathematically correct
         if len(self.accumulator) > 0:
             X = sum(a.new_value for a in self.accumulator.values())
+            #  reshape gives a new shape to an array without changing its data.
+            #  http://docs.scipy.org/doc/numpy/reference/generated/numpy.reshape.html
             X = X.reshape((self.count, self.dimensions))
+            #  self.encoders.T is the transpose of self.encoders
+            #  http://docs.scipy.org/doc/numpy-1.5.x/reference/generated/numpy.ndarray.T.html#numpy.ndarray.T
+            #  TT.dot calculates the inner tensor product of X and self.encoders.T
+            #  http://deeplearning.net/software/theano/library/tensor/basic.html#tensor.dot
             input = input + TT.dot(X, self.encoders.T)
 
         # pass that total into the neuron model to produce the main theano computation
@@ -179,7 +201,7 @@ class Ensemble:
 
     def run(self, ticker_conn):
 	#  While true because once we have run the model for enough time, we
-	#  call a method to kill these processes
+	#  call a method from the user application to kill these processes
         while True:
             ticker_conn.recv()
             self.tick()
