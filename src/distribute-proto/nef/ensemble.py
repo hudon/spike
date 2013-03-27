@@ -20,6 +20,12 @@ import origin
 #  it is not as simple as dividing all arrays in half.  Dimension and cardinality of involved
 #  data structures must be known exactly.  I have attempted to document these specifics where 
 #  I can.
+#  As a naive first attempt to split things up, I tried to think through what would happen if you
+#  split up the enseble placing a fraction of the neurons in each EnsemblePartition.  This looks
+#  easy enough for the init function, but I have no idea if this is valid, and it looks like the 
+#  acumulators are acting as some sort of state sharing thing?  Perhaps the acumulator would need
+#  to stay on a master node and we communicate with it from each neuron?  How do you re-combine 
+#  the results?  How do magnets work?
 
 # generates a set of encoders
 def make_encoders(neurons,dimensions,srng,encoders=None):
@@ -35,8 +41,9 @@ def make_encoders(neurons,dimensions,srng,encoders=None):
 	#  It producs a matrix of Size is R X C = dimensions X neurons
         encoders=numpy.tile(encoders,(neurons/len(encoders)+1,1))[:neurons,:dimensions]
 
-    #  I don't understand how you can square the encoders here, because the dimensions don't match up
-    #  Thus, I don't know what the shape of the result is
+    #  Welcome to the matrix (or the tensor if you perfer)  This uses some crazy math magic called broadcasting
+    #  to give results for matrix operations that do not have the correct dimensions.
+    #  http://deeplearning.net/software/theano/library/tensor/basic.html#libdoc-tensor-broadcastable
     norm=TT.sum(encoders*encoders,axis=[1],keepdims=True)
     encoders=encoders/TT.sqrt(norm)
     return theano.function([],encoders)()
