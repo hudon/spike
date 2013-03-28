@@ -6,27 +6,6 @@ import numpy
 import neuron
 import origin
 
-#  TODO:  Split Up Ensembles
-#  One method for splitting up ensembles would be to come up with a second concept of
-#  EnsemblePartitions.  The Ensemble class would retain the same exernal interface and 
-#  be responsible for partitioning the required Ensemble into EnsemblePartitions, when
-#  the Ensemble class is initialized, and consolidating the output from each EnseblePartition
-#  into the the output required by the external Enseble interface.
-#  An EnsemblePartiton would essentially be what an ensemble is now.  The ensemble class would
-#  be responsible for deciding how to represent the larger enseble in terms of a series of
-#  smaller ones.
-#  Implementing this requires understanding the intimate details of the mathematical operations 
-#  that calculate the output.  Clearly, many of the calculations involve matrix operations, so 
-#  it is not as simple as dividing all arrays in half.  Dimension and cardinality of involved
-#  data structures must be known exactly.  I have attempted to document these specifics where 
-#  I can.
-#  As a naive first attempt to split things up, I tried to think through what would happen if you
-#  split up the enseble placing a fraction of the neurons in each EnsemblePartition.  This looks
-#  easy enough for the init function, but I have no idea if this is valid, and it looks like the 
-#  acumulators are acting as some sort of state sharing thing?  Perhaps the acumulator would need
-#  to stay on a master node and we communicate with it from each neuron?  How do you re-combine 
-#  the results?  How do magnets work?
-
 # generates a set of encoders
 def make_encoders(neurons,dimensions,srng,encoders=None):
     if encoders is None:
@@ -47,7 +26,6 @@ def make_encoders(neurons,dimensions,srng,encoders=None):
     norm=TT.sum(encoders*encoders,axis=[1],keepdims=True)
     encoders=encoders/TT.sqrt(norm)
     return theano.function([],encoders)()
-
 
 # a collection of terminations, all sharing the same time constant
 class Accumulator:
@@ -132,13 +110,10 @@ class Ensemble:
         self.bias = self.bias.astype('float32')
 
         # compute encoders
-	#  The actual dimensions of encoders is not obvious to me
         self.encoders = make_encoders(neurons, dimensions, srng, encoders=encoders)
         self.encoders = (self.encoders.T * alpha).T
 
         # make default origin
-	#  Again, origin uses insane math and I can't figure out shape it has
-	#  so I don't really know how/if to split it up.
         self.origin = dict(X=origin.Origin(self))
         self.accumulator = {}
 
@@ -155,11 +130,8 @@ class Ensemble:
         self.accumulator[tau].add(input_pipe, value_size, transform)
 
     def make_tick(self):
-	#  Create a dictionary called updates
         updates = {}
-	#  Call the update method of dictionary, pass in a crazy tensor
         updates.update(self.update())
-	#  Call our theano function interface, passing in the dictionary updates
         self.theano_tick = theano.function([], [], updates = updates)
 
     def tick(self):
@@ -182,7 +154,6 @@ class Ensemble:
         # accumulator: group of terminations (inputs) that share the same low
         # pass filter. The group produces one result to feed into the
         # ensemble.
-	#  I have no idea how to split this up while keeping it mathematically correct
         if len(self.accumulator) > 0:
             X = sum(a.new_value for a in self.accumulator.values())
             #  reshape gives a new shape to an array without changing its data.
