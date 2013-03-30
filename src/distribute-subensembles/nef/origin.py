@@ -19,7 +19,10 @@ class Origin:
     def __init__(self, ensemble, func=None):
         self.ensemble = ensemble
         self.func = func
-        self.decoder = self.compute_decoder()
+        if self.ensemble.decoders is not None:
+            self.decoder = self.ensemble.decoders
+        else:
+            self.decoder = self.compute_decoder()
         self.dimensions = self.decoder.shape[1] * self.ensemble.count
 
         self.value = theano.shared(numpy.zeros(self.dimensions).astype('float32'))

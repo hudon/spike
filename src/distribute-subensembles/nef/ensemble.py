@@ -6,6 +6,8 @@ import numpy
 import neuron
 import origin
 
+import sys
+
 # generates a set of encoders
 def make_encoders(neurons,dimensions,srng,encoders=None):
     if encoders is None:
@@ -23,9 +25,9 @@ def make_encoders(neurons,dimensions,srng,encoders=None):
     #  Welcome to the matrix (or the tensor if you perfer)  This uses some crazy math magic called broadcasting
     #  to give results for matrix operations that do not have the correct dimensions.
     #  http://deeplearning.net/software/theano/library/tensor/basic.html#libdoc-tensor-broadcastable
-    norm=TT.sum(encoders*encoders,axis=[1],keepdims=True)
-    encoders=encoders/TT.sqrt(norm)
-    return theano.function([],encoders)()
+    norm = TT.sum(encoders * encoders, axis=[1], keepdims=True)
+    encoders = encoders / TT.sqrt(norm)
+    return theano.function([], encoders)()
 
 # a collection of terminations, all sharing the same time constant
 class Accumulator:
@@ -67,18 +69,21 @@ class Accumulator:
         for i, pipe in enumerate(self.input_pipes):
             val = pipe.recv()
             self.vals[i].set_value(val)
-
+            print >> sys.stderr, "name " + self.ensemble.name + " val " + str(val)
+     
         return True
 
 class Ensemble:
     def __init__(self, neurons, dimensions, count = 1, max_rate = (200, 300),
             intercept = (-1.0, 1.0), t_ref = 0.002, t_rc = 0.02, seed = None,
-            type = 'lif', dt = 0.001, encoders = None, name = None):
+                 type='lif', dt=0.001, encoders=None,
+                 override_encoders=False, name=None, decoders=None):
         self.seed = seed
         self.neurons = neurons
         self.dimensions = dimensions
         self.count = count
         self.name = name
+        self.decoders = decoders
 
         # create the neurons
         # TODO: handle different neuron types, which may have different parameters to pass in
@@ -110,11 +115,16 @@ class Ensemble:
         self.bias = self.bias.astype('float32')
 
         # compute encoders
-        self.encoders = make_encoders(neurons, dimensions, srng, encoders=encoders)
-        self.encoders = (self.encoders.T * alpha).T
+        if not override_encoders:
+            self.encoders = make_encoders(neurons, dimensions, srng, encoders=encoders)
+            self.encoders = (self.encoders.T * alpha).T
+        else:
+            self.encoders = encoders
 
         # make default origin
         self.origin = dict(X=origin.Origin(self))
+        if decoders is None:
+            self.decoders = self.origin['X'].decoder
         self.accumulator = {}
 
     # create a new origin that computes a given function
@@ -140,10 +150,16 @@ class Ensemble:
             if not a.tick():
                 # no data was in the pipe
                 return
+       
         self.theano_tick()
         # continue the tick in the origins
         for o in self.origin.values():
             o.tick()
+
+        if self.name is 'A':
+            print "acc for", self.name, ":", self.accumulator[0.01].value.get_value()
+            print "output for", self.name, ":", self.origin['X'].value.get_value()
+
 
     # compute the set of theano updates needed for this ensemble
     def update(self):

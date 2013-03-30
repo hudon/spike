@@ -28,8 +28,9 @@ class Network:
 
     # make an ensemble,  Note that all ensembles are by default arrays of
     # length 1
-    def make(self, name, neurons, dimensions, array_count=1,
-            intercept=(-1, 1), seed=None, type='lif', encoders=None):
+    def make(self, name, neurons, dimensions, array_count=1, isprocess=True,
+             intercept=(-1, 1), seed=None, type='lif', encoders=None, override_encoders=False,
+             decoders=None):
         # we need to run the setup again if ensembles are added
         self.setup = False
 
@@ -39,16 +40,19 @@ class Network:
 
         e = ensemble.Ensemble(neurons, dimensions, count = array_count,
                 intercept = intercept, dt = self.dt, seed = seed,
-                type = type, encoders = encoders, name=name)
+                              type=type, encoders=encoders, override_encoders=override_encoders,
+                              name=name, decoders=decoders)
         self.nodes[name] = e
 
-        timer_conn, node_conn = Pipe()
-        p = Process(target=e.run, args=(node_conn, ), name=name)
-        self.processes[name] = (p, timer_conn)
+        if isprocess:
+            timer_conn, node_conn = Pipe()
+            p = Process(target=e.run, args=(node_conn, ), name=name)
+            self.processes[name] = (p, timer_conn)
+        return e
 
-    def make_array(self, name, neurons, count, dimensions = 1, **args):
+    def make_array(self, name, neurons, count, dimensions = 1, isprocess=True, **args):
         return self.make(name = name, neurons = neurons, dimensions = dimensions,
-                array_count = count, **args)
+                array_count = count, isprocess=isprocess, **args)
 
     # create an input
     def make_input(self, name, value, zero_after=None):
