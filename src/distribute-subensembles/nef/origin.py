@@ -6,7 +6,7 @@ import neuron
 
 # generate sample points uniformly distributed within the sphere
 def make_samples(neurons, dimensions, srng):
-    samples = srng.normal((neurons,dimensions))
+    samples = srng.normal((neurons, dimensions))
     norm = TT.sum(samples * samples, axis=[1], keepdims=True)
     samples = samples / TT.sqrt(norm)
 
@@ -19,7 +19,7 @@ class Origin:
     def __init__(self, ensemble, func=None):
         self.ensemble = ensemble
         self.func = func
-        if self.ensemble.decoders is not None:
+        if self.ensemble.override:
             self.decoder = self.ensemble.decoders
         else:
             self.decoder = self.compute_decoder()

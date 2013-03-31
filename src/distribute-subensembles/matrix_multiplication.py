@@ -29,27 +29,12 @@ net.make_array(name='A', neurons=50, count=D1 * D2)
 B = net.make_array(name='B', neurons=200, count=D2 * D3, isprocess=False)
 encoder_length = len(B.encoders)
 decoder_length = len(B.decoders)
-B1 = net.make_array(name='B1', neurons=100, count=D2 * D3,
-               encoders=B.encoders[:encoder_length / 2], override_encoders=True,
-               decoders=B.decoders[:decoder_length / 2])
-B2 = net.make_array(name='B2', neurons=100, count=D2 * D3,
-               encoders=B.encoders[encoder_length / 2:], override_encoders=True,
-               decoders=B.decoders[decoder_length / 2:])
-
+bias_length = len(B.bias)
 
 # connect inputs to them so we can set their value
 net.make_input(name='input A', value=[0] * D1 * D2)
 net.make_input(name='input B', value=[0] * D2 * D3)
 net.connect(pre='input A', post='A')
-net.connect(pre='input B', post='B1')
-net.connect(pre='input B', post='B2')
-
-print "B encoders", B.encoders
-print "B decoders", B.decoders
-print "B1 encoders", B1.encoders
-print "B1 decoders", B1.decoders
-print "B2 encoders", B2.encoders
-print "B2 decoders", B2.decoders
 
 # the C matrix holds the intermediate product calculations
 #  need to compute D1*D2*D3 products to multiply 2 matrices together
@@ -76,9 +61,6 @@ for i in range(D1):
             transformB[(j + k * D2 + i * D2 * D3) * 2 + 1][k + j * D3] = 1
 
 net.connect('A', 'C', transform=numpy.array(transformA).T)
-net.connect('B1', 'C', transform=numpy.array(transformB).T)
-net.connect('B2', 'C', transform=numpy.array(transformB).T)
-
 
 # now compute the products and do the appropriate summing
 net.make_array('D', 50, D1 * D3, type='lif-rate')
@@ -95,13 +77,30 @@ for i in range(D1 * D2 * D3):
 
 net.connect('C', 'D', transform=transform, func=product)
 
+B1 = net.make_array(name='B1', neurons=100, count=D2 * D3,
+               encoders=B.encoders[:encoder_length / 2],
+               override=True,
+               decoders=B.decoders[:decoder_length / 2],
+               bias=B.bias[:bias_length / 2])
+B2 = net.make_array(name='B2', neurons=100, count=D2 * D3,
+               encoders=B.encoders[encoder_length / 2:],
+               override=True,
+               decoders=B.decoders[decoder_length / 2:],
+               bias=B.bias[bias_length / 2:])
+
+net.connect(pre='input B', post='B1')
+net.connect(pre='input B', post='B2')
+
+net.connect('B1', 'C', transform=numpy.array(transformB).T)
+net.connect('B2', 'C', transform=numpy.array(transformB).T)
+
 print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 net.run(0.001)
 import time
 start = time.time()
-for i in range(1000):
+for i in range(50):
     net.run(0.001)
-    print "time per tick:", (time.time() - start) / (i + 1)
+    # print "time per tick:", (time.time() - start) / (i + 1)
 #net.clean_up()
 import sys
 print >> sys.stderr, "done"

@@ -18,6 +18,7 @@ class Network:
         # all the nodes in the network, indexed by name
         self.nodes = {}
         self.processes = {}
+        self.subensembles = {}
 
         # the list of nodes who have non-theano code that must be run
         # each timestep
@@ -28,9 +29,13 @@ class Network:
 
     # make an ensemble,  Note that all ensembles are by default arrays of
     # length 1
-    def make(self, name, neurons, dimensions, array_count=1, isprocess=True,
-             intercept=(-1, 1), seed=None, type='lif', encoders=None, override_encoders=False,
-             decoders=None):
+    def make(self, name, neurons, dimensions, array_count=1,
+             intercept=(-1, 1), seed=None, type='lif', num_splits=1):
+
+        if num_splits < 1:
+            print >> sys.stderr, "num_splits for ensembles must be greater than 0"
+            exit(1)
+
         # we need to run the setup again if ensembles are added
         self.setup = False
 
@@ -39,20 +44,52 @@ class Network:
                 seed = self.random.randrange(0x7fffffff)
 
         e = ensemble.Ensemble(neurons, dimensions, count = array_count,
-                intercept = intercept, dt = self.dt, seed = seed,
-                              type=type, encoders=encoders, override_encoders=override_encoders,
-                              name=name, decoders=decoders)
-        self.nodes[name] = e
+            intercept = intercept, dt = self.dt, seed = seed, type=type, 
+            name=name)
 
-        if isprocess:
+        if num_splits > 1:
+            encoders = e.encoders
+            decoders = e.decoders
+            bias = e.bias
+
+            encoder_length = len(encoders)
+            decoder_length = len(decoders)
+            bias_length = len(bias)
+
+            for e_num in range(1, num_splits + 1):
+                subname = e.name + str(e_num)
+
+                e_size = encoder_length / num_splits
+                d_size = decoder_length / num_splits
+                b_size = bias_length / num_splits
+
+                e1 = ensemble.Ensemble(neurons / num_splits, dimensions,
+                    count = array_count, intercept = intercept, dt = self.dt,
+                    seed = seed, type=type,
+                    encoders=encoders[e_size * (e_num - 1):e_size * e_num],
+                    override=True,
+                    name=subname,
+                    decoders=decoders[d_size * (e_num - 1):d_size * e_num],
+                    bias=bias[b_size * (e_num - ):b_size * e_num])
+
+                self.nodes[subname] = e1
+                self.subensembles[name] = subname
+
+                # creating a process for EACH subensemble
+                timer_conn, node_conn = Pipe()
+                p = Process(target=e1.run, args=(node_conn, ), name=subname)
+                self.processes[subname] = (p, timer_conn)
+
+        else:
+            # if no subensembles, create just the main ensemble process
             timer_conn, node_conn = Pipe()
-            p = Process(target=e.run, args=(node_conn, ), name=name)
-            self.processes[name] = (p, timer_conn)
-        return e
+            p = Process(target=e.run, args=(node_conn, ), name=subname)
+            self.processes[subname] = (p, timer_conn)
 
-    def make_array(self, name, neurons, count, dimensions = 1, isprocess=True, **args):
+    # wrapper for make function
+    def make_array(self, name, neurons, count, dimensions = 1, **args):
         return self.make(name = name, neurons = neurons, dimensions = dimensions,
-                array_count = count, isprocess=isprocess, **args)
+                array_count = count, **args)
 
     # create an input
     def make_input(self, name, value, zero_after=None):
