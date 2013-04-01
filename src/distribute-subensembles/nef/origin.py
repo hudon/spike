@@ -16,13 +16,15 @@ def make_samples(neurons, dimensions, srng):
     return theano.function([],samples)()
 
 class Origin:
-    def __init__(self, ensemble, func=None):
+    def __init__(self, ensemble, func=None, decoder=None):
         self.ensemble = ensemble
         self.func = func
-        if self.ensemble.override:
-            self.decoder = self.ensemble.decoders
+
+        if decoder is None:
+            self.decoder = self.compute_decoder() 
         else:
-            self.decoder = self.compute_decoder()
+            self.decoder = decoder
+
         self.dimensions = self.decoder.shape[1] * self.ensemble.count
 
         self.value = theano.shared(numpy.zeros(self.dimensions).astype('float32'))
@@ -32,7 +34,7 @@ class Origin:
     def add_output(self, output_pipe):
         self.output_pipes.append(output_pipe)
 
-    def tick(self):
+    def tick(self):    
         for pipe in self.output_pipes:
             pipe.send(self.value.get_value())
 

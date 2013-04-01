@@ -21,25 +21,20 @@ D1 = 1
 D2 = 5
 D3 = 5
 
-# make 2 matrices to store the input (ensembles?)
-# NOTE: the 50 is hardcoded here, shouldn't it depend on D1 * D2?
-# NOTE: answer: no, neurons is the number of neurons per ensemble, count is
-# the number of arrays in the ensemble array (which is called "Ensemble" here)
 net.make_array(name='A', neurons=50, count=D1 * D2)
-B = net.make_array(name='B', neurons=200, count=D2 * D3, isprocess=False)
-encoder_length = len(B.encoders)
-decoder_length = len(B.decoders)
-bias_length = len(B.bias)
+net.make_array(name='B', neurons=200, count=D2 * D3)
 
 # connect inputs to them so we can set their value
 net.make_input(name='input A', value=[0] * D1 * D2)
 net.make_input(name='input B', value=[0] * D2 * D3)
+
 net.connect(pre='input A', post='A')
+net.connect(pre='input B', post='B')
 
 # the C matrix holds the intermediate product calculations
 #  need to compute D1*D2*D3 products to multiply 2 matrices together
 net.make_array('C', 200, D1 * D2 * D3, dimensions=2,
-               encoders=[[1, 1], [1, -1], [-1, 1], [-1, -1]])
+               encoders=[[1, 1], [1, -1], [-1, 1], [-1, -1]], num_subs=1)
 
 # determine the transformation matrices to get the correct pairwise
 #  products computed.  This looks a bit like black magic but if
@@ -61,10 +56,10 @@ for i in range(D1):
             transformB[(j + k * D2 + i * D2 * D3) * 2 + 1][k + j * D3] = 1
 
 net.connect('A', 'C', transform=numpy.array(transformA).T)
+net.connect('B', 'C', transform=numpy.array(transformB).T)
 
 # now compute the products and do the appropriate summing
 net.make_array('D', 50, D1 * D3, type='lif-rate')
-
 
 def product(x):
     return x[0] * x[1]
@@ -76,23 +71,6 @@ for i in range(D1 * D2 * D3):
     transform[i][i / D2] = 1
 
 net.connect('C', 'D', transform=transform, func=product)
-
-B1 = net.make_array(name='B1', neurons=100, count=D2 * D3,
-               encoders=B.encoders[:encoder_length / 2],
-               override=True,
-               decoders=B.decoders[:decoder_length / 2],
-               bias=B.bias[:bias_length / 2])
-B2 = net.make_array(name='B2', neurons=100, count=D2 * D3,
-               encoders=B.encoders[encoder_length / 2:],
-               override=True,
-               decoders=B.decoders[decoder_length / 2:],
-               bias=B.bias[bias_length / 2:])
-
-net.connect(pre='input B', post='B1')
-net.connect(pre='input B', post='B2')
-
-net.connect('B1', 'C', transform=numpy.array(transformB).T)
-net.connect('B2', 'C', transform=numpy.array(transformB).T)
 
 print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 net.run(0.001)

@@ -67,15 +67,17 @@ class Accumulator:
 class Ensemble:
     def __init__(self, neurons, dimensions, count = 1, max_rate = (200, 300),
             intercept = (-1.0, 1.0), t_ref = 0.002, t_rc = 0.02, seed = None,
-                 type='lif', dt=0.001, encoders=None,
-                 override=False, name=None, decoders=None, bias=None):
+            type='lif', dt=0.001, encoders=None,
+            is_subensemble=False, name=None, decoders=None, bias=None):
+        self.name = name
         self.seed = seed
+
         self.neurons = neurons
         self.dimensions = dimensions
         self.count = count
-        self.name = name
-        self.decoders = decoders
-        self.override = override
+        self.accumulator = {}
+
+        self.is_subensemble = is_subensemble
 
         # create the neurons
         # TODO: handle different neuron types, which may have different parameters to pass in
@@ -89,8 +91,6 @@ class Ensemble:
     	#  ])
         self.neuron = neuron.names[type]((count, self.neurons), t_rc = t_rc, t_ref = t_ref, dt = dt)
 
-        # compute alpha and bias
-        
     	#  uniform(self, size=(), low=0.0, high=1.0, ndim=None):
     	#  Sample a tensor of given size whose element from a uniform distribution between low and high.
     	#  FROM http://deeplearning.net/software/theano/library/tensor/raw_random.html#raw_random.RandomStreamsBase
@@ -101,32 +101,70 @@ class Ensemble:
     	#  If no shape is specified, a single sample is returned.
     	#  SUMMARY:  srng.uniform generates a random sample array of length [neurons] (I think)
 
-        if not override:
+        if is_subensemble:
+            self.bias = bias
+            self.encoders = encoders
+        else:
+            # compute alpha and bias
             srng = RandomStreams(seed=seed)
             max_rates = srng.uniform([neurons], low=max_rate[0], high=max_rate[1])
             threshold = srng.uniform([neurons], low=intercept[0], high=intercept[1])
 
             alpha, self.bias = theano.function([], self.neuron.make_alpha_bias(max_rates, threshold))()
             self.bias = self.bias.astype('float32')
-        else:
-            self.bias = bias
 
-        # compute encoders
-        if not override:
+            # compute encoders
             self.encoders = make_encoders(neurons, dimensions, srng, encoders=encoders)
             self.encoders = (self.encoders.T * alpha).T
-        else:
-            self.encoders = encoders
 
         # make default origin
-        self.origin = dict(X=origin.Origin(self))
-        if decoders is None:
-            self.decoders = self.origin['X'].decoder
-        self.accumulator = {}
+        self.origin = dict(X=origin.Origin(self, decoder=decoders))
+
+    def get_subensemble_parts(self, num_parts):
+        parts = []
+
+        decoder_parts = self.get_subensemble_decoder(num_parts, "X")
+
+        encoder_length = len(self.encoders)
+        bias_length = len(self.bias)
+
+        # create the specified number of subensembles
+        for e_num in range(1, num_parts + 1):
+            e_size = encoder_length / num_parts
+            b_size = bias_length / num_parts
+
+            encoder_part = self.encoders[e_size * (e_num - 1):e_size * e_num]
+            bias_part = self.bias[b_size * (e_num - 1):b_size * e_num]
+
+            parts.append((encoder_part, decoder_parts[e_num - 1], bias_part))
+
+        return parts
+
+    def get_subensemble_decoder(self, num_parts, origin_name, func=None):
+        parts = []
+
+        # TODO do not require an Origin to be created just to compute decoder
+        if origin_name not in self.origin:
+            # create the origin in order to compute a decoder
+            self.add_origin(origin_name, func)
+            # print "name " + self.name + " decoder: " + str(self.origin[origin_name].decoder)
+
+        decoder = self.origin[origin_name].decoder
+        decoder_length = len(decoder)
+
+        # create the specified number of decoders
+        for e_num in range(1, num_parts + 1):
+            d_size = decoder_length / num_parts
+            decoder_part = decoder[d_size * (e_num - 1):d_size * e_num]
+
+            parts.append(decoder_part)
+
+        return parts
+
 
     # create a new origin that computes a given function
-    def add_origin(self, name, func):
-        self.origin[name] = origin.Origin(self, func)
+    def add_origin(self, name, func, decoder=None):
+        self.origin[name] = origin.Origin(self, func, decoder=decoder)
 
     # create a new termination that takes the given input (a theano object)
     # and filters it with the given tau
@@ -153,10 +191,6 @@ class Ensemble:
         # continue the tick in the origins
         for o in self.origin.values():
             o.tick()
-
-        if self.name is 'D':
-            # print "PROD output for", self.name, ":", self.origin['product'].value.get_value()
-            print "output for", self.name, ":", self.origin['X'].value.get_value()
 
     # compute the set of theano updates needed for this ensemble
     def update(self):
