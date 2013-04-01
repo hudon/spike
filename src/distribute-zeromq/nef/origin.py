@@ -37,9 +37,7 @@ class Origin:
 
     def tick(self):
         for socket in self.output_sockets:
-            print(self.value)
-            print(self.value.get_value())
-            socket.send("%d" % self.value.get_value())
+            socket.send_pyobj(self.value.get_value())
 
     # the theano computation for converting neuron output into a decoded value
     def update(self, spikes):

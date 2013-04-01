@@ -37,7 +37,7 @@ class Input:
             self.value = self.function(self.t)
 
         for socket in self.output_sockets:
-            socket.send(self.value)
+            socket.send_pyobj(self.value)
 
     def reset(self):
         self.zeroed = False

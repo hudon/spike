@@ -120,7 +120,7 @@ class Network:
                 # REP socket expects an envelope of the format:
                 # [Sender Address] | Delimiter Frame | Data
                 self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
-                self.ticker_conn.send("%d" % t)
+                self.ticker_conn.send(str(t))
 
             for i in xrange(num_processes):
                 self.ticker_conn.recv()

@@ -68,11 +68,9 @@ class Accumulator:
 
         for i, socket in enumerate(self.input_sockets):
             if socket in responses and responses[socket] == zmq.POLLIN:
-                print("YESPOLL")
-                val = socket.recv()
+                val = socket.recv_pyobj()
                 self.vals[i].set_value(val)
             else:
-                print("NOPOLL")
                 return False
 
         return True
