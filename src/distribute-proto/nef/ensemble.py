@@ -5,6 +5,8 @@ import numpy
 
 import neuron
 import origin
+import zmq
+import zmq_utils
 
 # generates a set of encoders
 def make_encoders(neurons,dimensions,srng,encoders=None):
@@ -30,11 +32,12 @@ class Accumulator:
         self.total = None   # the theano object representing the sum of the inputs to this filter
 
         # parallel lists
-        self.input_pipes = []
+        self.input_socket_definitions = []
+        self.input_sockets = []
         self.vals = []
 
-    def add(self, input_pipe, value_size, transform=None):
-        self.input_pipes.append(input_pipe)
+    def add(self, input_socket_definition, value_size, transform=None):
+        self.input_socket_definitions.append(input_socket_definition)
 
         val = theano.shared(numpy.zeros(value_size).astype('float32'))
         self.vals.append(val)
@@ -49,27 +52,42 @@ class Accumulator:
 
         self.new_value = self.decay * self.value + (1 - self.decay) * self.total
 
+    # Must be run prior to calling tick() to create and bind sockets
+    def bind_sockets(self):
+        for defn in self.input_socket_definitions:
+            self.input_sockets.append(defn.create_socket())
+
     # returns False if some data was not available
     def tick(self):
-        for pipe in self.input_pipes:
-            if not pipe.poll():
-                return False
+        poller = zmq.Poller()
 
-        for i, pipe in enumerate(self.input_pipes):
-            val = pipe.recv()
-            self.vals[i].set_value(val)
+        for socket in self.input_sockets:
+            poller.register(socket, zmq.POLLIN)
+
+        responses = dict(poller.poll(1000))
+
+        for i, socket in enumerate(self.input_sockets):
+            if socket in responses and responses[socket] == zmq.POLLIN:
+                print("YESPOLL")
+                val = socket.recv()
+                self.vals[i].set_value(val)
+            else:
+                print("NOPOLL")
+                return False
 
         return True
 
 class Ensemble:
     def __init__(self, neurons, dimensions, count = 1, max_rate = (200, 300),
             intercept = (-1.0, 1.0), t_ref = 0.002, t_rc = 0.02, seed = None,
-            type = 'lif', dt = 0.001, encoders = None, name = None):
+            type = 'lif', dt = 0.001, encoders = None, name = None, address = "localhost"):
         self.seed = seed
         self.neurons = neurons
         self.dimensions = dimensions
         self.count = count
         self.name = name
+        self.address = address
+        self.ticker_conn = None
 
         # create the neurons
         # TODO: handle different neuron types, which may have different parameters to pass in
@@ -96,11 +114,11 @@ class Ensemble:
 
     # create a new termination that takes the given input (a theano object)
     # and filters it with the given tau
-    def add_input(self, input_pipe, tau, value_size, transform):
+    def add_input(self, input_socket_definition, tau, value_size, transform):
         if tau not in self.accumulator:
             self.accumulator[tau] = Accumulator(self, tau)
 
-        self.accumulator[tau].add(input_pipe, value_size, transform)
+        self.accumulator[tau].add(input_socket_definition, value_size, transform)
 
     def make_tick(self):
         updates = {}
@@ -111,7 +129,7 @@ class Ensemble:
         # start the tick in the accumulators
         for a in self.accumulator.values():
             if not a.tick():
-                # no data was in the pipe
+                # no data was in the socket
                 return
         self.theano_tick()
         # continue the tick in the origins
@@ -145,11 +163,24 @@ class Ensemble:
 
         return updates
 
-    def run(self, ticker_conn):
+    def bind_sockets(self):
+        # Create socket connections for inputs
+        for a in self.accumulator.values():
+            a.bind_sockets()
+
+        for o in self.origin.values():
+            o.bind_sockets()
+
+        # zmq.REP strictly enforces alternating recv/send ordering
+        zmq_context = zmq.Context()
+        self.ticker_conn = zmq_context.socket(zmq.REP)
+        self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
+
+
+    def run(self):
+        self.bind_sockets()
+
         while True:
-            ticker_conn.recv()
+            self.ticker_conn.recv()
             self.tick()
-            ticker_conn.send(1)
-
-
-
+            self.ticker_conn.send("")

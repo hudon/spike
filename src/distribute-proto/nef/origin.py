@@ -24,14 +24,22 @@ class Origin:
 
         self.value = theano.shared(numpy.zeros(self.dimensions).astype('float32'))
 
-        self.output_pipes = []
+        self.output_socket_definitions = []
+        self.output_sockets = []
+        self.ticker_conn = None
 
-    def add_output(self, output_pipe):
-        self.output_pipes.append(output_pipe)
+    def add_output(self, output_socket_definition):
+        self.output_socket_definitions.append(output_socket_definition)
+
+    def bind_sockets(self):
+        for defn in self.output_socket_definitions:
+           self.output_sockets.append(defn.create_socket())
 
     def tick(self):
-        for pipe in self.output_pipes:
-            pipe.send(self.value.get_value())
+        for socket in self.output_sockets:
+            print(self.value)
+            print(self.value.get_value())
+            socket.send("%d" % self.value.get_value())
 
     # the theano computation for converting neuron output into a decoded value
     def update(self, spikes):
@@ -84,4 +92,3 @@ class Origin:
         # compute decoder
         decoder=numpy.dot(Ginv,U)/(self.ensemble.neuron.dt)
         return decoder.astype('float32')
-
