@@ -36,6 +36,10 @@ class Accumulator:
         self.input_sockets = []
         self.vals = []
 
+    def __del__(self):
+        for socket in self.input_sockets:
+            socket.close()
+
     def add(self, input_socket_definition, value_size, transform=None):
         self.input_socket_definitions.append(input_socket_definition)
 
@@ -105,6 +109,9 @@ class Ensemble:
         # make default origin
         self.origin = dict(X=origin.Origin(self))
         self.accumulator = {}
+
+    def __del__(self):
+        self.ticker_conn.close()
 
     # create a new origin that computes a given function
     def add_origin(self, name, func):

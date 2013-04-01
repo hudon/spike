@@ -23,6 +23,10 @@ class Input:
         else:
             self.value = numpy.array(value).astype('float32')
 
+    def __del__(self):
+        for socket in self.output_sockets:
+            socket.close()
+
     def add_output(self, output_definition):
         self.output_socket_definitions.append(output_definition)
 

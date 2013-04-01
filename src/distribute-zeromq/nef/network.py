@@ -30,6 +30,9 @@ class Network:
             self.random = random.Random()
             self.random.seed(seed)
 
+    def __del__(self):
+        self.ticker_conn.close()
+
     # make an ensemble,  Note that all ensembles are by default arrays of
     # length 1
     def make(self, name, neurons, dimensions, array_count=1,

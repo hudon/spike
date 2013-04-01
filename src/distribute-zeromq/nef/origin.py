@@ -28,6 +28,10 @@ class Origin:
         self.output_sockets = []
         self.ticker_conn = None
 
+    def __del__(self):
+        for socket in self.output_sockets:
+            socket.close()
+
     def add_output(self, output_socket_definition):
         self.output_socket_definitions.append(output_socket_definition)
 
