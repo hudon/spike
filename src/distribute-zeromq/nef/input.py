@@ -1,6 +1,8 @@
 from theano import tensor as TT
 import theano
 import numpy
+import zmq
+import zmq_utils
 
 class Input:
     def __init__(self, name, value, zero_after=None):
@@ -10,7 +12,9 @@ class Input:
         self.zero_after = zero_after
         self.zeroed = False
 
-        self.output_pipes = []
+        self.output_socket_definitions = []
+        self.output_sockets = []
+        self.ticker_conn = None
 
         if callable(value):
             v = value(0.0)
@@ -19,8 +23,8 @@ class Input:
         else:
             self.value = numpy.array(value).astype('float32')
 
-    def add_output(self, output):
-        self.output_pipes.append(output)
+    def add_output(self, output_definition):
+        self.output_socket_definitions.append(output_definition)
 
     def tick(self):
         if self.zeroed: return
@@ -32,14 +36,25 @@ class Input:
         if self.function is not None:
             self.value = self.function(self.t)
 
-        for pipe in self.output_pipes:
-            pipe.send(self.value)
+        for socket in self.output_sockets:
+            socket.send(self.value)
 
     def reset(self):
         self.zeroed = False
 
-    def run(self, ticker_conn):
+    def bind_sockets(self):
+       for defn in self.output_socket_definitions:
+           self.output_sockets.append(defn.create_socket())
+
+        # zmq.REP strictly enforces alternating recv/send ordering
+       zmq_context = zmq.Context()
+       self.ticker_conn = zmq_context.socket(zmq.REP)
+       self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
+
+    def run(self):
+        self.bind_sockets()
+
         while True:
-            ticker_conn.recv()
+            self.ticker_conn.recv()
             self.tick()
-            ticker_conn.send(1)
+            self.ticker_conn.send("")

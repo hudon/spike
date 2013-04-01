@@ -5,8 +5,9 @@ from theano import tensor as TT
 import theano
 import numpy
 import random
-from multiprocessing import Process, Pipe
-
+import zmq
+import zmq_utils
+from multiprocessing import Process
 
 class Network:
     def __init__(self, name, seed=None):
@@ -17,7 +18,10 @@ class Network:
 
         # all the nodes in the network, indexed by name
         self.nodes = {}
-        self.processes = {}
+        self.processes = []
+
+        self.ticker_conn = zmq.Context().socket(zmq.DEALER)
+        self.ticker_conn.bind(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
 
         # the list of nodes who have non-theano code that must be run
         # each timestep
@@ -42,9 +46,8 @@ class Network:
                 type = type, encoders = encoders, name=name)
         self.nodes[name] = e
 
-        timer_conn, node_conn = Pipe()
-        p = Process(target=e.run, args=(node_conn, ), name=name)
-        self.processes[name] = (p, timer_conn)
+        p = Process(target=e.run, name=name)
+        self.processes.append(p)
 
     def make_array(self, name, neurons, count, dimensions = 1, **args):
         return self.make(name = name, neurons = neurons, dimensions = dimensions,
@@ -63,10 +66,10 @@ class Network:
         self.tick_nodes.append(node)
         self.nodes[node.name] = node
 
-        timer_conn, node_conn = Pipe()
-        p = Process(target=node.run, args=(node_conn, ), name=node.name)
-        self.processes[node.name] = (p, timer_conn)
+        p = Process(target=node.run, name=node.name)
+        self.processes.append(p)
 
+    # TODO: Two versions of this: Local (INPROC) and Global (TCP)
     def connect(self, pre, post, transform=None, pstc=0.01, func=None,
             origin_name=None):
         # we need to run the setup again if ensembles are added
@@ -75,25 +78,25 @@ class Network:
         pre = self.nodes[pre]
         post = self.nodes[post]
 
+        origin_socket, destination_socket = zmq_utils.create_local_socket_definition_pair(pre, post)
+
         if hasattr(pre, 'value'):
             assert func is None
-            next_conn, prev_conn = Pipe()
-            pre.add_output(next_conn)
+            pre.add_output(origin_socket)
             value_size = len(pre.value)
         else:
-            next_conn, prev_conn = Pipe()
             if func is not None:
                 if origin_name is None:
                     origin_name = func.__name__
                 if origin_name not in pre.origin:
                     pre.add_origin(origin_name, func)
 
-                pre.origin[origin_name].add_output(next_conn)
+                pre.origin[origin_name].add_output(origin_socket)
                 value_size = len(pre.origin[origin_name].value.eval())
             else:
-                pre.origin['X'].add_output(next_conn)
+                pre.origin['X'].add_output(origin_socket)
                 value_size = len(pre.origin['X'].value.eval())
-        post.add_input(prev_conn, pstc, value_size, transform)
+        post.add_input(destination_socket, pstc, value_size, transform)
 
     run_time = 0.0
 
@@ -103,7 +106,7 @@ class Network:
                 if hasattr(e, 'make_tick'):
                     e.make_tick()
 
-            for proc, timer_conn in self.processes.values():
+            for proc in self.processes:
                 if not proc.is_alive():
                     proc.start()
             self.setup = True
@@ -111,16 +114,23 @@ class Network:
         for i in range(int(time / self.dt)):
             t = self.run_time + i * self.dt
 
-            for proc, timer_conn in self.processes.values():
-                timer_conn.send(t)
+            num_processes = len(self.processes)
 
-            for proc, timer_conn in self.processes.values():
-                timer_conn.recv()
+            for i in xrange(num_processes):
+                # REP socket expects an envelope of the format:
+                # [Sender Address] | Delimiter Frame | Data
+                self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
+                self.ticker_conn.send("%d" % t)
+
+            for i in xrange(num_processes):
+                self.ticker_conn.recv()
 
         self.run_time += time
 
     # called when the user is all done (otherwise, procs hang :) )
     def clean_up(self):
+        self.ticker_conn.close()
+
         # force kill
-        for proc, timer_conn in self.processes.values():
+        for proc in self.processes:
             proc.terminate()
