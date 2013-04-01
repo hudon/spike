@@ -7,14 +7,18 @@ TICKER_SOCKET_LOCAL_NAME = "ipc:///tmp/spike.tick_timer_connection"
 TICKER_SOCKET_GLOBAL_NAME = "tcp://*:10000"
 
 class SocketDefinition(object):
-    def __init__(self, endpoint, socket_type):
+    def __init__(self, endpoint, socket_type, is_server = False):
         self.endpoint = endpoint
         self.socket_type = socket_type
+        self.is_server = is_server
 
     def create_socket(self):
         ctx = zmq.Context()
         socket = ctx.socket(self.socket_type)
-        socket.bind(self.endpoint)
+        if self.is_server:
+            socket.bind(self.endpoint)
+        else:
+            socket.connect(self.endpoint)
 
         return socket
 
@@ -26,4 +30,4 @@ def create_local_socket_definition_pair(origin_node, destination_node):
     origin_socket_type = zmq.PUSH
     destination_socket_type = zmq.PULL
 
-    return SocketDefinition(socket_name, origin_socket_type), SocketDefinition(socket_name, destination_socket_type)
+    return SocketDefinition(socket_name, origin_socket_type, is_server=True), SocketDefinition(socket_name, destination_socket_type, is_server=False)
