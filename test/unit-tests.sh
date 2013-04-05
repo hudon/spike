@@ -11,8 +11,9 @@ TEST_SCRIPTS=(
 );
 
 compareOutput(){
-	observed_output_command="python -m ${1} ${CODE_TO_TEST_PATH}"
-	goal_output_command="python -m ${1} ${WORKING_CODE_PATH}"
+	realpath=$(echo $(cd $(dirname ${1}); pwd)/$(basename ${1}))
+	observed_output_command="python ${realpath} ${CODE_TO_TEST_PATH}"
+	goal_output_command="python ${realpath} ${WORKING_CODE_PATH}"
 
 	echo "Computing output from command '${observed_output_command}'..."
 	observed_output=$(${observed_output_command})
