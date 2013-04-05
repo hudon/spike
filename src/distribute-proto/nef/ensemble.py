@@ -6,8 +6,6 @@ import numpy
 import neuron
 import origin
 
-import sys
-
 # generates a set of encoders
 def make_encoders(neurons,dimensions,srng,encoders=None):
     if encoders is None:
@@ -97,15 +95,6 @@ class Ensemble:
         # compute alpha and bias
         srng = RandomStreams(seed=seed)
 
-    	#  uniform(self, size=(), low=0.0, high=1.0, ndim=None):
-    	#  Sample a tensor of given size whose element from a uniform distribution between low and high.
-    	#  FROM http://deeplearning.net/software/theano/library/tensor/raw_random.html#raw_random.RandomStreamsBase
-    	#  This is a symbolic stand-in for numpy.random.RandomState.
-    	#  http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.RandomState.uniform.html#numpy.random.RandomState.uniform
-    	#  size : int or tuple of ints, optional Shape of output. If the
-    	#  given size is, for example, (m,n,k), m*n*k samples are generated.
-    	#  If no shape is specified, a single sample is returned.
-    	#  SUMMARY:  srng.uniform generates a random sample array of length [neurons] (I think)
         max_rates = srng.uniform([neurons], low=max_rate[0], high=max_rate[1])
         threshold = srng.uniform([neurons], low=intercept[0], high=intercept[1])
 
@@ -149,10 +138,6 @@ class Ensemble:
         # continue the tick in the origins
         for o in self.origin.values():
             o.tick()
-
-        if self.name is 'D':
-            # print "PROD output for", self.name, ":", self.origin['product'].value.get_value()
-            print "output for", self.name, ":", self.origin['X'].value.get_value()
 
     # compute the set of theano updates needed for this ensemble
     def update(self):

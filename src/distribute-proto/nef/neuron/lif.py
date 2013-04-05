@@ -14,16 +14,15 @@ class LIFNeuron(Neuron):
 
     # define the theano update rules that implement this neuron type
     def update(self,input_current):
-
         # Euler's method
-        dV=self.dt / self.t_rc*(input_current-self.voltage)
+        dV = self.dt / self.t_rc * (input_current - self.voltage)
 
         # increase the voltage, ignore values below 0
-        v=TT.maximum(self.voltage+dV,0)
+        v = TT.maximum(self.voltage + dV, 0)
 
         # handle refractory period
-        post_ref = 1.0-(self.refractory_time - self.dt) / self.dt
-        v *= TT.clip(post_ref,0,1)
+        post_ref = 1.0 - (self.refractory_time - self.dt) / self.dt
+        v *= TT.clip(post_ref, 0, 1)
 
         # determine which neurons spike
         spiked = TT.switch(v > 1, 1.0, 0.0)

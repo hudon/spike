@@ -59,8 +59,8 @@ class Network:
         if seed is None and self.seed is not None:
             seed = self.random.randrange(0x7fffffff)
 
-        e = ensemble.Ensemble(neurons, dimensions, count = array_count,
-            intercept = intercept, dt = self.dt, seed = seed, type=type, 
+        e = ensemble.Ensemble(neurons, dimensions, count=array_count,
+            intercept=intercept, dt=self.dt, seed=seed, type=type,
             encoders=encoders, name=name)
 
         # if no subensembles, create just the main ensemble process and exit
@@ -91,7 +91,6 @@ class Network:
 
             e_num += 1
 
-    # wrapper for make function
     def make_array(self, name, neurons, count, dimensions = 1, **args):
         return self.make(name = name, neurons = neurons, dimensions = dimensions,
                 array_count = count, **args)
@@ -109,17 +108,20 @@ class Network:
         self.nodes[node.name] = Node(node, p, timer_conn)
 
     def get_subnodes(self, parent_name):
+        """ Gets all subensembles for given parent name
+        """
         subnodes = []
         for node in self.nodes.values():
             if node.is_subensemble() and node.get_parent_name() is parent_name:
                 subnodes.append(node)
         return subnodes
 
-    # This function connects the origin of a node to the accumulator of another
-    # node. If the pre is an ensemble that we have split, we must connect all of
-    # its subensemble origins to post's accumulators. Same for post (connect all)
     def connect(self, pre, post, transform=None, pstc=0.01,
             func=None, origin_name=None):
+        """ This function connects the origin of a node to the accumulator of another
+            node. If the pre is an ensemble that we have split, we must connect all of
+            its subensemble origins to post's accumulators. Same for post (connect all)
+        """
 
         # pre_parent and num_subs are only used if we're connecting to subensembles
         def connect_helper(pre_ens, post_ens, origin_name, pre_index,

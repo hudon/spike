@@ -6,8 +6,6 @@ import numpy
 import neuron
 import origin
 
-import sys
-
 # generates a set of encoders
 def make_encoders(neurons,dimensions,srng,encoders=None):
     if encoders is None:
@@ -16,7 +14,7 @@ def make_encoders(neurons,dimensions,srng,encoders=None):
         encoders = numpy.array(encoders)
 	#  numpy.tile:  Construct an array by repeating A the number of times given by reps.
 	#  It producs a matrix of Size is R X C = dimensions X neurons
-        encoders=numpy.tile(encoders, (neurons / len(encoders) + 1, 1))[:neurons, :dimensions]
+        encoders = numpy.tile(encoders, (neurons / len(encoders) + 1, 1))[:neurons, :dimensions]
 
     norm = TT.sum(encoders * encoders, axis=[1], keepdims=True)
     encoders = encoders / TT.sqrt(norm)
@@ -91,16 +89,6 @@ class Ensemble:
     	#  ])
         self.neuron = neuron.names[type]((count, self.neurons), t_rc = t_rc, t_ref = t_ref, dt = dt)
 
-    	#  uniform(self, size=(), low=0.0, high=1.0, ndim=None):
-    	#  Sample a tensor of given size whose element from a uniform distribution between low and high.
-    	#  FROM http://deeplearning.net/software/theano/library/tensor/raw_random.html#raw_random.RandomStreamsBase
-    	#  This is a symbolic stand-in for numpy.random.RandomState.
-    	#  http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.RandomState.uniform.html#numpy.random.RandomState.uniform
-    	#  size : int or tuple of ints, optional Shape of output. If the
-    	#  given size is, for example, (m,n,k), m*n*k samples are generated.
-    	#  If no shape is specified, a single sample is returned.
-    	#  SUMMARY:  srng.uniform generates a random sample array of length [neurons] (I think)
-
         if is_subensemble:
             self.bias = bias
             self.encoders = encoders
@@ -121,6 +109,10 @@ class Ensemble:
         self.origin = dict(X=origin.Origin(self, decoder=decoders))
 
     def get_subensemble_parts(self, num_parts):
+        """
+        Uses an encoder, decoder and bias of an ensemble and divides them
+        into the specified number of parts for the subensembles.
+        """
         parts = []
 
         decoder_parts = self.get_subensemble_decoder(num_parts, "X")
@@ -141,6 +133,9 @@ class Ensemble:
         return parts
 
     def get_subensemble_decoder(self, num_parts, origin_name, func=None):
+        """ Gets decoder for a specified origin of the ensemble
+        and divides it into the specified number of parts for subensembles
+        """
         parts = []
 
         # TODO do not require an Origin to be created just to compute decoder

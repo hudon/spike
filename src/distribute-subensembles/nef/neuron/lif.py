@@ -14,7 +14,6 @@ class LIFNeuron(Neuron):
 
     # define the theano update rules that implement this neuron type
     def update(self,input_current):
-
         # Euler's method
         dV=self.dt / self.t_rc*(input_current-self.voltage)
 

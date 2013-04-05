@@ -34,7 +34,7 @@ class Origin:
     def add_output(self, output_pipe):
         self.output_pipes.append(output_pipe)
 
-    def tick(self):    
+    def tick(self):
         for pipe in self.output_pipes:
             pipe.send(self.value.get_value())
 

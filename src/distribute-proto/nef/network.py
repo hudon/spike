@@ -37,14 +37,14 @@ class Network:
             if self.seed is not None:
                 seed = self.random.randrange(0x7fffffff)
 
-        e = ensemble.Ensemble(neurons, dimensions, count = array_count,
-                intercept = intercept, dt = self.dt, seed = seed,
-                type = type, encoders=encoders, name=name)
+        e = ensemble.Ensemble(neurons, dimensions, count=array_count,
+                intercept=intercept, dt=self.dt, seed=seed,
+                type=type, encoders=encoders, name=name)
         self.nodes[name] = e
 
         timer_conn, node_conn = Pipe()
         p = Process(target=e.run, args=(node_conn, ), name=name)
-        self.processes[name]=(p, timer_conn)
+        self.processes[name] = (p, timer_conn)
 
     def make_array(self, name, neurons, count, dimensions=1, **args):
         return self.make(name=name, neurons=neurons, dimensions=dimensions,

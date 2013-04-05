@@ -35,7 +35,9 @@ class Origin:
 
     # the theano computation for converting neuron output into a decoded value
     def update(self, spikes):
-        new_val = TT.unbroadcast(TT.dot(spikes, self.decoder).reshape([self.dimensions]), 0)
+        new_val = TT.unbroadcast(TT.dot(spikes, self.decoder).reshape(
+            [self.dimensions]), 0)
+
         return { self.value: new_val }
 
     def compute_decoder(self):

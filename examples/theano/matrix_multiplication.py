@@ -73,10 +73,4 @@ import time
 start = time.time()
 for i in range(5):
 	net.run(0.001)
-	# print "time per tick:", (time.time() - start) / (i + 1)
-	# print "acc for A:", net.node['A'].accumulator[0.01].value.get_value()
-	# print "output for A:", net.node['A'].origin['X'].value.get_value()
-	# print "output for B:", net.node['B'].origin['X'].value.get_value()
-	print "output for C:", net.node['C'].origin['X'].value.get_value()
-	print "PROD output for C:", net.node['C'].origin['product'].value.get_value()
-	# print "output for D:", net.node['D'].origin['X'].value.get_value()
+	print "time per tick:", (time.time() - start) / (i + 1)
