@@ -9,29 +9,21 @@ import origin
 # generates a set of encoders
 def make_encoders(neurons,dimensions,srng,encoders=None):
     if encoders is None:
-	#  This is that same theano RandomStream thing that is standing in for
-	#  http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.RandomState.normal.html#numpy.random.RandomState.normal
-	#  size : tuple of ints Output shape. If the given shape is, e.g., (m, n, k), then m * n * k samples are drawn.
-	#  SUMMARY:  Returns a random matrix with values from a normal distribution.  Size is R X C = dimensions X neurons
-        encoders=srng.normal((neurons,dimensions))
+        encoders = srng.normal((neurons, dimensions))
     else:
-        encoders=numpy.array(encoders)
+        encoders = numpy.array(encoders)
 	#  numpy.tile:  Construct an array by repeating A the number of times given by reps.
 	#  It producs a matrix of Size is R X C = dimensions X neurons
-        encoders=numpy.tile(encoders,(neurons/len(encoders)+1,1))[:neurons,:dimensions]
+        encoders = numpy.tile(encoders, (neurons / len(encoders) + 1, 1))[:neurons, :dimensions]
 
-    #  Welcome to the matrix (or the tensor if you perfer)  This uses some crazy math magic called broadcasting
-    #  to give results for matrix operations that do not have the correct dimensions.
-    #  http://deeplearning.net/software/theano/library/tensor/basic.html#libdoc-tensor-broadcastable
-    norm=TT.sum(encoders*encoders,axis=[1],keepdims=True)
-    encoders=encoders/TT.sqrt(norm)
-    return theano.function([],encoders)()
+    norm = TT.sum(encoders * encoders, axis=[1], keepdims=True)
+    encoders = encoders / TT.sqrt(norm)
+    return theano.function([], encoders)()
 
 # a collection of terminations, all sharing the same time constant
 class Accumulator:
     def __init__(self, ensemble, tau):
         self.ensemble = ensemble   # the ensemble this set of terminations is attached to
-
 
         self.value = theano.shared(numpy.zeros(self.ensemble.dimensions * self.ensemble.count).astype('float32'))  # the current filtered value
 
@@ -67,59 +59,107 @@ class Accumulator:
         for i, pipe in enumerate(self.input_pipes):
             val = pipe.recv()
             self.vals[i].set_value(val)
-
+     
         return True
 
 class Ensemble:
     def __init__(self, neurons, dimensions, count = 1, max_rate = (200, 300),
             intercept = (-1.0, 1.0), t_ref = 0.002, t_rc = 0.02, seed = None,
-            type = 'lif', dt = 0.001, encoders = None, name = None):
+            type='lif', dt=0.001, encoders=None,
+            is_subensemble=False, name=None, decoders=None, bias=None):
+        self.name = name
         self.seed = seed
+
         self.neurons = neurons
         self.dimensions = dimensions
         self.count = count
-        self.name = name
+        self.accumulator = {}
+
+        self.is_subensemble = is_subensemble
 
         # create the neurons
         # TODO: handle different neuron types, which may have different parameters to pass in
-	#  The structure of the data contained in self.neuron consists of several variables that are 
-	#  arrays of the form
-	#  Array([
-	#	[x_0_0, x_0_1, x_0_2,..., x_0_(neurons - 1)],
-	#	[x_1_0, x_1_1, x_1_2,..., x_1_(neurons - 1)],
-	#	[...],
-	#	[x_(count-1)_0, x_(count-1)_1, x_(count-1)_2,..., x_$count-1)_(neurons - 1)]
-	#  ])
+    	#  The structure of the data contained in self.neuron consists of several variables that are 
+    	#  arrays of the form
+    	#  Array([
+    	#	[x_0_0, x_0_1, x_0_2,..., x_0_(neurons - 1)],
+    	#	[x_1_0, x_1_1, x_1_2,..., x_1_(neurons - 1)],
+    	#	[...],
+    	#	[x_(count-1)_0, x_(count-1)_1, x_(count-1)_2,..., x_$count-1)_(neurons - 1)]
+    	#  ])
         self.neuron = neuron.names[type]((count, self.neurons), t_rc = t_rc, t_ref = t_ref, dt = dt)
 
-        # compute alpha and bias
-        srng = RandomStreams(seed=seed)
-	#  uniform(self, size=(), low=0.0, high=1.0, ndim=None):
-	#  Sample a tensor of given size whose element from a uniform distribution between low and high.
-	#  FROM http://deeplearning.net/software/theano/library/tensor/raw_random.html#raw_random.RandomStreamsBase
-	#  This is a symbolic stand-in for numpy.random.RandomState.
-	#  http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.RandomState.uniform.html#numpy.random.RandomState.uniform
-	#  size : int or tuple of ints, optional Shape of output. If the
-	#  given size is, for example, (m,n,k), m*n*k samples are generated.
-	#  If no shape is specified, a single sample is returned.
-	#  SUMMARY:  srng.uniform generates a random sample array of length [neurons] (I think)
-        max_rates = srng.uniform([neurons], low=max_rate[0], high=max_rate[1])
-        threshold = srng.uniform([neurons], low=intercept[0], high=intercept[1])
-	#  I think this is returning alpha and bias as an array of length [neurons]
-        alpha, self.bias = theano.function([], self.neuron.make_alpha_bias(max_rates,threshold))()
-        self.bias = self.bias.astype('float32')
+        if is_subensemble:
+            self.bias = bias
+            self.encoders = encoders
+        else:
+            # compute alpha and bias
+            srng = RandomStreams(seed=seed)
+            max_rates = srng.uniform([neurons], low=max_rate[0], high=max_rate[1])
+            threshold = srng.uniform([neurons], low=intercept[0], high=intercept[1])
 
-        # compute encoders
-        self.encoders = make_encoders(neurons, dimensions, srng, encoders=encoders)
-        self.encoders = (self.encoders.T * alpha).T
+            alpha, self.bias = theano.function([], self.neuron.make_alpha_bias(max_rates, threshold))()
+            self.bias = self.bias.astype('float32')
+
+            # compute encoders
+            self.encoders = make_encoders(neurons, dimensions, srng, encoders=encoders)
+            self.encoders = (self.encoders.T * alpha).T
 
         # make default origin
-        self.origin = dict(X=origin.Origin(self))
-        self.accumulator = {}
+        self.origin = dict(X=origin.Origin(self, decoder=decoders))
+
+    def get_subensemble_parts(self, num_parts):
+        """
+        Uses an encoder, decoder and bias of an ensemble and divides them
+        into the specified number of parts for the subensembles.
+        """
+        parts = []
+
+        decoder_parts = self.get_subensemble_decoder(num_parts, "X")
+
+        encoder_length = len(self.encoders)
+        bias_length = len(self.bias)
+
+        # create the specified number of subensembles
+        for e_num in range(1, num_parts + 1):
+            e_size = encoder_length / num_parts
+            b_size = bias_length / num_parts
+
+            encoder_part = self.encoders[e_size * (e_num - 1):e_size * e_num]
+            bias_part = self.bias[b_size * (e_num - 1):b_size * e_num]
+
+            parts.append((encoder_part, decoder_parts[e_num - 1], bias_part))
+
+        return parts
+
+    def get_subensemble_decoder(self, num_parts, origin_name, func=None):
+        """ Gets decoder for a specified origin of the ensemble
+        and divides it into the specified number of parts for subensembles
+        """
+        parts = []
+
+        # TODO do not require an Origin to be created just to compute decoder
+        if origin_name not in self.origin:
+            # create the origin in order to compute a decoder
+            self.add_origin(origin_name, func)
+            # print "name " + self.name + " decoder: " + str(self.origin[origin_name].decoder)
+
+        decoder = self.origin[origin_name].decoder
+        decoder_length = len(decoder)
+
+        # create the specified number of decoders
+        for e_num in range(1, num_parts + 1):
+            d_size = decoder_length / num_parts
+            decoder_part = decoder[d_size * (e_num - 1):d_size * e_num]
+
+            parts.append(decoder_part)
+
+        return parts
+
 
     # create a new origin that computes a given function
-    def add_origin(self, name, func):
-        self.origin[name] = origin.Origin(self, func)
+    def add_origin(self, name, func, decoder=None):
+        self.origin[name] = origin.Origin(self, func, decoder=decoder)
 
     # create a new termination that takes the given input (a theano object)
     # and filters it with the given tau
@@ -140,7 +180,9 @@ class Ensemble:
             if not a.tick():
                 # no data was in the pipe
                 return
+       
         self.theano_tick()
+
         # continue the tick in the origins
         for o in self.origin.values():
             o.tick()
@@ -157,13 +199,11 @@ class Ensemble:
         if len(self.accumulator) > 0:
             X = sum(a.new_value for a in self.accumulator.values())
             #  reshape gives a new shape to an array without changing its data.
-            #  http://docs.scipy.org/doc/numpy/reference/generated/numpy.reshape.html
             X = X.reshape((self.count, self.dimensions))
             #  self.encoders.T is the transpose of self.encoders
-            #  http://docs.scipy.org/doc/numpy-1.5.x/reference/generated/numpy.ndarray.T.html#numpy.ndarray.T
             #  TT.dot calculates the inner tensor product of X and self.encoders.T
-            #  http://deeplearning.net/software/theano/library/tensor/basic.html#tensor.dot
             input = input + TT.dot(X, self.encoders.T)
+
 
         # pass that total into the neuron model to produce the main theano computation
         updates = self.neuron.update(input)

@@ -6,7 +6,7 @@ import neuron
 
 # generate sample points uniformly distributed within the sphere
 def make_samples(neurons, dimensions, srng):
-    samples = srng.normal((neurons,dimensions))
+    samples = srng.normal((neurons, dimensions))
     norm = TT.sum(samples * samples, axis=[1], keepdims=True)
     samples = samples / TT.sqrt(norm)
 
@@ -16,10 +16,15 @@ def make_samples(neurons, dimensions, srng):
     return theano.function([],samples)()
 
 class Origin:
-    def __init__(self, ensemble, func=None):
+    def __init__(self, ensemble, func=None, decoder=None):
         self.ensemble = ensemble
         self.func = func
-        self.decoder = self.compute_decoder()
+
+        if decoder is None:
+            self.decoder = self.compute_decoder() 
+        else:
+            self.decoder = decoder
+
         self.dimensions = self.decoder.shape[1] * self.ensemble.count
 
         self.value = theano.shared(numpy.zeros(self.dimensions).astype('float32'))

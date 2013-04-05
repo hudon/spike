@@ -21,24 +21,20 @@ D1 = 1
 D2 = 5
 D3 = 5
 
-# make 2 matrices to store the input (ensembles?)
-# NOTE: the 50 is hardcoded here, shouldn't it depend on D1 * D2?
-# NOTE: answer: no, neurons is the number of neurons per ensemble, count is
-# the number of arrays in the ensemble array (which is called "Ensemble" here)
 net.make_array(name='A', neurons=50, count=D1 * D2)
 net.make_array(name='B', neurons=200, count=D2 * D3)
 
 # connect inputs to them so we can set their value
 net.make_input(name='input A', value=[0] * D1 * D2)
 net.make_input(name='input B', value=[0] * D2 * D3)
+
 net.connect(pre='input A', post='A')
 net.connect(pre='input B', post='B')
-
 
 # the C matrix holds the intermediate product calculations
 #  need to compute D1*D2*D3 products to multiply 2 matrices together
 net.make_array('C', 200, D1 * D2 * D3, dimensions=2,
-               encoders=[[1, 1], [1, -1], [-1, 1], [-1, -1]])
+               encoders=[[1, 1], [1, -1], [-1, 1], [-1, -1]], num_subs=1)
 
 # determine the transformation matrices to get the correct pairwise
 #  products computed.  This looks a bit like black magic but if
@@ -62,10 +58,8 @@ for i in range(D1):
 net.connect('A', 'C', transform=numpy.array(transformA).T)
 net.connect('B', 'C', transform=numpy.array(transformB).T)
 
-
 # now compute the products and do the appropriate summing
 net.make_array('D', 50, D1 * D3, type='lif-rate')
-
 
 def product(x):
     return x[0] * x[1]
@@ -82,7 +76,7 @@ print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 net.run(0.001)
 import time
 start = time.time()
-for i in range(5000):
+for i in range(500):
     net.run(0.001)
     print "time per tick:", (time.time() - start) / (i + 1)
 net.clean_up()
