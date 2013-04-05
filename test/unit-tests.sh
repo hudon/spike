@@ -11,8 +11,8 @@ TEST_SCRIPTS=(
 );
 
 compareOutput(){
-	observed_output_command="python ${1} ${CODE_TO_TEST_PATH}"
-	goal_output_command="python ${1} ${WORKING_CODE_PATH}"
+	observed_output_command="python -m ${1} ${CODE_TO_TEST_PATH}"
+	goal_output_command="python -m ${1} ${WORKING_CODE_PATH}"
 
 	echo "Computing output from command '${observed_output_command}'..."
 	observed_output=$(${observed_output_command})
