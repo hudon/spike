@@ -4,4 +4,4 @@ python:
 install:
   - pip install pyzmq
 script:
-  - python -m test/distribute-proto/matrix_multiply
+  - test/unit-tests.sh
