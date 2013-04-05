@@ -213,5 +213,5 @@ class Network:
     # called when the user is all done (otherwise, procs hang :) )
     def clean_up(self):
         # force kill
-        for val in self.network_nodes:
+        for val in self.nodes.values():
             val.process.terminate()
