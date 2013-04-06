@@ -6,6 +6,6 @@ before_install:
  - sudo apt-get install -qq python-numpy python-scipy
 install:
   - sudo pip install pyzmq
-  - sudo pip install Theano --install-option='--prefix=~/.local'
+  - sudo pip install Theano
 script:
   - test/unit-tests.sh
