@@ -1,11 +1,11 @@
 language: python
 python:
   - 2.7
+before_install:
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq apt-get install python-numpy python-scipy
 install:
-  - pip install -r requirements.txt --use-mirrors
   - pip install pyzmq
-  - pip install numpy
-  - pip install scipy
   - pip install Theano
 script:
   - test/unit-tests.sh
