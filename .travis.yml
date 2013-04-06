@@ -7,5 +7,9 @@ before_install:
 install:
   - sudo pip install pyzmq
   - sudo pip install Theano
+  - ls -latr /usr/local/lib/python2.7/dist-packages/
+  - PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.7/dist-packages/
+  - PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.7/dist-packages/theano/
+  - export PYTHONPATH
 script:
   - test/unit-tests.sh
