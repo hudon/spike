@@ -13,6 +13,7 @@ install:
   - ls -latr /usr/local/lib/python2.7/dist-packages/
   - PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.7/dist-packages/
   - PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.7/dist-packages/theano/
+  - PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
   - export PYTHONPATH
 script:
   - test/unit-tests.sh
