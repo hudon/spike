@@ -1,13 +1,15 @@
 #!/bin/bash          
+printenv
+pwd
 
-CODE_TO_TEST_PATH="../src/distribute-proto"
-WORKING_CODE_PATH="../examples/theano"
+CODE_TO_TEST_PATH="src/distribute-proto"
+WORKING_CODE_PATH="examples/theano"
 
 TEST_SCRIPTS=(
-	'matrix_multiplication'
-	'cleanup_test'
-	'array_test'
-	'func_test'
+	'test/matrix_multiplication'
+	'test/cleanup_test'
+	'test/array_test'
+	'test/func_test'
 );
 
 compareOutput(){
