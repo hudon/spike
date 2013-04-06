@@ -4,22 +4,29 @@ CODE_TO_TEST_PATH="../src/distribute-proto"
 WORKING_CODE_PATH="../examples/theano"
 
 TEST_SCRIPTS=(
-	'matrix_multiplication.py'
-	'cleanup_test.py'
-	'array_test.py'
-	'func_test.py'
+	'matrix_multiplication'
+	'cleanup_test'
+	'array_test'
+	'func_test'
 );
 
 compareOutput(){
-	realpath=$(echo $(cd $(dirname ${1}); pwd)/$(basename ${1}))
-	observed_output_command="python ${realpath} ${CODE_TO_TEST_PATH}"
-	goal_output_command="python ${realpath} ${WORKING_CODE_PATH}"
+	observed_output_command="python -m ${1} ${CODE_TO_TEST_PATH}"
+	goal_output_command="python -m ${1} ${WORKING_CODE_PATH}"
 
-	echo "Computing output from command '${observed_output_command}'..."
+	start=$(date +"%s")
+	echo -ne "Computing output from command '${observed_output_command}'..."
 	observed_output=$(${observed_output_command})
+	end=$(date +"%s")
+	diff=$(($end-$start))
+	echo "Took ${diff} seconds."
 
-	echo "Computing output from command '${goal_output_command}'..."
+	start=$(date +"%s")
+	echo -ne "Computing output from command '${goal_output_command}'..."
 	goal_output=$(${goal_output_command})
+	end=$(date +"%s")
+	diff=$(($end-$start))
+	echo "Took ${diff} seconds."
 
 	diff=$(diff <(echo "$output") <(echo "$2"))
 
