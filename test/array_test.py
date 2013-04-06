@@ -23,7 +23,7 @@ start=time.time()
 for i in range(1):
 	net.run(0.001)
 	if hasattr(net, 'node'):
-		print i,net.node['B'].accumulator[0.1].value.get_value()
+		print i,net.node['B'].origin['X'].value.get_value()
 	else:
 		print i,net.nodes['B'].origin['X'].value.get_value()
 

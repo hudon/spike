@@ -11,6 +11,7 @@ N1=100
 N2=50
 index=0
 
+numpy.random.seed(2)
 def make_vector():
     v=numpy.random.normal(size=(D,))
     
