@@ -3,7 +3,10 @@ python:
   - 2.7
 before_install:
  - sudo apt-get update -qq
- - sudo apt-get install -qq python-numpy python-scipy
+ - sudo apt-get install -qq python-numpy
+ - sudo apt-get install -qq python-scipy
+ - sudo apt-get install libatlas-base-dev gfortran
+ - sudo pip install scipy
 install:
   - sudo pip install pyzmq
   - sudo pip install Theano
