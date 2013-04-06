@@ -3,5 +3,6 @@ python:
   - 2.7
 install:
   - pip install pyzmq
+  - pip install Theano
 script:
   - test/unit-tests.sh

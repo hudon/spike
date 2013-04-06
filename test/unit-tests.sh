@@ -1,20 +1,21 @@
 #!/bin/bash          
-printenv
-pwd
 
-CODE_TO_TEST_PATH="src/distribute-proto"
-WORKING_CODE_PATH="examples/theano"
+THIS_SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+#  All file locations are relative to this file
+CODE_TO_TEST_PATH="../src/distribute-proto"
+WORKING_CODE_PATH="../examples/theano"
 
 TEST_SCRIPTS=(
-	'test/matrix_multiplication'
-	'test/cleanup_test'
-	'test/array_test'
-	'test/func_test'
+	'matrix_multiplication'
+	'cleanup_test'
+	'array_test'
+	'func_test'
 );
 
 compareOutput(){
-	observed_output_command="python -m ${1} ${CODE_TO_TEST_PATH}"
-	goal_output_command="python -m ${1} ${WORKING_CODE_PATH}"
+	observed_output_command="python -m ${THIS_SCRIPT_DIRECTORY}/${1} ${THIS_SCRIPT_DIRECTORY}/${CODE_TO_TEST_PATH}"
+	goal_output_command="python -m ${THIS_SCRIPT_DIRECTORY}/${1} ${THIS_SCRIPT_DIRECTORY}/${WORKING_CODE_PATH}"
 
 	start=$(date +"%s")
 	echo -ne "Computing output from command '${observed_output_command}'..."
