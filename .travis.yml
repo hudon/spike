@@ -3,6 +3,8 @@ python:
   - 2.7
 install:
   - pip install pyzmq
+  - pip install numpy
+  - pip install scipy
   - pip install Theano
 script:
   - test/unit-tests.sh
