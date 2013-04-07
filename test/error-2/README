@@ -1,0 +1,17 @@
+to see error run
+
+./show-error
+
+
+result is 
+
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/runpy.py", line 162, in _run_module_as_main
+    "__main__", fname, loader, pkg_name)
+  File "/usr/lib/python2.7/runpy.py", line 72, in _run_code
+    exec code in run_globals
+  File "/home/robert/spike/test/error-2/func_test.py", line 9, in <module>
+    net.connect('input','A')
+  File "/home/robert/spike/test/error-2/../../src/distribute-proto/nef/network.py", line 82, in connect
+    value_size = len(pre.value)
+TypeError: len() of unsized object
