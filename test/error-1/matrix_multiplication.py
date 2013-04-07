@@ -10,7 +10,6 @@ net = nef.Network('Matrix Multiplication', seed = 1) #Create the network object
 
 # Adjust these values to change the matrix dimensions
 #  Matrix A is D1xD2
-#  Matrix B is D2xD3
 #  result is D1xD3
 
 D1 = 1
@@ -19,13 +18,10 @@ D3 = 1
 
 # make 2 matrices to store the input
 net.make_array('A', 50, D1 * D2)
-net.make_array('B', 200, D2 * D3)
 
 # connect inputs to them so we can set their value
 net.make_input('input A', [0] * D1 * D2)
-net.make_input('input B', [0] * D2 * D3)
 net.connect('input A', 'A')
-net.connect('input B', 'B')
 
 
 # the C matrix holds the intermediate product calculations
@@ -45,15 +41,12 @@ net.make_array('C', 200, D1 * D2 * D3, dimensions = 2,
 #  two values per ensemble.  We add 1 to the B index so it goes into
 #  the second value in the ensemble.  
 transformA = [[0] * (D1 * D2) for i in range(D1 * D2 * D3 * 2)]
-transformB = [[0] * (D2 * D3) for i in range(D1 * D2 * D3 * 2)]
 for i in range(D1):
     for j in range(D2):
         for k in range(D3):
             transformA[(j + k * D2 + i * D2 * D3) * 2][j + i * D2] = 1
-            transformB[(j + k * D2 + i * D2 * D3) * 2 + 1][k + j * D3] = 1
 
 net.connect('A', 'C', transform = numpy.array(transformA).T)
-net.connect('B', 'C', transform = numpy.array(transformB).T)
 
 
 # now compute the products and do the appropriate summing
