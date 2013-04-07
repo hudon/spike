@@ -25,7 +25,9 @@ class Accumulator:
     def __init__(self, ensemble, tau):
         self.ensemble = ensemble   # the ensemble this set of terminations is attached to
 
-        self.value = theano.shared(numpy.zeros(self.ensemble.dimensions * self.ensemble.count).astype('float32'))  # the current filtered value
+        # the current filtered value
+        self.value = theano.shared(numpy.zeros(
+            self.ensemble.dimensions * self.ensemble.count).astype('float32'))
 
         self.decay = numpy.exp(-self.ensemble.neuron.dt / tau)   # time constant for filter
         self.total = None   # the theano object representing the sum of the inputs to this filter
@@ -174,13 +176,20 @@ class Ensemble:
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates = updates)
 
+        # introduce 1-time-step delay
+        self.theano_tick()
+        # continue the tick in the origins
+        for o in self.origin.values():
+            o.tick()
+
+
     def tick(self):
         # start the tick in the accumulators
         for a in self.accumulator.values():
             if not a.tick():
                 # no data was in the pipe
                 return
-       
+
         self.theano_tick()
 
         # continue the tick in the origins
