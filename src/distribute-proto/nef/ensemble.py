@@ -1,5 +1,6 @@
 from theano.tensor.shared_randomstreams import RandomStreams
 from theano import tensor as TT
+from collections import OrderedDict
 import theano
 import numpy
 
@@ -122,7 +123,7 @@ class Ensemble:
         self.accumulator[tau].add(input_pipe, value_size, transform)
 
     def make_tick(self):
-        updates = {}
+        updates = OrderedDict()
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates = updates)
 

@@ -4,6 +4,8 @@ from theano import tensor as TT
 
 from neuron import Neuron
 
+from collections import OrderedDict
+
 class LIFNeuron(Neuron):
     def __init__(self, size, dt=0.001, t_rc=0.02, t_ref=0.002):
         Neuron.__init__(self, size, dt)
@@ -34,9 +36,11 @@ class LIFNeuron(Neuron):
         new_refractory_time = TT.switch(spiked, spiketime + self.t_ref, self.refractory_time - self.dt)
 
         # internal variables to update (including setting a neuron that spikes to a voltage of 0)
-        return { self.voltage : (v * (1 - spiked)).astype('float32'),
-                self.refractory_time : new_refractory_time.astype('float32'),
-                self.output : spiked.astype('float32') }
+        return OrderedDict([
+		(self.voltage, (v * (1 - spiked)).astype('float32')),
+                (self.refractory_time, new_refractory_time.astype('float32')),
+                (self.output, spiked.astype('float32'))
+	])
 
     # compute the alpha and bias needed to get the given max_rate and intercept values
     #  TODO: make this generic so it can be applied to any neuron model (by running the neurons

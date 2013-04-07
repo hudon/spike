@@ -14,8 +14,8 @@ TEST_SCRIPTS=(
 );
 
 compareOutput(){
-	observed_output_command="python -W ignore -m ${THIS_SCRIPT_DIRECTORY}/${1} ${THIS_SCRIPT_DIRECTORY}/${CODE_TO_TEST_PATH}"
-	goal_output_command="python -W ignore -m ${THIS_SCRIPT_DIRECTORY}/${1} ${THIS_SCRIPT_DIRECTORY}/${WORKING_CODE_PATH}"
+	observed_output_command="python -m ${THIS_SCRIPT_DIRECTORY}/${1} ${THIS_SCRIPT_DIRECTORY}/${CODE_TO_TEST_PATH}"
+	goal_output_command="python -m ${THIS_SCRIPT_DIRECTORY}/${1} ${THIS_SCRIPT_DIRECTORY}/${WORKING_CODE_PATH}"
 
 	start=$(date +"%s")
 	echo -ne "Computing output from command '${observed_output_command}'..."

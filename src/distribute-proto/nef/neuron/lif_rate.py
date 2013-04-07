@@ -1,5 +1,6 @@
 import theano
 import numpy
+from collections import OrderedDict
 from theano import tensor as TT
 
 from neuron import Neuron
@@ -15,7 +16,9 @@ class LIFRateNeuron(Neuron):
     def update(self,input_current):        
         rate=self.t_ref-self.t_rc*TT.log(1-1.0/TT.maximum(input_current,0))
         rate=TT.switch(input_current>1,1/rate,0)
-        return {self.output:TT.unbroadcast(rate.astype('float32'),0)}
+        return OrderedDict([
+		(self.output, TT.unbroadcast(rate.astype('float32'),0))
+	])
                 
     def make_alpha_bias(self,max_rates,intercepts):
         x1=intercepts
