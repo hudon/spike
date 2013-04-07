@@ -49,20 +49,6 @@ for i in range(D1):
 net.connect('A', 'C', transform = numpy.array(transformA).T)
 
 
-# now compute the products and do the appropriate summing
-net.make_array('D', 50, D1 * D3, type = 'lif-rate')
-
-def product(x):
-    return x[0] * x[1]
-# the mapping for this transformation is much easier, since we want to
-# combine D2 pairs of elements (we sum D2 products together)    
-
-transform = [[0] * (D1 * D3) for i in range(D1 * D2 * D3)]
-for i in range(D1 * D2 * D3):
-    transform[i][i / D2] = 1
-
-net.connect('C', 'D', transform = transform, func = product)
-
 print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 import time
 start = time.time()
