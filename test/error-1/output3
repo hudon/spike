@@ -1,0 +1,83 @@
+robert@robert-ubuntu:~/spike/test/error-1$ ./show-error.sh 
+/usr/bin/python -m /home/robert/spike/test/error-1/matrix_multiplication /home/robert/spike/test/error-1/../../src/distribute-proto
+Just maked pipe named  Array 1
+Just added pipe named  Input 1
+Just maked pipe named  Array 2
+neurons: 11
+Iteration  0
+UPDATING
+UPDATING
+proc.start
+proc.start
+proc.start
+Process  3969   Matrix Multiplication  timer_conn send
+Process  3969   Matrix Multiplication  timer_conn send
+Process  3969   Matrix Multiplication  timer_conn send
+Process  3969   Matrix Multiplication  timer_conn recv
+Started Executing run in Process  3975   Array 1
+Process  3975   Array 1  ticker_conn recv
+Process  3975   Array 1  entering ensemble tick
+Process  3975   Array 1  pipe.poll()
+Process  3975   Array 1  tick returned false
+Process  3975   Array 1  ticker_conn send
+Process  3969   Matrix Multiplication  timer_conn recv
+Process  3975   Array 1  ticker_conn recv
+Started Executing run in Process  3976   Input 1
+Process  3976   Input 1  ticker_conn recv
+Pipe.send from  3976   Input 1
+Process  3976   Input 1  ticker_conn send
+Process  3976   Input 1  ticker_conn recv
+Started Executing run in Process  3977   Array 2
+Process  3969   Matrix Multiplication  timer_conn recv
+Process  3977   Array 2  ticker_conn recv
+Process  3977   Array 2  entering ensemble tick
+Process  3977   Array 2  pipe.poll()
+Process  3977   Array 2  tick returned false
+Process  3977   Array 2  ticker_conn send
+Process  3977   Array 2  ticker_conn recv
+Iteration  1
+Process  3969   Matrix Multiplication  timer_conn send
+Process  3969   Matrix Multiplication  timer_conn send
+Process  3969   Matrix Multiplication  timer_conn send
+Pipe.send from  3976   Input 1
+Process  3969   Matrix Multiplication  timer_conn recv
+Process  3977   Array 2  entering ensemble tick
+Process  3977   Array 2  pipe.poll()
+Process  3975   Array 1  entering ensemble tick
+Process  3977   Array 2  tick returned false
+Process  3975   Array 1  pipe.poll()
+Process  3977   Array 2  ticker_conn send
+Process  3976   Input 1  ticker_conn send
+Process  3975   Array 1  pipe.recv()
+Process  3977   Array 2  ticker_conn recv
+Process  3976   Input 1  ticker_conn recv
+Process  3975   Array 1  tick returned true
+Process  3975   Array 1  about to do theano_tick()
+Process  3975   Array 1  after theano_tick()
+Process  3975   Array 1  ticker_conn send
+Process  3969   Matrix Multiplication  timer_conn recv
+Process  3969   Matrix Multiplication  timer_conn recv
+Iteration  2
+Process  3969   Matrix Multiplication  timer_conn send
+Process  3969   Matrix Multiplication  timer_conn send
+Process  3969   Matrix Multiplication  timer_conn send
+Pipe.send from  3976   Input 1
+Process  3969   Matrix Multiplication  timer_conn recv
+Process  3977   Array 2  entering ensemble tick
+Process  3975   Array 1  ticker_conn recv
+Process  3977   Array 2  pipe.poll()
+Process  3975   Array 1  entering ensemble tick
+Process  3977   Array 2  pipe.recv()
+Process  3975   Array 1  pipe.poll()
+Process  3976   Input 1  ticker_conn send
+Process  3975   Array 1  pipe.recv()
+Process  3976   Input 1  ticker_conn recv
+Process  3975   Array 1  tick returned true
+Process  3975   Array 1  about to do theano_tick()
+Process  3975   Array 1  after theano_tick()
+Process  3975   Array 1  ticker_conn send
+Process  3969   Matrix Multiplication  timer_conn recv
+Process  3977   Array 2  tick returned true
+Process  3969   Matrix Multiplication  timer_conn recv
+Process  3977   Array 2  about to do theano_tick()
+Process  3975   Array 1  ticker_conn recv
