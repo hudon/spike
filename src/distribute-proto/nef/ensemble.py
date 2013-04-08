@@ -3,6 +3,7 @@ from theano import tensor as TT
 from collections import OrderedDict
 import theano
 import numpy
+import os
 
 import neuron
 import origin
@@ -62,13 +63,18 @@ class Accumulator:
     # returns False if some data was not available
     def tick(self):
         for pipe in self.input_pipes:
-            if not pipe.poll():
+            print "Process ",os.getpid()," ",self.ensemble.name," pipe.poll()"
+            rtn = pipe.poll()
+            if not rtn:
+                print "Process ",os.getpid()," ",self.ensemble.name," tick returned false"
                 return False
 
         for i, pipe in enumerate(self.input_pipes):
+            print "Process ",os.getpid()," ",self.ensemble.name," pipe.recv()"
             val = pipe.recv()
             self.vals[i].set_value(val)
 
+        print "Process ",os.getpid()," ",self.ensemble.name," tick returned true"
         return True
 
 class Ensemble:
@@ -134,7 +140,9 @@ class Ensemble:
                 # no data was in the pipe
                 return
         
+        print "Process ",os.getpid()," ",self.name," about to do theano_tick()"
         self.theano_tick()
+        print "Process ",os.getpid()," ",self.name," after theano_tick()"
 
         # continue the tick in the origins
         for o in self.origin.values():
@@ -142,6 +150,7 @@ class Ensemble:
 
     # compute the set of theano updates needed for this ensemble
     def update(self):
+	print "UPDATING"
         # apply the bias to all neurons in the array
         input = numpy.tile(self.bias, (self.count, 1))
 
@@ -173,11 +182,15 @@ class Ensemble:
         return updates
 
     def run(self, ticker_conn):
+        print "Started Executing run in Process ",os.getpid()," ",self.name
 	#  While true because once we have run the model for enough time, we
 	#  call a method from the user application to kill these processes
         while True:
+            print "Process ",os.getpid()," ",self.name," ticker_conn recv"
             ticker_conn.recv()
+            print "Process ",os.getpid()," ",self.name," entering ensemble tick"
             self.tick()
+            print "Process ",os.getpid()," ",self.name," ticker_conn send"
             ticker_conn.send(1)
 
 

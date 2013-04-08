@@ -5,6 +5,7 @@ from theano import tensor as TT
 import theano
 import numpy
 import random
+import os
 from multiprocessing import Process, Pipe
 
 
@@ -44,6 +45,7 @@ class Network:
 
         timer_conn, node_conn = Pipe()
         p = Process(target=e.run, args=(node_conn, ), name=name)
+        print "Just maked pipe named ",name
         self.processes[name] = (p, timer_conn)
 
     def make_array(self, name, neurons, count, dimensions=1, **args):
@@ -65,6 +67,7 @@ class Network:
 
         timer_conn, node_conn = Pipe()
         p = Process(target=node.run, args=(node_conn, ), name=node.name)
+        print "Just added pipe named ",node.name
         self.processes[node.name] = (p, timer_conn)
 
     def connect(self, pre, post, transform=None, pstc=0.01, func=None,
@@ -105,6 +108,7 @@ class Network:
 
             for proc, timer_conn in self.processes.values():
                 if not proc.is_alive():
+                    print "proc.start"
                     proc.start()
             self.setup = True
 
@@ -112,9 +116,11 @@ class Network:
             t = self.run_time + i * self.dt
 
             for proc, timer_conn in self.processes.values():
+                print "Process ",os.getpid()," ",self.name," timer_conn send"
                 timer_conn.send(t)
 
             for proc, timer_conn in self.processes.values():
+                print "Process ",os.getpid()," ",self.name," timer_conn recv"
                 timer_conn.recv()
 
         self.run_time += time
@@ -123,4 +129,5 @@ class Network:
     def clean_up(self):
         # force kill
         for proc, timer_conn in self.processes.values():
+            print "Killing Process ",os.getpid()," ",self.name,""
             proc.terminate()
