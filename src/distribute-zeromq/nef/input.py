@@ -59,6 +59,6 @@ class Input:
         self.bind_sockets()
 
         while True:
-            self.ticker_conn.recv()
+            self.t = float(self.ticker_conn.recv())
             self.tick()
             self.ticker_conn.send("")
