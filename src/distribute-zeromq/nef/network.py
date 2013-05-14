@@ -105,10 +105,6 @@ class Network:
 
     def run(self, time):
         if not self.setup:
-            for e in self.nodes.values():
-                if hasattr(e, 'make_tick'):
-                    e.make_tick()
-
             for proc in self.processes:
                 if not proc.is_alive():
                     proc.start()

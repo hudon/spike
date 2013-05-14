@@ -107,6 +107,12 @@ class Ensemble:
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates = updates)
 
+        # introduce 1-time-tick delay
+        self.theano_tick()
+        # continue the tick in the origin
+        for o in self.origin.values():
+            o.tick()
+
     def tick(self):
         # start the tick in the accumulators
         for a in self.accumulator.values():
@@ -146,6 +152,8 @@ class Ensemble:
         return updates
 
     def run(self, ticker_conn):
+        self.make_tick()
+
         while True:
             ticker_conn.recv()
             self.tick()

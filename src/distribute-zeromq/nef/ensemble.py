@@ -26,7 +26,8 @@ class Accumulator:
     def __init__(self, ensemble, tau):
         self.ensemble = ensemble   # the ensemble this set of terminations is attached to
 
-        self.value = theano.shared(numpy.zeros(self.ensemble.dimensions * self.ensemble.count).astype('float32'))  # the current filtered value
+        self.value = theano.shared(numpy.zeros(
+            self.ensemble.dimensions * self.ensemble.count).astype('float32'))  # the current filtered value
 
         self.decay = numpy.exp(-self.ensemble.neuron.dt / tau)   # time constant for filter
         self.total = None   # the theano object representing the sum of the inputs to this filter
@@ -70,12 +71,14 @@ class Accumulator:
 
         responses = dict(poller.poll(1000))
 
+        # poll for all inputs, do not receive unless all inputs are available
         for i, socket in enumerate(self.input_sockets):
-            if socket in responses and responses[socket] == zmq.POLLIN:
-                val = socket.recv_pyobj()
-                self.vals[i].set_value(val)
-            else:
+            if socket not in responses or responses[socket] != zmq.POLLIN:
                 return False
+
+        for i, socket in enumerate(self.input_sockets):
+            val = socket.recv_pyobj()
+            self.vals[i].set_value(val)
 
         return True
 
@@ -129,6 +132,12 @@ class Ensemble:
         updates = {}
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates = updates)
+
+        # introduce 1-time-tick delay
+        self.theano_tick()
+        # continue the tick in the origin
+        for o in self.origin.values():
+            o.tick()
 
     def tick(self):
         # start the tick in the accumulators
@@ -184,6 +193,7 @@ class Ensemble:
 
     def run(self):
         self.bind_sockets()
+        self.make_tick()
 
         while True:
             self.ticker_conn.recv()
