@@ -9,9 +9,6 @@ WORKING_CODE_PATH="../examples/theano"
 
 TEST_SCRIPTS=(
 	'matrix_multiplication'
-	'cleanup_test'
-	'array_test'
-	'func_test'
 );
 
 compareOutput(){

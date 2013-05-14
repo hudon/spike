@@ -20,7 +20,7 @@ net.connect('A2','B',pstc=0.1)
 import time
 
 start=time.time()
-for i in range(1):
+for i in range(10):
 	net.run(0.001)
 	if hasattr(net, 'node'):
 		print i,net.node['B'].origin['X'].value.get_value()

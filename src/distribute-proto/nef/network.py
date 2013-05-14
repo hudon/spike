@@ -31,6 +31,7 @@ class Network:
     # length 1
     def make(self, name, neurons, dimensions, array_count=1,
             intercept=(-1, 1), seed=None, type='lif', encoders=None):
+        print "Just called make"
         # we need to run the setup again if ensembles are added
         self.setup = False
 
@@ -59,6 +60,7 @@ class Network:
     # add an arbitrary non-theano node (used for Input now, should be used for
     # SimpleNodes when those get implemented
     def add(self, node):
+        print "Just called add"
         # we need to run the setup again if ensembles are added
         self.setup = False
 

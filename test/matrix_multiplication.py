@@ -73,7 +73,7 @@ net.connect('C', 'D', transform = transform, func = product)
 print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 import time
 start = time.time()
-for i in range(1):
+for i in range(10):
 	net.run(0.001)
 	if hasattr(net, 'node'):
 		print "output for C:", net.node['C'].origin['X'].value.get_value()

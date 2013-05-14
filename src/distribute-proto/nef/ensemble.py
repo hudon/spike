@@ -150,7 +150,7 @@ class Ensemble:
 
     # compute the set of theano updates needed for this ensemble
     def update(self):
-	print "UPDATING"
+        print "UPDATING Process ",os.getpid()," ",self.name," after theano_tick()"
         # apply the bias to all neurons in the array
         input = numpy.tile(self.bias, (self.count, 1))
 

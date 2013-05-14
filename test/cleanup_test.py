@@ -38,7 +38,7 @@ net.connect('C','B',words,pstc=0.1)
 net.make_input('input',words[index])
 net.connect('input','A',pstc=0.1)
 
-for i in range(1):
+for i in range(10):
 	net.run(0.001)
 	if hasattr(net, 'node'):
 		print i,net.node['A'].origin['X'].value.get_value()
