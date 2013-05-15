@@ -1,1 +1,4 @@
-numpy==1.6.1
+numpy==1.7.1
+scipy==0.11.0
+theano==0.6.0rc3
+zmq==2.2.0
