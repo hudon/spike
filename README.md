@@ -16,6 +16,15 @@ The main contributors of this project are:
 * [Robert Elder](https://github.com/robertelder)
 * [James Hudon](https://github.com/Hudon)
 * [Artem Pasyechnyk](https://github.com/artemip)
+* 
+
+Requirements
+------------
+
+* numpy == 1.7.x
+* scipy == 0.11.0
+* theano == 0.6.0rc3
+* zmq == 2.2.0
 
 
 Examples
