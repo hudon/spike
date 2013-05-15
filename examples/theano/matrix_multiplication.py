@@ -10,9 +10,9 @@ net = nef.Network('Matrix Multiplication', seed = 1) #Create the network object
 #  Matrix B is D2xD3
 #  result is D1xD3
 
-D1 = 1
-D2 = 5
-D3 = 5
+D1 = 5
+D2 = 25
+D3 = 25
 
 # make 2 matrices to store the input
 net.make_array('A', 50, D1 * D2)
@@ -71,7 +71,7 @@ print 'neurons:', 50 * (D1 * D2 + D2 * D3 + D1 * D3) + 200 * (D1 * D2 * D3)
 net.run(0.001)
 import time
 start = time.time()
-for i in range(50000):
+for i in range(1500):
     net.run(0.001)
     print "time per tick:", (time.time() - start) / (i + 1)
 
