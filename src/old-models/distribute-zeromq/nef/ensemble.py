@@ -36,6 +36,7 @@ class Accumulator:
         self.input_socket_definitions = []
         self.input_sockets = []
         self.vals = []
+        self.poller = zmq.Poller()
 
     def __del__(self):
         for socket in self.input_sockets:
@@ -60,16 +61,13 @@ class Accumulator:
     # Must be run prior to calling tick() to create and bind sockets
     def bind_sockets(self):
         for defn in self.input_socket_definitions:
-            self.input_sockets.append(defn.create_socket())
+            socket = defn.create_socket()
+            self.input_sockets.append(socket)
+            self.poller.register(socket, zmq.POLLIN)
 
     # returns False if some data was not available
     def tick(self):
-        poller = zmq.Poller()
-
-        for socket in self.input_sockets:
-            poller.register(socket, zmq.POLLIN)
-
-        responses = dict(poller.poll(1000))
+        responses = dict(self.poller.poll(1))
 
         # poll for all inputs, do not receive unless all inputs are available
         for i, socket in enumerate(self.input_sockets):
