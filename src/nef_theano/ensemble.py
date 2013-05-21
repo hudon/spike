@@ -14,9 +14,9 @@ from .helpers import map_gemv
 
 class Ensemble:
     """An ensemble is a collection of neurons representing a vector space.
-    
+
     """
-    
+
     def __init__(self, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
                  max_rate=(200, 300), intercept=(-1.0, 1.0), radius=1.0,
                  encoders=None, seed=None, neuron_type='lif',
@@ -81,7 +81,7 @@ class Ensemble:
             if len(eval_points.shape) == 1:
                 eval_points.shape = [1, eval_points.shape[0]]
         self.eval_points = eval_points
-        
+
         # make sure intercept is the right shape
         if isinstance(intercept, (int,float)): intercept = [intercept, 1]
         elif len(intercept) == 1: intercept.append(1) 
@@ -119,7 +119,7 @@ class Ensemble:
 
             # force to 32 bit for consistency / speed
             self.bias = self.bias.astype('float32')
-                    
+
             # compute encoders
             self.encoders = self.make_encoders(encoders=encoders)
             # combine encoders and gain for simplification
@@ -135,8 +135,8 @@ class Ensemble:
             # make default origin
             self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
 
-        elif self.mode == 'direct': 
-            
+        elif self.mode == 'direct':
+
             # make default origin
             self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size) 
             # reset neurons_num to 0
@@ -165,7 +165,7 @@ class Ensemble:
         :param learn_input:
             theano object representing the learned output of
             the pre population multiplied by a connection weight matrix
-        
+
         """
         # make sure one and only one of
         # (decoded_input, encoded_input) is specified
@@ -316,24 +316,24 @@ class Ensemble:
 
         # normalize encoders across represented dimensions 
         norm = TT.sum(encoders * encoders, axis=[2], keepdims=True)
-        encoders = encoders / TT.sqrt(norm)        
+        encoders = encoders / TT.sqrt(norm)
 
         return theano.function([], encoders)()
 
     def theano_tick(self):
 
-        if self.mode == 'direct': 
+        if self.mode == 'direct':
             # set up matrix to store accumulated decoded input
             X = np.zeros((self.array_size, self.dimensions))
             # updates is an ordered dictionary of theano variables to update
-        
+
             for di in self.decoded_input.values(): 
                 # add its values to the total decoded input
                 X += di.value.get_value()
 
             # if we're calculating a function on the decoded input
-            for o in self.origin.values(): 
-                if o.func is not None:  
+            for o in self.origin.values():
+                if o.func is not None:
                     val = np.float32([o.func(X[i]) for i in range(len(X))])
                     o.decoded_output.set_value(val.flatten())
 
@@ -345,7 +345,7 @@ class Ensemble:
 
         :param float dt: the timestep of the update
         """
-        
+
         ### find the total input current to this population of neurons
 
         # set up matrix to store accumulated decoded input
@@ -398,7 +398,7 @@ class Ensemble:
             # pass that total into the neuron model to produce
             # the main theano computation
             updates.update(self.neurons.update(J, dt))
-        
+
             for l in self.learned_terminations:
                 # also update the weight matrices on learned terminations
                 updates.update(l.update(dt))

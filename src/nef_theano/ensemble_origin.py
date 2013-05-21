@@ -21,7 +21,7 @@ class EnsembleOrigin(Origin):
         :param function func:
             the transformation to perform to the ensemble's
             represented values to get the output value
-        
+
         """
         self.ensemble = ensemble
         # sets up self.decoders
@@ -83,7 +83,7 @@ class EnsembleOrigin(Origin):
             target_values = eval_points 
         else:
             # otherwise calculate target_values using provided function
-            
+
             # scale all our sample points by ensemble radius,
             # calculate function value, then scale back to unit length
 
@@ -96,7 +96,7 @@ class EnsembleOrigin(Origin):
             if len(target_values.shape) < 2:
                 target_values.shape = target_values.shape[0], 1
             target_values = target_values.T
-        
+
         # replicate attached population of neurons into array of ensembles,
         # one ensemble per sample point
         # set up matrix to store decoders,
@@ -137,12 +137,12 @@ class EnsembleOrigin(Origin):
 
                 # compute Gamma and Upsilon
                 G = np.dot(A, A.T) # correlation matrix
-                
+
                 #TODO: optimize this so we're not doing
                 # the full eigenvalue decomposition
                 #TODO: add NxS method for large N?
                 #TODO: compare below with pinv rcond
-                
+
                 #TODO: check the decoder_noise math, and maybe add on to the
                 #      diagonal of G?
 
@@ -164,12 +164,12 @@ class EnsembleOrigin(Origin):
                 # w[:, np.newaxis] gives transpose of vector,
                 # np.multiply is very fast element-wise multiplication
                 Ginv = np.dot(v, np.multiply(w[:, np.newaxis], v.T)) 
-                
+
                 #Ginv=np.linalg.pinv(G, rcond=.01)  
                 cache.set_gamma_inv(index_key, (Ginv, A))
 
             U = np.dot(A, target_values.T)
-            
+
             # compute decoders - least squares method 
             decoders[index] = np.dot(Ginv, U)
 
@@ -179,13 +179,13 @@ class EnsembleOrigin(Origin):
 
     def make_samples(self):
         """Generate sample points uniformly distributed within the sphere.
-        
+
         Returns float array of sample points.
-        
+
         """
         srng = RandomStreams(seed=self.ensemble.seed)
         samples = srng.normal((self.num_samples, self.ensemble.dimensions))
-        
+
         # normalize magnitude of sampled points to be of unit length
         norm = TT.sum(samples * samples, axis=[1], keepdims=True) 
         samples = samples / TT.sqrt(norm)
@@ -196,13 +196,13 @@ class EnsembleOrigin(Origin):
 
         # scale sample points
         samples = samples.T * scale 
-        
+
         return theano.function([], samples)()
 
     def update(self, dt, spikes):
         """the theano computation for converting neuron output
         into a decoded value.
-        
+
         returns a dictionary with the decoded output value
 
         :param array spikes:
