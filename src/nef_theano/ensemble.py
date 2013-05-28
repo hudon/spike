@@ -12,12 +12,15 @@ from . import filter
 from .hPES_termination import hPESTermination
 from .helpers import map_gemv
 
+import zmq
+import zmq_utils
+
 class Ensemble:
     """An ensemble is a collection of neurons representing a vector space.
 
     """
 
-    def __init__(self, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
+    def __init__(self, name, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
                  max_rate=(200, 300), intercept=(-1.0, 1.0), radius=1.0,
                  encoders=None, seed=None, neuron_type='lif',
                  array_size=1, eval_points=None, decoder_noise=0.1,
@@ -63,6 +66,9 @@ class Ensemble:
             If noise_type = gaussian, this is the variance.
 
         """
+        self.name = name
+        self.dt = dt
+
         if seed is None:
             seed = np.random.randint(1000)
         self.seed = seed
@@ -73,6 +79,7 @@ class Ensemble:
         self.noise = noise
         self.noise_type = noise_type
         self.decoder_noise = decoder_noise
+
         self.mode = mode
 
         # make sure that eval_points is the right shape
@@ -135,14 +142,29 @@ class Ensemble:
             # make default origin
             self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
 
-        elif self.mode == 'direct':
+            self.ticker_conn = None
+            self.input_socket_definitions = []
+            self.input_sockets = []
+            # ONLY decoded_input/ filter names, same order as input_sockets
+            # TODO: improve this
+            self.inputs = []
+            self.poller = zmq.Poller()
 
+        elif self.mode == 'direct':
+            raise Exception("ERROR", "The 'direct' ensemble mode should not be used.")
             # make default origin
             self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size) 
             # reset neurons_num to 0
             self.neurons_num = 0
 
-    def add_termination(self, name, pstc, decoded_input=None, encoded_input=None):
+    def __del__(self):
+        for socket in self.input_sockets:
+            socket.close()
+
+        self.ticker_conn.close()
+
+    def add_termination(self, name, pstc, decoded_input=None, 
+        encoded_input=None, input_socket=None, transform=None):
         """Accounts for a new termination that takes the given input
         (a theano object) and filters it with the given pstc.
 
@@ -172,19 +194,36 @@ class Ensemble:
         if decoded_input is not None: assert (encoded_input is None)
         elif encoded_input is not None: assert (decoded_input is None) 
         else: assert False
+        
 
-        if decoded_input: 
-            if self.mode is not 'direct': 
-                # rescale decoded_input by this neuron's radius
-                source = TT.true_div(decoded_input, self.radius)
-            # ignore radius in direct mode
-            else: source = decoded_input
+        if decoded_input is not None and self.mode is 'direct':
+            raise Exception("ERROR", "Not using the 'direct' mode of ensembles")
+            source = TT.true_div(decoded_input, self.radius)
             name = self.get_unique_name(name, self.decoded_input)
             self.decoded_input[name] = filter.Filter(
-                name=name, pstc=pstc, source=source, 
+                name=name, pstc=pstc, source=source,
                 shape=(self.array_size, self.dimensions))
-        elif encoded_input: 
+
+        # decoded_input in this case will be the output of pre node
+        elif decoded_input is not None and self.mode is 'spiking':
+            # decoded_input is NOT the shared variable of the origin
+            pre_output = theano.shared(decoded_input)
+            source = TT.dot(transform, pre_output)
+            self.input_socket_definitions.append(input_socket)
+            name = self.get_unique_name(name, self.decoded_input)
+
+            self.decoded_input[name] = filter.Filter(
+                name=name, pstc=pstc, source=source,
+                shape=(self.array_size, self.dimensions),
+                pre_output=pre_output)
+
+            # Assumption: the ith socket represents the ith value
+            self.inputs.append(name)
+
+        elif encoded_input:
+            raise Exception("ERROR", "Just deal with decoded_input for ensembles") 
             name = self.get_unique_name(name, self.encoded_input)
+
             self.encoded_input[name] = filter.Filter(
                 name=name, pstc=pstc, source=encoded_input, 
                 shape=(self.array_size, self.neurons_num))
@@ -204,6 +243,8 @@ class Ensemble:
         :param float pstc:
         :param learned_termination_class:
         """
+        raise Exception("ERRPR", "Learned connections are not usable yet.")
+
         #TODO: is there ever a case we wouldn't want this?
         assert error.dimensions == self.dimensions * self.array_size
 
@@ -253,8 +294,7 @@ class Ensemble:
             specific set of points to optimize decoders over for this origin
         """
 
-        # if we're in spiking mode create an ensemble_origin with decoders 
-        # and the whole shebang for interpreting the neural activity
+        # Create an ensemble_origin with decoders
         if self.mode == 'spiking':
             if 'eval_points' not in kwargs.keys():
                 kwargs['eval_points'] = self.eval_points
@@ -264,6 +304,7 @@ class Ensemble:
         # if we're in direct mode then this population is just directly 
         # performing the specified function, use a basic origin
         elif self.mode == 'direct':
+            raise Exception("ERROR", "The 'direct' ensemble mode is not being used.")
             if func is not None:
                 if 'initial_value' not in kwargs.keys():
                     # [func(np.zeros(self.dimensions)) for i in range(self.array_size)]
@@ -320,8 +361,18 @@ class Ensemble:
 
         return theano.function([], encoders)()
 
-    def theano_tick(self):
+    def make_tick(self):
+        updates = {}
+        updates.update(self.update())
+        self.theano_tick = theano.function([], [], updates = updates)
 
+        # introduce 1-time-tick delay
+        self.theano_tick()
+        for o in self.origin.values():
+            o.tick()
+
+    def direct_tick(self):
+        raise Exception("ERROR", "Not using 'direct' mode of ensembles")
         if self.mode == 'direct':
             # set up matrix to store accumulated decoded input
             X = np.zeros((self.array_size, self.dimensions))
@@ -337,7 +388,54 @@ class Ensemble:
                     val = np.float32([o.func(X[i]) for i in range(len(X))])
                     o.decoded_output.set_value(val.flatten())
 
-    def update(self, dt):
+    def run(self):
+        self.bind_sockets()
+        self.make_tick()
+
+        while True:
+            self.ticker_conn.recv()
+            self.tick()
+            self.ticker_conn.send("")
+
+    # Receive the outputs of pre - decoded output - and pass it to filters
+    def tick(self):
+        responses = dict(self.poller.poll(1))
+
+        # poll for all inputs, do not receive unless all inputs are available
+        for i, socket in enumerate(self.input_sockets):
+            if socket not in responses or responses[socket] != zmq.POLLIN:
+                return
+
+        for i, socket in enumerate(self.input_sockets):
+            val = socket.recv_pyobj()
+            name = self.inputs[i]
+            self.decoded_input[name].set_pre_output(val)
+
+        # should be the compiled theano function for this ensemble
+        # includes the accumulators, ensemble, and origins updates
+        self.theano_tick()
+
+        # continue the tick in the origins
+        for o in self.origin.values():
+            o.tick()
+
+    def bind_sockets(self):
+        # create socket connections for inputs
+        for defn in self.input_socket_definitions:
+            socket = defn.create_socket()
+            self.input_sockets.append(socket)
+            self.poller.register(socket, zmq.POLLIN)
+
+        for o in self.origin.values():
+            o.bind_sockets()
+
+        # zmq.REP strictly enforces alternating recv/send ordering
+        zmq_context = zmq.Context()
+        self.ticker_conn = zmq_context.socket(zmq.REP)
+        self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
+
+    # Using the dt that was passed to the ensemble at construction time
+    def update(self):
         """Compute the set of theano updates needed for this ensemble.
 
         Returns a dictionary with new neuron state,
@@ -360,7 +458,7 @@ class Ensemble:
             else:
                 X += di.value
 
-            updates.update(di.update(dt))
+            updates.update(di.update(self.dt))
 
         # if we're in spiking mode, then look at the input current and 
         # calculate new neuron activities for output
@@ -372,7 +470,7 @@ class Ensemble:
             for ei in self.encoded_input.values():
                 # add its values directly to the input current
                 J += (ei.value.T * self.alpha.T).T
-                updates.update(ei.update(dt))
+                updates.update(ei.update(self.dt))
 
             # only do this if there is decoded_input
             if X is not None:
@@ -388,27 +486,27 @@ class Ensemble:
                 # sqrt(dt) instead of dt. Hence, we divide the std by sqrt(dt).
                 if self.noise_type.lower() == 'gaussian':
                     J += self.srng.normal(
-                        size=self.bias.shape, std=np.sqrt(self.noise/dt))
+                        size=self.bias.shape, std=np.sqrt(self.noise/self.dt))
                 elif self.noise_type.lower() == 'uniform':
                     J += self.srng.uniform(
                         size=self.bias.shape, 
-                        low=-self.noise/np.sqrt(dt), 
-                        high=self.noise/np.sqrt(dt))
+                        low=-self.noise/np.sqrt(self.dt), 
+                        high=self.noise/np.sqrt(self.dt))
 
             # pass that total into the neuron model to produce
             # the main theano computation
-            updates.update(self.neurons.update(J, dt))
+            updates.update(self.neurons.update(J, self.dt))
 
             for l in self.learned_terminations:
                 # also update the weight matrices on learned terminations
-                updates.update(l.update(dt))
+                updates.update(l.update(self.dt))
 
             # and compute the decoded origin decoded_input from the neuron output
             for o in self.origin.values():
-                updates.update(o.update(dt, updates[self.neurons.output]))
+                updates.update(o.update(self.dt, updates[self.neurons.output]))
 
         if self.mode == 'direct': 
-
+            raise Exception("ERROR", "The 'direct' ensemble connections not used")
             # if we're in direct mode then just directly pass the decoded_input 
             # to the origins for decoded_output
             for o in self.origin.values(): 

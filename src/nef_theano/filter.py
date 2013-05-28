@@ -7,7 +7,8 @@ import theano.tensor as TT
 class Filter:
     """Filter an arbitrary theano.shared"""
 
-    def __init__(self, pstc, name=None, source=None, shape=None):
+    def __init__(self, pstc, name=None, source=None, shape=None, 
+        pre_output=None):
         """
         :param float pstc:
         :param string name:
@@ -17,6 +18,9 @@ class Filter:
         """
         self.pstc = pstc
         self.source = source
+
+        # has to be a Theano shared variable
+        self.pre_output = pre_output
 
         ### try to find the shape from the given parameters (source and shape)
         if source is not None and hasattr(source, 'get_value'):
@@ -33,6 +37,10 @@ class Filter:
         ### create shared variable to store the filtered value
         self.value = theano.shared(value, name=name)
         self.name = name
+
+    # TODO: will set_value always work in this case?
+    def set_pre_output(self, output):
+        self.pre_output.set_value(output)
 
     def set_source(self, source):
         """Set the source of data for this filter

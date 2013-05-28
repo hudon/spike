@@ -1,6 +1,6 @@
 # Perform matrix multiplication on arbitrary matrices
 
-import nengo.nef_theano as nef
+import nef_theano as nef
 
 net=nef.Network('Matrix Multiplication') #Create the network object
 
@@ -64,3 +64,4 @@ def product(x):
 net.connect('C','D',index_post=[i/D2 for i in range(D1*D2*D3)],func=product)
 
 net.run(1) # run for 1 second
+net.clean_up()

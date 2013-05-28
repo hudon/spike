@@ -4,6 +4,9 @@ import collections
 import numpy as np
 import theano
 
+import zmq
+import zmq_utils
+
 class Origin(object):
     """An origin is an object that provides a signal. Origins project
     to terminations.
@@ -45,3 +48,21 @@ class Origin(object):
         # find number of parameters of the projected value
         if dimensions is None: dimensions = len(initial_value)
         self.dimensions = dimensions
+
+        self.output_socket_definitions = []
+        self.output_sockets = []
+
+    def __del__(self):
+        for socket in self.output_sockets:
+            socket.close()
+
+    def add_output(self, output_socket_def):
+        self.output_socket_definitions.append(output_socket_def)
+
+    def bind_sockets(self):
+        for defn in self.output_socket_definitions:
+            self.output_sockets.append(defn.create_socket())
+
+    def tick(self):
+        for socket in self.output_sockets:
+            socket.send_pyobj(self.decoded_output.get_value())
