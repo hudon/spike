@@ -198,7 +198,7 @@ class Ensemble:
 
         if decoded_input is not None and self.mode is 'direct':
             raise Exception("ERROR", "Not using the 'direct' mode of ensembles")
-            source = TT.true_div(decoded_input, self.radius)
+            source = decoded_input
             name = self.get_unique_name(name, self.decoded_input)
             self.decoded_input[name] = filter.Filter(
                 name=name, pstc=pstc, source=source,
@@ -209,6 +209,8 @@ class Ensemble:
             # decoded_input is NOT the shared variable of the origin
             pre_output = theano.shared(decoded_input)
             source = TT.dot(transform, pre_output)
+            source = TT.true_div(source, self.radius)
+
             self.input_socket_definitions.append(input_socket)
             name = self.get_unique_name(name, self.decoded_input)
 
@@ -412,7 +414,7 @@ class Ensemble:
             self.decoded_input[name].set_pre_output(val)
 
         # should be the compiled theano function for this ensemble
-        # includes the accumulators, ensemble, and origins updates
+        # includes the filters, ensemble, and origins updates
         self.theano_tick()
 
         # continue the tick in the origins

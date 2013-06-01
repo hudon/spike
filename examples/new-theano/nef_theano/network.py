@@ -174,7 +174,7 @@ class Network(object):
                     and (index_post is None))
 
             transform = np.array(transform)
-            
+
             # check to see if post side is an encoded connection, case 2 or 3
             #TODO: a better check for this
             if transform.shape[0] != post.dimensions * post.array_size \
@@ -363,7 +363,7 @@ class Network(object):
         self.theano_tick = None
 
         kwargs['dt'] = self.dt
-        e = ensemble.Ensemble(*args, **kwargs) 
+        e = ensemble.Ensemble(name, *args, **kwargs)
 
         # store created ensemble in node dictionary
         if kwargs.get('mode', None) == 'direct':
@@ -474,7 +474,7 @@ class Network(object):
                 node.theano_tick()
 
             # run the theano nodes
-            self.theano_tick()    
+            self.theano_tick()
 
         # update run_time variable
         self.run_time += time

@@ -1,8 +1,8 @@
 # Perform matrix multiplication on arbitrary matrices
 
-import nengo.nef_theano as nef
+import nef_theano as nef
 
-net=nef.Network('Matrix Multiplication') #Create the network object
+net=nef.Network('Matrix Multiplication', 100, 100) #Create the network object
 
 # Adjust these values to change the matrix dimensions
 #  Matrix A is D1xD2
