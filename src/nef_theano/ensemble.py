@@ -44,10 +44,11 @@ class EnsembleProcess:
 
     def __del__(self):
         for socket in self.input_sockets:
-            socket.close()
+            if socket is not None:
+                socket.close()
 
-        ## TODO this is being ticker_conn is None when __del__ is called
-        #self.ticker_conn.close()
+        if self.ticker_conn is not None:
+            self.ticker_conn.close()
 
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already
