@@ -56,9 +56,6 @@ class Network(object):
         if seed is not None:
             self.random.seed(seed)
 
-    def __del__(self):
-        self.ticker_conn.close()
-
     def add(self, node):
         """Add an arbitrary non-theano node to the network.
 

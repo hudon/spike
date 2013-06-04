@@ -39,15 +39,6 @@ class EnsembleProcess:
         self.input_sockets = []
         self.ticker_conn = None
 
-    def __del__(self):
-        for socket in self.input_sockets:
-            # the socket instance may be deleted before this destructor
-            if socket.instance is not None:
-                socket.instance.close()
-
-        if self.ticker_conn is not None:
-            self.ticker_conn.close()
-
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already
         if self.zmq_context is None:

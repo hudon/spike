@@ -51,12 +51,6 @@ class Origin(object):
 
         self.output_sockets = []
 
-    def __del__(self):
-        for socket in self.output_sockets:
-            # the socket instance may be deleted before this destructor
-            if socket.instance is not None:
-                socket.instance.close()
-
     def add_output(self, output_socket_def):
         # the name is not used but may be nice to have for debugging
         name = self.func.__name__ if self.func is not None else 'X'
