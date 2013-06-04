@@ -502,7 +502,7 @@ class Network(object):
             num_processes = len(self.processes)
 
             ## Tick all nodes
-            for i in xrange(num_processes):
+            for proc in xrange(num_processes):
                 self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
                 self.ticker_conn.send(str(t))
 
@@ -511,18 +511,24 @@ class Network(object):
                 self.ticker_conn.recv() # This is the delimiter (discard it)
                 self.ticker_conn.recv()
 
+        for proc in xrange(num_processes):
+            self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
+            self.ticker_conn.send("END")
+
         # update run_time variable
         self.run_time += time
 
-        ## TODO spike: run cleanup here
+        self.clean_up()
+
 
     # called when the simulation is done (otherwise, procs will hang)
     def clean_up(self):
         self.ticker_conn.close()
 
-        # force kill
+        # wait for all procs to end
         for proc in self.processes:
-            proc.terminate()
+            proc.join()
+
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the 

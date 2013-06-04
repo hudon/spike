@@ -97,7 +97,10 @@ class Input(object):
         self.bind_sockets()
 
         while True:
-            self.t = float(self.ticker_conn.recv())
+            msg = self.ticker_conn.recv()
+            if msg == "END":
+                break
+            self.t = float(msg)
             self.tick()
             self.ticker_conn.send("")
 

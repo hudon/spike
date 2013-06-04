@@ -20,10 +20,15 @@ class EnsembleProcess:
     responsible for infrastructure logic such as setting up messaging,
     printing, process clean-up, etc. It also acts as an Adapter for most of
     the Ensemble's methods.
+
+    :param str name: name of the process
+    :param bool is_printing: should the process be printing values to stdout
     """
     def __init__(self, name, *args, **kwargs):
         self.name = name
+        self.is_printing = kwargs.pop('is_printing', None)
 
+        ## Adapter for Ensemble
         self.ensemble = Ensemble(*args, **kwargs)
         self.origin = self.ensemble.origin
         self.dimensions = self.ensemble.dimensions
@@ -79,10 +84,20 @@ class EnsembleProcess:
         self.bind_sockets()
         self.ensemble.make_tick()
 
+        if self.is_printing:
+            print self.origin['X'].decoded_output.get_value()
+
         while True:
-            self.ticker_conn.recv()
+            msg = self.ticker_conn.recv()
+            if msg == "END":
+                break
+
             self.tick()
+            if self.is_printing:
+                print self.origin['X'].decoded_output.get_value()
+
             self.ticker_conn.send("")
+
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't

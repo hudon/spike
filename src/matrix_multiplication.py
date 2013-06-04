@@ -55,7 +55,7 @@ net.connect('B','C',transform=transformB)
 
 
 # now compute the products and do the appropriate summing
-net.make_array('D',50,D1*D3,radius=radius)
+net.make_array('D',50,D1*D3,radius=radius, is_printing=True)
 
 def product(x):
     return x[0]*x[1]
@@ -64,4 +64,3 @@ def product(x):
 net.connect('C','D',index_post=[i/D2 for i in range(D1*D2*D3)],func=product)
 
 net.run(1) # run for 1 second
-net.clean_up()

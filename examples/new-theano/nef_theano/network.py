@@ -475,6 +475,7 @@ class Network(object):
 
             # run the theano nodes
             self.theano_tick()
+            print self.nodes['D'].origin['X'].decoded_output.get_value()
 
         # update run_time variable
         self.run_time += time
