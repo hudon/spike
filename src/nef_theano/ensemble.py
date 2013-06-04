@@ -32,20 +32,18 @@ class EnsembleProcess:
         self.add_origin = self.ensemble.add_origin
         self.update = self.ensemble.update
 
-        self.poller = zmq.Poller()
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
-        self.input_socket_definitions = []
+        self.poller = zmq.Poller()
+
         self.input_sockets = []
-        # ONLY decoded_input/ filter names, same order as input_sockets
-        # TODO: improve this
-        self.inputs = []
         self.ticker_conn = None
 
     def __del__(self):
         for socket in self.input_sockets:
-            if socket is not None:
-                socket.close()
+            # the socket instance may be deleted before this destructor
+            if socket.instance is not None:
+                socket.instance.close()
 
         if self.ticker_conn is not None:
             self.ticker_conn.close()
@@ -56,10 +54,9 @@ class EnsembleProcess:
             self.zmq_context = zmq.Context()
 
         # create socket connections for inputs
-        for defn in self.input_socket_definitions:
-            socket = defn.create_socket(self.zmq_context)
-            self.input_sockets.append(socket)
-            self.poller.register(socket, zmq.POLLIN)
+        for socket in self.input_sockets:
+            socket.init(self.zmq_context)
+            self.poller.register(socket.instance, zmq.POLLIN)
 
         for o in self.ensemble.origin.values():
             o.bind_sockets(self.zmq_context)
@@ -76,17 +73,16 @@ class EnsembleProcess:
 
         # poll for all inputs, do not receive unless all inputs are available
         for i, socket in enumerate(self.input_sockets):
-            if socket not in responses or responses[socket] != zmq.POLLIN:
+            socket_inst = socket.instance
+            if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
                 return
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
-            val = socket.recv_pyobj()
-            name = self.inputs[i]
-            inputs[name] = val
+            val = socket.instance.recv_pyobj()
+            inputs[socket.name] = val
 
         self.ensemble.tick(inputs)
-
 
     def run(self):
         self.bind_sockets()
@@ -104,9 +100,9 @@ class EnsembleProcess:
         unique_name = self.ensemble.get_unique_name(kwargs['name'],
                 self.ensemble.decoded_input)
         kwargs['name'] = unique_name
-        self.input_socket_definitions.append(input_socket)
-        # Assumption: the ith socket represents the ith value
-        self.inputs.append(unique_name)
+        
+        self.input_sockets.append(zmq_utils.Socket(input_socket, unique_name))
+
         return self.ensemble.add_termination(*args, **kwargs)
 
 
@@ -237,14 +233,12 @@ class Ensemble:
             # make default origin
             self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
 
-
         elif self.mode == 'direct':
             raise Exception("ERROR", "The 'direct' ensemble mode should not be used.")
             # make default origin
             self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size) 
             # reset neurons_num to 0
             self.neurons_num = 0
-
 
     def add_termination(self, name, pstc, decoded_input=None, 
         encoded_input=None, input_socket=None, transform=None):
@@ -479,7 +473,6 @@ class Ensemble:
         # continue the tick in the origins
         for o in self.origin.values():
             o.tick()
-
 
     # Using the dt that was passed to the ensemble at construction time
     def update(self):

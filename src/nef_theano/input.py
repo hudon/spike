@@ -24,8 +24,6 @@ class Input(object):
             time after which to set function output = 0 (s)
         
         """
-        self.ticker_conn = None
-
         self.name = name
         self.t = 0
         self.function = None
@@ -36,6 +34,7 @@ class Input(object):
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
+        self.ticker_conn = None
 
         # if value parameter is a python function
         if callable(value): 

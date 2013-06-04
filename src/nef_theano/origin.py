@@ -49,20 +49,23 @@ class Origin(object):
         if dimensions is None: dimensions = len(initial_value)
         self.dimensions = dimensions
 
-        self.output_socket_definitions = []
         self.output_sockets = []
 
     def __del__(self):
         for socket in self.output_sockets:
-            socket.close()
+            # the socket instance may be deleted before this destructor
+            if socket.instance is not None:
+                socket.instance.close()
 
     def add_output(self, output_socket_def):
-        self.output_socket_definitions.append(output_socket_def)
+        # the name is not used but may be nice to have for debugging
+        name = self.func.__name__ if self.func is not None else 'X'
+        self.output_sockets.append(zmq_utils.Socket(output_socket_def, name))
 
     def bind_sockets(self, zmq_context):
-        for defn in self.output_socket_definitions:
-            self.output_sockets.append(defn.create_socket(zmq_context))
+        for socket in self.output_sockets:
+            socket.init(zmq_context)
 
     def tick(self):
         for socket in self.output_sockets:
-            socket.send_pyobj(self.decoded_output.get_value())
+            socket.instance.send_pyobj(self.decoded_output.get_value())

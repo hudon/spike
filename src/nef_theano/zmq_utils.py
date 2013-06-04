@@ -30,3 +30,14 @@ def create_local_socket_definition_pair(origin_node, destination_node):
     destination_socket_type = zmq.PULL
 
     return SocketDefinition(socket_name, origin_socket_type, is_server=True), SocketDefinition(socket_name, destination_socket_type, is_server=False)
+
+class Socket(object):
+    def __init__(self, definition, name):
+        self.definition = definition
+        self.name = name
+
+        self.instance = None
+
+    def init(self, zmq_context):
+        self.instance = self.definition.create_socket(zmq_context)
+
