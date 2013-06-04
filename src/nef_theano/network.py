@@ -253,8 +253,8 @@ class Network(object):
 
                     # pass in the pre population encoded output function
                     # to the post population, connecting them for theano
-                    post.add_termination(name=pre_name, pstc=pstc, 
-                        encoded_input=encoded_output, input_socket=dest_socket)
+                    post.add_termination(input_socket=dest_socket, name=pre_name, pstc=pstc, 
+                        encoded_input=encoded_output)
 
                     pre_origin.add_output(origin_socket)
 
@@ -274,9 +274,8 @@ class Network(object):
         # pre output needs to be replaced during execution using IPC
         # pass pre_out and transform + calculate dot product in accumulator
         # passing VALUE of pre output (do not share theano shared vars between processes)
-        post.add_termination(name=pre_name, pstc=pstc, 
-            decoded_input=pre_output.get_value(), 
-            input_socket=destination_socket, transform=transform) 
+        post.add_termination(input_socket=destination_socket, name=pre_name, pstc=pstc, 
+            decoded_input=pre_output.get_value(), transform=transform) 
 
         pre_origin.add_output(origin_socket)
 
@@ -387,7 +386,7 @@ class Network(object):
         self.theano_tick = None
 
         kwargs['dt'] = self.dt
-        e = ensemble.Ensemble(name, *args, **kwargs) 
+        e = ensemble.EnsembleProcess(name, *args, **kwargs)
         self.nodes[name] = e
 
         p = Process(target=e.run, name=name)
@@ -397,7 +396,7 @@ class Network(object):
         if kwargs.get('mode', None) == 'direct':
             raise Exception("ERROR", "Do not support 'direct' communication mode")
             self.tick_nodes.append(e)
-        
+
         return e
 
     def make_array(self, name, neurons, array_size, dimensions=1, **kwargs):
@@ -505,10 +504,12 @@ class Network(object):
 
             num_processes = len(self.processes)
 
+            ## Tick all nodes
             for i in xrange(num_processes):
                 self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
                 self.ticker_conn.send(str(t))
 
+            ## Wait for all nodes
             for i in xrange(num_processes):
                 self.ticker_conn.recv() # This is the delimiter (discard it)
                 self.ticker_conn.recv()
