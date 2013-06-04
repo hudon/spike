@@ -148,6 +148,9 @@ class Ensemble:
             # ONLY decoded_input/ filter names, same order as input_sockets
             # TODO: improve this
             self.inputs = []
+
+            # context should be created when the process is started (bind_sockets)
+            self.zmq_context = None
             self.poller = zmq.Poller()
 
         elif self.mode == 'direct':
@@ -422,18 +425,20 @@ class Ensemble:
             o.tick()
 
     def bind_sockets(self):
+        # create a context for this ensemble process if do not have one already
+        if self.zmq_context is None:
+            self.zmq_context = zmq.Context()
         # create socket connections for inputs
         for defn in self.input_socket_definitions:
-            socket = defn.create_socket()
+            socket = defn.create_socket(self.zmq_context)
             self.input_sockets.append(socket)
             self.poller.register(socket, zmq.POLLIN)
 
         for o in self.origin.values():
-            o.bind_sockets()
+            o.bind_sockets(self.zmq_context)
 
         # zmq.REP strictly enforces alternating recv/send ordering
-        zmq_context = zmq.Context()
-        self.ticker_conn = zmq_context.socket(zmq.REP)
+        self.ticker_conn = self.zmq_context.socket(zmq.REP)
         self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
 
     # Using the dt that was passed to the ensemble at construction time

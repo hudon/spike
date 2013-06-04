@@ -12,9 +12,8 @@ class SocketDefinition(object):
         self.socket_type = socket_type
         self.is_server = is_server
 
-    def create_socket(self):
-        ctx = zmq.Context()
-        socket = ctx.socket(self.socket_type)
+    def create_socket(self, context):
+        socket = context.socket(self.socket_type)
         if self.is_server:
             socket.bind(self.endpoint)
         else:

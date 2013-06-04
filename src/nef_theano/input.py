@@ -34,6 +34,9 @@ class Input(object):
         self.change_time = None
         self.origin = {}
 
+        # context should be created when the process is started (bind_sockets)
+        self.zmq_context = None
+
         # if value parameter is a python function
         if callable(value): 
             self.origin['X'] = origin.Origin(func=value)
@@ -100,11 +103,14 @@ class Input(object):
             self.ticker_conn.send("")
 
     def bind_sockets(self):
+        # create a context for this ensemble process if do not have one already
+        if self.zmq_context is None:
+            self.zmq_context = zmq.Context()
+
         for o in self.origin.values():
-            o.bind_sockets()
+            o.bind_sockets(self.zmq_context)
 
         # zmq.REP strictly enforces alternating recv/send ordering
-        zmq_context = zmq.Context()
-        self.ticker_conn = zmq_context.socket(zmq.REP)
+        self.ticker_conn = self.zmq_context.socket(zmq.REP)
         self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
 

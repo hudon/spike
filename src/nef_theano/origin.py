@@ -59,9 +59,9 @@ class Origin(object):
     def add_output(self, output_socket_def):
         self.output_socket_definitions.append(output_socket_def)
 
-    def bind_sockets(self):
+    def bind_sockets(self, zmq_context):
         for defn in self.output_socket_definitions:
-            self.output_sockets.append(defn.create_socket())
+            self.output_sockets.append(defn.create_socket(zmq_context))
 
     def tick(self):
         for socket in self.output_sockets:
