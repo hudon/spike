@@ -520,7 +520,6 @@ class Network(object):
 
         self.clean_up()
 
-
     # called when the simulation is done (otherwise, procs will hang)
     def clean_up(self):
         self.ticker_conn.close()
@@ -528,7 +527,6 @@ class Network(object):
         # wait for all procs to end
         for proc in self.processes:
             proc.join()
-
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the 

@@ -98,11 +98,10 @@ class EnsembleProcess:
 
             self.ticker_conn.send("")
 
-
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't
-        ## need to do so and we can then use the unique_name in the inputs
-        ## dict
+        ## need to do so and we can then use the unique_name to identify
+        ## the input sockets
         unique_name = self.ensemble.get_unique_name(kwargs['name'],
                 self.ensemble.decoded_input)
         kwargs['name'] = unique_name
@@ -110,7 +109,6 @@ class EnsembleProcess:
         self.input_sockets.append(zmq_utils.Socket(input_socket, unique_name))
 
         return self.ensemble.add_termination(*args, **kwargs)
-
 
 
 class Ensemble:
@@ -262,8 +260,7 @@ class Ensemble:
         :param float pstc: post-synaptic time constant
         :param decoded_input:
             theano object representing the decoded output of
-            the pre population multiplied by this termination's
-            transform matrix
+            the pre population (just value, not a shared variable)
         :param encoded_input:
             theano object representing the encoded output of
             the pre population multiplied by a connection weight matrix
@@ -271,6 +268,9 @@ class Ensemble:
             theano object representing the learned output of
             the pre population multiplied by a connection weight matrix
 
+        :param transform:
+            the transform that needs to be applied (dot product) to the 
+            decoded output of the pre population
         """
         # make sure one and only one of
         # (decoded_input, encoded_input) is specified
@@ -287,7 +287,7 @@ class Ensemble:
 
         # decoded_input in this case will be the output of pre node
         elif decoded_input is not None and self.mode is 'spiking':
-            # decoded_input is NOT the shared variable of the origin
+            # decoded_input is NOT the shared variable at the origin
             pre_output = theano.shared(decoded_input)
             source = TT.dot(transform, pre_output)
             source = TT.true_div(source, self.radius)
@@ -464,7 +464,6 @@ class Ensemble:
                     val = np.float32([o.func(X[i]) for i in range(len(X))])
                     o.decoded_output.set_value(val.flatten())
 
-
     # Receive the outputs of pre - decoded output - and pass it to filters
     def tick(self, inputs):
         ## Set the inputs
@@ -486,8 +485,6 @@ class Ensemble:
 
         Returns a dictionary with new neuron state,
         termination, and origin values.
-
-        :param float dt: the timestep of the update
         """
 
         ### find the total input current to this population of neurons
