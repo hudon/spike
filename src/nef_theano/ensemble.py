@@ -52,7 +52,7 @@ class EnsembleProcess:
         # create socket connections for inputs
         for socket in self.input_sockets:
             socket.init(self.zmq_context)
-            self.poller.register(socket.instance, zmq.POLLIN)
+            self.poller.register(socket.get_instance(), zmq.POLLIN)
 
         for o in self.ensemble.origin.values():
             o.bind_sockets(self.zmq_context)
@@ -69,13 +69,13 @@ class EnsembleProcess:
 
         # poll for all inputs, do not receive unless all inputs are available
         for i, socket in enumerate(self.input_sockets):
-            socket_inst = socket.instance
+            socket_inst = socket.get_instance()
             if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
                 return
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
-            val = socket.instance.recv_pyobj()
+            val = socket.get_instance().recv_pyobj()
             inputs[socket.name] = val
 
         self.ensemble.tick(inputs)

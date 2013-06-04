@@ -62,4 +62,4 @@ class Origin(object):
 
     def tick(self):
         for socket in self.output_sockets:
-            socket.instance.send_pyobj(self.decoded_output.get_value())
+            socket.get_instance().send_pyobj(self.decoded_output.get_value())

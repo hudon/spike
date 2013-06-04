@@ -38,6 +38,9 @@ class Socket(object):
 
         self.instance = None
 
+    def get_instance(self):
+        return self.instance
+
     def init(self, zmq_context):
         self.instance = self.definition.create_socket(zmq_context)
 
