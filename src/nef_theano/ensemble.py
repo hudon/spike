@@ -366,14 +366,14 @@ class Ensemble:
     def make_tick(self):
         updates = {}
         updates.update(self.update())
-        self.theano_tick = theano.function([], [], updates = updates)
+        self.theano_tick = theano.function([], [], updates=updates)
 
         # introduce 1-time-tick delay
         self.theano_tick()
         for o in self.origin.values():
             o.tick()
 
-    def direct_tick(self):
+    def direct_mode_tick(self):
         raise Exception("ERROR", "Not using 'direct' mode of ensembles")
         if self.mode == 'direct':
             # set up matrix to store accumulated decoded input

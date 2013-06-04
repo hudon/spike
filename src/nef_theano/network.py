@@ -45,10 +45,13 @@ class Network(object):
         self.ticker_conn = zmq.Context().socket(zmq.DEALER)
         self.ticker_conn.bind(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
 
+        # TODO: remove these commented variables if they are not used by direct ensembles
+
         # the function call to run the theano portions of the model
         # self.theano_tick = None
         # the list of nodes that have non-theano code
         # self.tick_nodes = [] 
+
         self.random = random.Random()
         if seed is not None:
             self.random.seed(seed)
@@ -250,7 +253,6 @@ class Network(object):
 
                     # pass in the pre population encoded output function
                     # to the post population, connecting them for theano
-                    # I.E. adding an Accumulator
                     post.add_termination(name=pre_name, pstc=pstc, 
                         encoded_input=encoded_output, input_socket=dest_socket)
 
@@ -269,16 +271,9 @@ class Network(object):
             index_post=index_post, 
             transform=transform)
 
-        # apply transform matrix, directing pre dimensions
-        # to specific post dimensions
-
-        # decoded_output = TT.dot(transform, pre_output)
-
-        # decoded input = decoded_out * transform
-        # decoded_out (pre output) needs to be replaced using IPC
-        # so pass both + calculate dot product in accumulator
-
-        # passing in the VALUE of pre output
+        # pre output needs to be replaced during execution using IPC
+        # pass pre_out and transform + calculate dot product in accumulator
+        # passing VALUE of pre output (do not share theano shared vars between processes)
         post.add_termination(name=pre_name, pstc=pstc, 
             decoded_input=pre_output.get_value(), 
             input_socket=destination_socket, transform=transform) 
@@ -523,7 +518,7 @@ class Network(object):
 
         ## TODO spike: run cleanup here
 
-    # called when the user is all done (otherwise, procs hang :) )
+    # called when the simulation is done (otherwise, procs will hang)
     def clean_up(self):
         self.ticker_conn.close()
 
