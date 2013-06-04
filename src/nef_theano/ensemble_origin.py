@@ -31,7 +31,7 @@ class EnsembleOrigin(Origin):
         initial_value = np.zeros(self.ensemble.array_size * func_size) 
         Origin.__init__(self, func=func, initial_value=initial_value)
         self.func_size = func_size
-    
+
     def compute_decoders(self, func, dt, eval_points=None):     
         """Compute decoding weights.
 
@@ -197,7 +197,7 @@ class EnsembleOrigin(Origin):
         # scale sample points
         samples = samples.T * scale 
 
-        return theano.function([], samples)()
+        return theano.function([], samples)()            
 
     def update(self, dt, spikes):
         """the theano computation for converting neuron output

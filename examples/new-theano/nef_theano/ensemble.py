@@ -17,7 +17,7 @@ class Ensemble:
     
     """
     
-    def __init__(self, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
+    def __init__(self, name, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
                  max_rate=(200, 300), intercept=(-1.0, 1.0), radius=1.0,
                  encoders=None, seed=None, neuron_type='lif',
                  array_size=1, eval_points=None, decoder_noise=0.1,
@@ -63,6 +63,8 @@ class Ensemble:
             If noise_type = gaussian, this is the variance.
 
         """
+        self.name = name
+
         if seed is None:
             seed = np.random.randint(1000)
         self.seed = seed
@@ -183,6 +185,7 @@ class Ensemble:
             self.decoded_input[name] = filter.Filter(
                 name=name, pstc=pstc, source=source, 
                 shape=(self.array_size, self.dimensions))
+
         elif encoded_input: 
             name = self.get_unique_name(name, self.encoded_input)
             self.encoded_input[name] = filter.Filter(

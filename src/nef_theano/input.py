@@ -6,6 +6,8 @@ import numpy as np
 
 from . import origin
 
+import zmq
+import zmq_utils
 
 class Input(object):
     """Inputs are objects that provide real-valued input to ensembles.
@@ -22,6 +24,8 @@ class Input(object):
             time after which to set function output = 0 (s)
         
         """
+        self.ticker_conn = None
+
         self.name = name
         self.t = 0
         self.function = None
@@ -52,10 +56,8 @@ class Input(object):
         """
         self.zeroed = False
 
-    def theano_tick(self):
-        """Move function input forward in time.
-        
-        """
+    def tick(self):
+        """Move function input forward in time."""
         if self.zeroed:
             return
 
@@ -85,3 +87,24 @@ class Input(object):
             # cast as float32 for consistency / speed,
             # but _after_ it's been made a list
             self.origin['X'].decoded_output.set_value(np.float32(value)) 
+
+        for o in self.origin.values():
+            o.tick()
+
+    def run(self):
+        self.bind_sockets()
+
+        while True:
+            self.t = float(self.ticker_conn.recv())
+            self.tick()
+            self.ticker_conn.send("")
+
+    def bind_sockets(self):
+        for o in self.origin.values():
+            o.bind_sockets()
+
+        # zmq.REP strictly enforces alternating recv/send ordering
+        zmq_context = zmq.Context()
+        self.ticker_conn = zmq_context.socket(zmq.REP)
+        self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
+

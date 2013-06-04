@@ -14,6 +14,10 @@ from . import input
 from . import subnetwork
 from . import connection
 
+from multiprocessing import Process
+import zmq
+from . import zmq_utils
+
 class Network(object):
     def __init__(self, name, seed=None, fixed_seed=None, dt=.001):
         """Wraps an NEF network with a set of helper functions
@@ -35,13 +39,22 @@ class Network(object):
         self.fixed_seed = fixed_seed
         # all the nodes in the network, indexed by name
         self.nodes = {}
+        self.processes = []
+
+        self.setup = False
+        self.ticker_conn = zmq.Context().socket(zmq.DEALER)
+        self.ticker_conn.bind(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
+
         # the function call to run the theano portions of the model
-        self.theano_tick = None
+        # self.theano_tick = None
         # the list of nodes that have non-theano code
-        self.tick_nodes = [] 
+        # self.tick_nodes = [] 
         self.random = random.Random()
         if seed is not None:
             self.random.seed(seed)
+
+    def __del__(self):
+        self.ticker_conn.close()
 
     def add(self, node):
         """Add an arbitrary non-theano node to the network.
@@ -56,9 +69,11 @@ class Network(object):
         """
         # remake theano_tick function, in case the node has Theano updates 
         self.theano_tick = None 
-        self.tick_nodes.append(node)
+        #self.tick_nodes.append(node)
         self.nodes[node.name] = node
 
+        p = Process(target=node.run, name=node.name)
+        self.processes.append(p)
 
     def connect(self, pre, post, transform=None, weight=1,
                 index_pre=None, index_post=None, pstc=0.01, 
@@ -136,6 +151,7 @@ class Network(object):
             instead of creating a new one.
 
         """
+
         # reset timer in case the model has been run,
         # as adding a new node requires rebuilding the theano function 
         self.theano_tick = None  
@@ -143,15 +159,16 @@ class Network(object):
         # get post Node object from node dictionary
         post = self.get_object(post)
 
-        # get the origin from the pre Node
-        pre_origin = self.get_origin(pre, func)
         # get pre Node object from node dictionary
         pre_name = pre
         pre = self.get_object(pre)
-
-        # get decoded_output from specified origin
+        # get the origin from the pre Node, CREATE one if does not exist
+        pre_origin = self.get_origin(pre_name, func)
         pre_output = pre_origin.decoded_output
         dim_pre = pre_origin.dimensions 
+
+        origin_socket, destination_socket = \
+            zmq_utils.create_local_socket_definition_pair(pre, post)
 
         if transform is not None: 
 
@@ -179,6 +196,8 @@ class Network(object):
             #TODO: a better check for this
             if transform.shape[0] != post.dimensions * post.array_size \
                                                 or len(transform.shape) > 2:
+
+                raise Exception("ERROR", "Case 1 and 2 should NOT be reached.")
 
                 if transform.shape[0] == post.array_size * post.neurons_num:
                     transform = transform.reshape(
@@ -231,8 +250,11 @@ class Network(object):
 
                     # pass in the pre population encoded output function
                     # to the post population, connecting them for theano
+                    # I.E. adding an Accumulator
                     post.add_termination(name=pre_name, pstc=pstc, 
-                        encoded_input=encoded_output)
+                        encoded_input=encoded_output, input_socket=dest_socket)
+
+                    pre_origin.add_output(origin_socket)
 
                     return
 
@@ -249,12 +271,19 @@ class Network(object):
 
         # apply transform matrix, directing pre dimensions
         # to specific post dimensions
-        decoded_output = TT.dot(transform, pre_output)
 
-        # pass in the pre population decoded output function
-        # to the post population, connecting them for theano
+        # decoded_output = TT.dot(transform, pre_output)
+
+        # decoded input = decoded_out * transform
+        # decoded_out (pre output) needs to be replaced using IPC
+        # so pass both + calculate dot product in accumulator
+
+        # passing in the VALUE of pre output
         post.add_termination(name=pre_name, pstc=pstc, 
-            decoded_input=decoded_output) 
+            decoded_input=pre_output.get_value(), 
+            input_socket=destination_socket, transform=transform) 
+
+        pre_origin.add_output(origin_socket)
 
     def get_object(self, name):
         """This is a method for parsing input to return the proper object.
@@ -363,12 +392,17 @@ class Network(object):
         self.theano_tick = None
 
         kwargs['dt'] = self.dt
-        e = ensemble.Ensemble(*args, **kwargs) 
+        e = ensemble.Ensemble(name, *args, **kwargs) 
+        self.nodes[name] = e
+
+        p = Process(target=e.run, name=name)
+        self.processes.append(p)
 
         # store created ensemble in node dictionary
         if kwargs.get('mode', None) == 'direct':
+            raise Exception("ERROR", "Do not support 'direct' communication mode")
             self.tick_nodes.append(e)
-        self.nodes[name] = e
+        
         return e
 
     def make_array(self, name, neurons, array_size, dimensions=1, **kwargs):
@@ -396,7 +430,6 @@ class Network(object):
         :param name: the name of the subnetwork to create        
         """
         return subnetwork.SubNetwork(name, self)
-
 
     def make_probe(self, target, name=None, dt_sample=0.01, 
                    data_type='decoded', **kwargs):
@@ -462,24 +495,41 @@ class Network(object):
         :param float dt: the timestep of the update
         """
         # if theano graph hasn't been calculated yet, retrieve it
-        if self.theano_tick is None:
-            self.theano_tick = self.make_theano_tick() 
+        # if self.theano_tick is None:
+        #     self.theano_tick = self.make_theano_tick() 
+
+        if not self.setup:
+            for proc in self.processes:
+                if not proc.is_alive():
+                    proc.start()
+            self.setup = True
+
         for i in range(int(time / self.dt)):
             # get current time step
             t = self.run_time + i * self.dt
 
-            # run the non-theano nodes
-            for node in self.tick_nodes:
-                node.t = t
-                node.theano_tick()
+            num_processes = len(self.processes)
 
-            # run the theano nodes
-            self.theano_tick()
+            for i in xrange(num_processes):
+                self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
+                self.ticker_conn.send(str(t))
+
+            for i in xrange(num_processes):
+                self.ticker_conn.recv() # This is the delimiter (discard it)
+                self.ticker_conn.recv()
 
         # update run_time variable
         self.run_time += time
 
         ## TODO spike: run cleanup here
+
+    # called when the user is all done (otherwise, procs hang :) )
+    def clean_up(self):
+        self.ticker_conn.close()
+
+        # force kill
+        for proc in self.processes:
+            proc.terminate()
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the 
