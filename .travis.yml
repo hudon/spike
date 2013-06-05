@@ -16,4 +16,4 @@ install:
   - PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
   - export PYTHONPATH
 script:
-  - test/unit-tests.sh
+  - bash test/unit-tests.sh
