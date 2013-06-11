@@ -432,6 +432,9 @@ class Network(object):
         :returns: The Probe object
 
         """
+
+        raise Exception("ERROR: Probes are not yet supported by spike.")
+
         i = 0
         target_name = target + '-' + data_type
         while name is None or self.nodes.has_key(name):
