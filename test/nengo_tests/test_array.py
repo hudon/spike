@@ -12,7 +12,7 @@ import nef_theano as nef
 
 def test_array():
 
-    neurons = 40
+    neurons = 5000
 
     is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
 
@@ -36,7 +36,7 @@ def test_array():
     net.connect('in', 'B2')
     net.connect('A2', 'B')
 
-    timesteps = 200
+    timesteps = 100000
     dt_step = 0.01
     t = np.linspace(dt_step, timesteps*dt_step, timesteps)
     pstc = 0.01
