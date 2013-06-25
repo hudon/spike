@@ -4,8 +4,8 @@
 
 while [ 1 ]
 do
-	echo "ours:"
-	time /usr/bin/python2 /home/robert/spike/test/nengo_tests/test_array.py    /home/robert/spike/test/../src target > /dev/null
 	echo "theirs:"
 	time /usr/bin/python2 /home/robert/spike/test/nengo_tests/test_array.py    /home/robert/spike/test/../examples/new-theano > /dev/null
+	echo "ours:"
+	time /usr/bin/python2 /home/robert/spike/test/nengo_tests/test_array.py    /home/robert/spike/test/../src target > /dev/null
 done
