@@ -42,6 +42,9 @@ compareOutput(){
   diff=$(($end-$start))
   echo "Took ${diff} seconds."
 
+  echo "$ACTUAL_OUT" > /tmp/1
+  echo "$EXPECTED_OUT" > /tmp/2
+
   diff=$(diff <(echo "${ACTUAL_OUT}") <(echo "${EXPECTED_OUT}"))
 
   if [ ${#diff} -ne 0 ]; then
