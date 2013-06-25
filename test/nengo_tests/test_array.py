@@ -17,7 +17,7 @@ def test_array():
     is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
 
     net = nef.Network('Array Test', seed=50)
-    net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
+    net.make_input('in', np.arange(-1, 1, .34))
     #net.make_input('in', value=1, zero_after=1.0)
 
     if is_spike:
