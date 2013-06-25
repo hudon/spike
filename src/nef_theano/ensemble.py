@@ -12,6 +12,7 @@ from . import filter
 from .hPES_termination import hPESTermination
 from .helpers import map_gemv
 
+import os
 import zmq
 import zmq_utils
 
@@ -71,12 +72,14 @@ class EnsembleProcess:
         for i, socket in enumerate(self.input_sockets):
             socket_inst = socket.get_instance()
             if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
+                print "Returning in tick."
                 return
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
             val = socket.get_instance().recv_pyobj()
             inputs[socket.name] = val
+            print " recv_pyobj for socked named ", socket.name, " for pid ",os.getpid()
 
         self.ensemble.tick(inputs)
 
@@ -85,7 +88,7 @@ class EnsembleProcess:
         self.ensemble.make_tick()
 
         if self.is_printing:
-            print self.origin['X'].decoded_output.get_value()
+            print "First Decoded Origin: ",self.origin['X'].decoded_output.get_value()," in process ",os.getpid()
 
         while True:
             msg = self.ticker_conn.recv()
@@ -94,7 +97,7 @@ class EnsembleProcess:
 
             self.tick()
             if self.is_printing:
-                print self.origin['X'].decoded_output.get_value()
+                print "Decoded Origin: ",self.origin['X'].decoded_output.get_value()," in process ",os.getpid()
 
             self.ticker_conn.send("")
 
@@ -443,9 +446,11 @@ class Ensemble:
         self.theano_tick = theano.function([], [], updates=updates)
 
         # introduce 1-time-tick delay
+        print "1-time delay START"
         self.theano_tick()
         for o in self.origin.values():
             o.tick()
+        print "1-time delay END"
 
     def direct_mode_tick(self):
         raise Exception("ERROR", "Not using 'direct' mode of ensembles")

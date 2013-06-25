@@ -4,6 +4,7 @@ import collections
 import numpy as np
 import theano
 
+import os
 import zmq
 import zmq_utils
 
@@ -63,3 +64,4 @@ class Origin(object):
     def tick(self):
         for socket in self.output_sockets:
             socket.get_instance().send_pyobj(self.decoded_output.get_value())
+            print "send_pyobj to socked named ",socket.name, " from pid ", os.getpid()

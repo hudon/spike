@@ -499,6 +499,8 @@ class Network(object):
             self.setup = True
 
         for i in range(int(time / self.dt)):
+
+            print "---- Starting to perform tick number ", i," ----"
             # get current time step
             t = self.run_time + i * self.dt
 
@@ -510,7 +512,7 @@ class Network(object):
                 self.ticker_conn.send(str(t))
 
             ## Wait for all nodes
-            for i in xrange(num_processes):
+            for j in xrange(num_processes):
                 self.ticker_conn.recv() # This is the delimiter (discard it)
                 self.ticker_conn.recv()
 
