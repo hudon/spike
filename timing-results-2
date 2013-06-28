@@ -1,139 +1,30 @@
+REMOVED ZERO-AFTER
+
+disregard first run (theano compilation)
+
 ours:
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-INFO (theano.gof.compilelock): Waiting for existing lock by process '3257' (I am process '3263')
-INFO (theano.gof.compilelock): To manually release the lock, delete /home/robert/.theano/compiledir_Linux-3.2.0-45-generic-x86_64-with-Ubuntu-12.04-precise-x86_64-2.7.3/lock_dir
-INFO (theano.gof.compilelock): Waiting for existing lock by process '3257' (I am process '3260')
-INFO (theano.gof.compilelock): To manually release the lock, delete /home/robert/.theano/compiledir_Linux-3.2.0-45-generic-x86_64-with-Ubuntu-12.04-precise-x86_64-2.7.3/lock_dir
-INFO (theano.gof.compilelock): Waiting for existing lock by process '3257' (I am process '3254')
-INFO (theano.gof.compilelock): To manually release the lock, delete /home/robert/.theano/compiledir_Linux-3.2.0-45-generic-x86_64-with-Ubuntu-12.04-precise-x86_64-2.7.3/lock_dir
-INFO (theano.gof.compilelock): Waiting for existing lock by process '3263' (I am process '3254')
-INFO (theano.gof.compilelock): To manually release the lock, delete /home/robert/.theano/compiledir_Linux-3.2.0-45-generic-x86_64-with-Ubuntu-12.04-precise-x86_64-2.7.3/lock_dir
-INFO (theano.gof.compilelock): Waiting for existing lock by process '3263' (I am process '3260')
-INFO (theano.gof.compilelock): To manually release the lock, delete /home/robert/.theano/compiledir_Linux-3.2.0-45-generic-x86_64-with-Ubuntu-12.04-precise-x86_64-2.7.3/lock_dir
-INFO (theano.gof.compilelock): Waiting for existing lock by process '3260' (I am process '3254')
-INFO (theano.gof.compilelock): To manually release the lock, delete /home/robert/.theano/compiledir_Linux-3.2.0-45-generic-x86_64-with-Ubuntu-12.04-precise-x86_64-2.7.3/lock_dir
 
 real	161m36.244s
 user	278m41.213s
 sys	10m17.591s
+
 theirs:
 
 real	112m15.096s
 user	111m53.384s
 sys	0m9.933s
+
+
 ours:
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
 
 real	80m3.530s
 user	193m30.202s
 sys	9m55.013s
+
 theirs:
 
 real	109m31.331s
 user	109m10.185s
 sys	0m9.717s
-ours:
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-Process B2:
-Traceback (most recent call last):
-  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
-Process A2:
-Traceback (most recent call last):
-  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
-Process A:
-Traceback (most recent call last):
-Process B:
-  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
-Traceback (most recent call last):
-  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
-Process in:
-Traceback (most recent call last):
-  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
-    self.run()
-    self.run()
-  File "/usr/lib/python2.7/multiprocessing/process.py", line 114, in run
-    self._target(*self._args, **self._kwargs)
-  File "/home/robert/spike/test/../src/nef_theano/ensemble.py", line 95, in run
-  File "/usr/lib/python2.7/multiprocessing/process.py", line 114, in run
-    msg = self.ticker_conn.recv()
-  File "socket.pyx", line 616, in     msg = self.ticker_conn.recv()
-    self._target(*self._args, **self._kwargs)
-ket.Socket.recv (zmq/core/socket.c:5961)
-  File "socket.pyx", line 616, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5961)
-  File "/home/robert/spike/test/../src/nef_theano/input.py", line 100, in run
-    self.ensemble.tick(inputs)
-  File "/home/robert/spike/test/../src/nef_theano/ensemble.py", line 476, in tick
-    self.theano_tick()
-  File "/usr/local/lib/python2.7/dist-packages/theano/compile/function_module.py", line 580, in __call__
-  File "socket.pyx", line 650, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5832)
-  File "socket.pyx", line 650, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5832)
-  File "socket.pyx", line 119, in zmq.core.socket._recv_copy (zmq/core/socket.c:1664)
-  File "socket.pyx", line 119, in zmq.core.socket._recv_copy (zmq/core/socket.c:1664)
-  File "error.pyx", line 92, in zmq.core.error.ZMQError.__init__ (zmq/core/error.c:936)
-  File "error.pyx", line 92, in zmq.core.error.ZMQError.__init__ (zmq/core/error.c:936)
-KeyboardInterrupt
-KeyboardInterrupt
-Traceback (most recent call last):
-  File "/home/robert/spike/test/nengo_tests/test_array.py", line 75, in <module>
-    test_array()
-  File "/home/robert/spike/test/nengo_tests/test_array.py", line 54, in test_array
-    net.run(timesteps*dt_step)
-  File "/home/robert/spike/test/../src/nef_theano/network.py", line 514, in run
-    self.ticker_conn.recv() # This is the delimiter (discard it)
-  File "socket.pyx", line 616, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5961)
-  File "socket.pyx", line 650, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5832)
-  File "socket.pyx", line 119, in zmq.core.socket._recv_copy (zmq/core/socket.c:1664)
-  File "error.pyx", line 92, in zmq.core.error.ZMQError.__init__ (zmq/core/error.c:936)
-KeyboardInterrupt
-    outputs = self.fn()
-  File "/usr/local/lib/python2.7/dist-packages/theano/gof/op.py", line 606, in rval
-    r = p(n, [x[0] for x in i], o)
-  File "/home/robert/spike/test/../src/nef_theano/helpers.py", line 21, in perform
-    J[i] += alpha * np.dot(X[i], A[i].T)
-KeyboardInterrupt
-    msg = self.ticker_conn.recv()
-  File "socket.pyx", line 616, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5961)
-  File "socket.pyx", line 650, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5832)
-  File "socket.pyx", line 119, in zmq.core.socket._recv_copy (zmq/core/socket.c:1664)
-  File "error.pyx", line 92, in zmq.core.error.ZMQError.__init__ (zmq/core/error.c:936)
-KeyboardInterrupt
 
-real	11m56.682s
-user	27m25.347s
-sys	1m29.330s
-theirs:
-Traceback (most recent call last):
-  File "/home/robert/spike/test/nengo_tests/test_array.py", line 11, in <module>
-    import nef_theano as nef
-  File "/home/robert/spike/test/../examples/new-theano/nef_theano/__init__.py", line 1, in <module>
-    from .network import Network
-  File "/home/robert/spike/test/../examples/new-theano/nef_theano/network.py", line 5, in <module>
-    import theano
-  File "/usr/local/lib/python2.7/dist-packages/theano/__init__.py", line 76, in <module>
-    import theano.tests
-  File "/usr/local/lib/python2.7/dist-packages/theano/tests/__init__.py", line 3, in <module>
-    from main import main, TheanoNoseTester
-  File "/usr/local/lib/python2.7/dist-packages/theano/tests/main.py", line 2, in <module>
-    import nose.plugins.builtin
-  File "/usr/lib/python2.7/dist-packages/nose/__init__.py", line 1, in <module>
-    from nose.core import collector, main, run, run_exit, runmodule
 

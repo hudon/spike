@@ -3,70 +3,22 @@ theirs:
 real	190m13.324s
 user	188m44.092s
 sys	0m30.110s
+
 ours:
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
 
 real	82m5.487s
 user	198m47.529s
 sys	10m9.582s
+
+
 theirs:
 
 real	111m37.271s
 user	111m16.621s
 sys	0m9.641s
-ours:
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
-/home/robert/spike/test/../src/nef_theano/ensemble.py:443: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
-  self.theano_tick = theano.function([], [], updates=updates)
 
+ours:
 real	81m3.370s
 user	196m0.795s
 sys	9m56.885s
-theirs:
-Traceback (most recent call last):
-  File "/home/robert/spike/test/nengo_tests/test_array.py", line 75, in <module>
-    test_array()
-  File "/home/robert/spike/test/nengo_tests/test_array.py", line 56, in test_array
-    net.run(timesteps * dt_step, print_origin='B')
-  File "/home/robert/spike/test/../examples/new-theano/nef_theano/network.py", line 477, in run
-    self.theano_tick()
-  File "/usr/local/lib/python2.7/dist-packages/theano/compile/function_module.py", line 580, in __call__
-    outputs = self.fn()
-  File "/usr/local/lib/python2.7/dist-packages/theano/gof/op.py", line 606, in rval
-    r = p(n, [x[0] for x in i], o)
-  File "/home/robert/spike/test/../examples/new-theano/nef_theano/lif.py", line 58, in perform
-    v = np.maximum(voltage + dV, 0)
-KeyboardInterrupt
-
-real	34m59.799s
-user	34m46.794s
-sys	0m9.473s
-ours:
-Traceback (most recent call last):
-  File "/home/robert/spike/test/nengo_tests/test_array.py", line 11, in <module>
-    import nef_theano as nef
-  File "/home/robert/spike/test/../src/nef_theano/__init__.py", line 1, in <module>
-    from .network import Network
-  File "/home/robert/spike/test/../src/nef_theano/network.py", line 5, in <module>
-    import theano
-  File "/usr/local/lib/python2.7/dist-packages/theano/__init__.py", line 76, in <module>
-    import theano.tests
-  File "/usr/local/lib/python2.7/dist-packages/theano/tests/__init__.py", line 3, in <module>
-    from main import main, TheanoNoseTester
-  File "/usr/local/lib/python2.7/dist-packages/theano/tests/main.py", line 2, in <module>
-    import nose.plugins.builtin
-  File "/usr/lib/python2.7/dist-packages/nose/__init__.py", line 1, in <module>
-    from nose.core import collector, main, run, run_exit, runmodule
 
