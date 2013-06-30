@@ -518,13 +518,13 @@ class Network(object):
             for p in self.processes2: #xrange(num_processes):
                 ticker_conn = p[1]
                 #self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
-                ticker_conn.send_pyobj(str(t))
+                ticker_conn.send(str(t))
 
             ## Wait for all nodes
             for j in self.processes2: #xrange(num_processes):
                 ticker_conn = j[1]
                 #self.ticker_conn.recv() # This is the delimiter (discard it)
-                ticker_conn.recv_pyobj()
+                ticker_conn.recv()
 
         for p in self.processes2: #xrange(num_processes):
             ticker_conn = p[1]

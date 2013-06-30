@@ -98,12 +98,12 @@ class Input(object):
         ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
 
         while True:
-            msg = ticker_conn.recv_pyobj()
+            msg = ticker_conn.recv()
             if msg == "END":
                 break
             self.t = float(msg)
             self.tick()
-            ticker_conn.send_pyobj("")
+            ticker_conn.send("")
 
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already
