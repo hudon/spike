@@ -43,7 +43,7 @@ class EnsembleProcess:
         self.poller = zmq.Poller()
 
         self.input_sockets = []
-        self.ticker_conn = None
+        #self.ticker_conn = None
 
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already
@@ -59,8 +59,8 @@ class EnsembleProcess:
             o.bind_sockets(self.zmq_context)
 
         # zmq.REP strictly enforces alternating recv/send ordering
-        self.ticker_conn = self.zmq_context.socket(zmq.REP)
-        self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
+        #self.ticker_conn = self.zmq_context.socket(zmq.REP)
+        #self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
 
     def tick(self):
         """ This process tick is responsible for IPC, keeping the Ensemble
@@ -83,15 +83,17 @@ class EnsembleProcess:
 
         self.ensemble.tick(inputs)
 
-    def run(self):
+    def run(self, ticker_socket_def):
         self.bind_sockets()
         self.ensemble.make_tick()
+
+        ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
 
         if self.is_printing:
             print "First Decoded Origin: ",self.origin['X'].decoded_output.get_value()," in process ",os.getpid()
 
         while True:
-            msg = self.ticker_conn.recv()
+            msg = ticker_conn.recv()
             if msg == "END":
                 break
 
@@ -99,7 +101,7 @@ class EnsembleProcess:
             if self.is_printing:
                 print "Decoded Origin: ",self.origin['X'].decoded_output.get_value()," in process ",os.getpid()
 
-            self.ticker_conn.send("")
+            ticker_conn.send("")
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't

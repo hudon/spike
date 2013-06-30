@@ -34,7 +34,7 @@ class Input(object):
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
-        self.ticker_conn = None
+        #self.ticker_conn = None
 
         # if value parameter is a python function
         if callable(value): 
@@ -93,16 +93,17 @@ class Input(object):
         for o in self.origin.values():
             o.tick()
 
-    def run(self):
+    def run(self, ticker_socket_def):
         self.bind_sockets()
+        ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
 
         while True:
-            msg = self.ticker_conn.recv()
+            msg = ticker_conn.recv()
             if msg == "END":
                 break
             self.t = float(msg)
             self.tick()
-            self.ticker_conn.send("")
+            ticker_conn.send("")
 
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already
@@ -113,6 +114,6 @@ class Input(object):
             o.bind_sockets(self.zmq_context)
 
         # zmq.REP strictly enforces alternating recv/send ordering
-        self.ticker_conn = self.zmq_context.socket(zmq.REP)
-        self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
+        #self.ticker_conn = self.zmq_context.socket(zmq.REP)
+        #self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
 
