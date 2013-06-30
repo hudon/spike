@@ -90,7 +90,7 @@ class EnsembleProcess:
             print self.origin['X'].decoded_output.get_value()
 
         while True:
-            msg = ticker_conn.recv_string()
+            msg = ticker_conn.recv_pyobj()
             if msg == "END":
                 break
 
@@ -98,7 +98,7 @@ class EnsembleProcess:
             if self.is_printing:
                 print self.origin['X'].decoded_output.get_value()
 
-            ticker_conn.send_string("")
+            ticker_conn.send_pyobj("")
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't
