@@ -1,0 +1,41 @@
+robert@robert-ubuntu:~/spike$ /usr/bin/python2 /home/robert/spike/test/nengo_tests/test_array.py    /home/robert/spike/test/../src target
+starting simulation
+Before Recv in  in  10098
+---- Starting to perform tick number  0  ----
+After Recv in  in  10098
+Before Recv in  in  10098
+After Recv in  in  10098
+Before Recv in  in  10098
+/home/robert/spike/test/../src/nef_theano/ensemble.py:457: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:457: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:457: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:457: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+1-time delay START
+1-time delay END
+Before Recv in  B2  10110
+1-time delay START
+1-time delay END
+Before Recv in  A  10104
+After Recv in  A  10104
+in_0  was ready.  10104
+Before Recv in  A  10104
+1-time delay START
+1-time delay END
+Before Recv in  A2  10107
+1-time delay START
+1-time delay END
+First Decoded Origin:  [ 0.  0.  0.  0.  0.  0.]  in process  10101
+Before Recv in  B  10101
+After Recv in  B  10101      ****!!!!!!!!!!!!!!B does 2 Recvs !!!!!!!!!!!!!!!!!!!****
+in_0  was ready.  10101
+A2_0  was ready.  10101
+Decoded Origin:  [ 0.  0.  0.  0.  0.  0.]  in process  10101
+Before Recv in  B  10101
+After Recv in  B  10101     ****!!!!!!!!!!!!!!B does 2 Recvs !!!!!!!!!!!!!!!!!!!****
+in_0  was ready.  10101
+A2_0  NOT READY.  10101
+Broken.  10101
