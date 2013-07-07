@@ -6,6 +6,7 @@ import numpy as np
 
 from . import origin
 
+import os
 import zmq
 import zmq_utils
 
@@ -97,7 +98,9 @@ class Input(object):
         self.bind_sockets()
 
         while True:
+            print "Before Recv in ",self.name,"",os.getpid()
             msg = self.ticker_conn.recv()
+            print "After Recv in ",self.name,"",os.getpid()
             if msg == "END":
                 break
             self.t = float(msg)

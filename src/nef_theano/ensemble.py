@@ -12,6 +12,7 @@ from . import filter
 from .hPES_termination import hPESTermination
 from .helpers import map_gemv
 
+import sys
 import os
 import zmq
 import zmq_utils
@@ -66,20 +67,28 @@ class EnsembleProcess:
         """ This process tick is responsible for IPC, keeping the Ensemble
         unaware of the details of messaging/sockets.
         """
-        responses = dict(self.poller.poll(1))
 
+	ready = False
+
+	ready = True     # Assume ready and prove otherwise
+        responses = dict(self.poller.poll(1))
         # poll for all inputs, do not receive unless all inputs are available
         for i, socket in enumerate(self.input_sockets):
             socket_inst = socket.get_instance()
             if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
-                print "Returning in tick."
-                return
+                print socket.name," NOT READY. ",os.getpid()
+
+	        ready = False
+            else:
+                print socket.name," was ready. ",os.getpid()
+        if ready == False:
+            print "Broken. ",os.getpid()
+            sys.exit(0)
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
             val = socket.get_instance().recv_pyobj()
             inputs[socket.name] = val
-            print " recv_pyobj for socked named ", socket.name, " for pid ",os.getpid()
 
         self.ensemble.tick(inputs)
 
@@ -91,7 +100,9 @@ class EnsembleProcess:
             print "First Decoded Origin: ",self.origin['X'].decoded_output.get_value()," in process ",os.getpid()
 
         while True:
+            print "Before Recv in ",self.name,"",os.getpid()
             msg = self.ticker_conn.recv()
+            print "After Recv in ",self.name,"",os.getpid()
             if msg == "END":
                 break
 
