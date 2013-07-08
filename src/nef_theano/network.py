@@ -15,6 +15,7 @@ from . import subnetwork
 from . import connection
 
 from multiprocessing import Process
+import os
 import zmq
 from . import zmq_utils
 
@@ -520,6 +521,7 @@ class Network(object):
             for p in self.processes2: #xrange(num_processes):
                 ticker_conn = p[1]
                 #self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
+                print "Doing send in ",os.getpid()
                 ticker_conn.send(str(t))
 
             ## Wait for all nodes

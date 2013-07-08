@@ -68,19 +68,19 @@ class EnsembleProcess:
         unaware of the details of messaging/sockets.
         """
 
-	ready = False
+        ready = False
+        while ready == False:
+            ready = True     # Assume ready and prove otherwise
+            responses = dict(self.poller.poll(1))
+            # poll for all inputs, do not receive unless all inputs are available
+            for i, socket in enumerate(self.input_sockets):
+                socket_inst = socket.get_instance()
+                if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
+                    print socket.name," NOT READY. in ",self.name," ",os.getpid()
+	            ready = False
+                else:
+                    print socket.name," was ready. in ",self.name," ",os.getpid()
 
-	ready = True     # Assume ready and prove otherwise
-        responses = dict(self.poller.poll(1))
-        # poll for all inputs, do not receive unless all inputs are available
-        for i, socket in enumerate(self.input_sockets):
-            socket_inst = socket.get_instance()
-            if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
-                print socket.name," NOT READY. ",os.getpid()
-
-	        ready = False
-            else:
-                print socket.name," was ready. ",os.getpid()
         if ready == False:
             print "Broken. ",os.getpid()
             sys.exit(0)

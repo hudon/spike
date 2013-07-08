@@ -36,7 +36,7 @@ def test_array():
     net.connect('in', 'B2')
     net.connect('A2', 'B')
 
-    timesteps = 0.3
+    timesteps = 200
     dt_step = 0.01
     t = np.linspace(dt_step, timesteps*dt_step, timesteps)
     pstc = 0.01
