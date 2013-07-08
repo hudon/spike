@@ -17,7 +17,7 @@ def test_array():
     is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
 
     net = nef.Network('Array Test', seed=50)
-    net.make_input('in', np.arange(-1, 1, .34))
+    net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
     #net.make_input('in', value=1, zero_after=1.0)
 
     if is_spike:
@@ -36,7 +36,7 @@ def test_array():
     net.connect('in', 'B2')
     net.connect('A2', 'B')
 
-    timesteps = 200
+    timesteps = 101
     dt_step = 0.01
     t = np.linspace(dt_step, timesteps*dt_step, timesteps)
     pstc = 0.01

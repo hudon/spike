@@ -108,10 +108,13 @@ class EnsembleProcess:
             if msg == "END":
                 break
 
+            print "Before tick ",self.name,"",os.getpid()
             self.tick()
+            print "After tick ",self.name,"",os.getpid()
             if self.is_printing:
                 print "Decoded Origin: ",self.origin['X'].decoded_output.get_value()," in process ",os.getpid()
 
+            print "Before send ",self.name,"",os.getpid()
             ticker_conn.send("")
 
     def add_termination(self, input_socket, *args, **kwargs):

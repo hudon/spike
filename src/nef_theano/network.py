@@ -509,6 +509,7 @@ class Network(object):
                     proc.start()
             self.setup = True
 
+
         for i in range(int(time / self.dt)):
 
             print "---- Starting to perform tick number ", i," ----"

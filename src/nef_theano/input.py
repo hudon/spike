@@ -106,6 +106,7 @@ class Input(object):
                 break
             self.t = float(msg)
             self.tick()
+            print "Before send in ",self.name,"",os.getpid()
             ticker_conn.send("")
 
     def bind_sockets(self):
