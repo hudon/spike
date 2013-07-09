@@ -69,6 +69,7 @@ class EnsembleProcess:
         for i, socket in enumerate(self.input_sockets):
             socket_inst = socket.get_instance()
             if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
+                raise Exception("ERROR: Input should always be ready because of 1-tick delay.")
                 return
 
         inputs = {}

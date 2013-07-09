@@ -60,6 +60,9 @@ class Input(object):
     def tick(self):
         """Move function input forward in time."""
         if self.zeroed:
+            ## Even if the input is zeroed, we must send output
+            for o in self.origin.values():
+                o.tick()
             return
 
         # zero output
@@ -95,6 +98,9 @@ class Input(object):
     def run(self, ticker_socket_def):
         self.bind_sockets()
         ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
+
+        ## 1-time tick delay
+        self.tick()
 
         while True:
             msg = ticker_conn.recv()
