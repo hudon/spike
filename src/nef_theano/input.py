@@ -66,7 +66,7 @@ class Input(object):
             return
 
         # zero output
-        if self.zero_after_time is not None and self.t > self.zero_after_time:
+        if self.zero_after_time is not None and self.t >= self.zero_after_time:
             self.origin['X'].decoded_output.set_value(
                 np.float32(np.zeros(self.origin['X'].dimensions)))
             self.zeroed = True
