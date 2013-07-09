@@ -21,20 +21,10 @@ class SocketDefinition(object):
 
         return socket
 
-def create_socket_defs_reqrep(src, dest):
-    socket_name = "ipc:///tmp/spike.node_connection.{src_str}-to-{dest_str}".format(
-        src_str=src,
-        dest_str=dest)
-
-    origin_socket_type = zmq.REQ
-    destination_socket_type = zmq.REP
-
-    return SocketDefinition(socket_name, origin_socket_type, is_server=True), SocketDefinition(socket_name, destination_socket_type, is_server=False)
-
-def create_socket_defs_pushpull(src, dest):
-    socket_name = "ipc:///tmp/spike.node_connection.{src_str}-to-{dest_str}".format(
-        src_str=src,
-        dest_str=dest)
+def create_local_socket_definition_pair(origin_node, destination_node):
+    socket_name = "ipc:///tmp/spike.node_connection.{origin_name}-to-{destination_name}".format(
+        origin_name=origin_node.name,
+        destination_name=destination_node.name)
 
     origin_socket_type = zmq.PUSH
     destination_socket_type = zmq.PULL
@@ -53,5 +43,4 @@ class Socket(object):
 
     def init(self, zmq_context):
         self.instance = self.definition.create_socket(zmq_context)
-        return self.instance
 

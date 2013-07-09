@@ -40,9 +40,10 @@ class Network(object):
         # all the nodes in the network, indexed by name
         self.nodes = {}
         self.processes = []
-        self.zmq_context = zmq.Context()
 
         self.setup = False
+        self.ticker_conn = zmq.Context().socket(zmq.DEALER)
+        self.ticker_conn.bind(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
 
         # TODO: remove these commented variables if they are not used by direct ensembles
 
@@ -71,11 +72,8 @@ class Network(object):
         #self.tick_nodes.append(node)
         self.nodes[node.name] = node
 
-        ticker_socket, node_socket = \
-            zmq_utils.create_socket_defs_reqrep("ticker", node.name)
-        p = Process(target=node.run, args=(node_socket,), name=node.name)
-        self.processes.append((p,
-            ticker_socket.create_socket(self.zmq_context),))
+        p = Process(target=node.run, name=node.name)
+        self.processes.append(p)
 
     def connect(self, pre, post, transform=None, weight=1,
                 index_pre=None, index_post=None, pstc=0.01, 
@@ -170,7 +168,7 @@ class Network(object):
         dim_pre = pre_origin.dimensions 
 
         origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
+            zmq_utils.create_local_socket_definition_pair(pre, post)
 
         if transform is not None: 
 
@@ -384,14 +382,12 @@ class Network(object):
         # the theano function
         self.theano_tick = None
 
-        ticker_socket, node_socket = \
-            zmq_utils.create_socket_defs_reqrep("ticker", name)
         kwargs['dt'] = self.dt
-        e = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
+        e = ensemble.EnsembleProcess(name, *args, **kwargs)
         self.nodes[name] = e
 
         p = Process(target=e.run, name=name)
-        self.processes.append((p, ticker_socket.create_socket(self.zmq_context),))
+        self.processes.append(p)
 
         # store created ensemble in node dictionary
         if kwargs.get('mode', None) == 'direct':
@@ -497,8 +493,7 @@ class Network(object):
         #     self.theano_tick = self.make_theano_tick() 
 
         if not self.setup:
-            for p in self.processes:
-                proc = p[0]
+            for proc in self.processes:
                 if not proc.is_alive():
                     proc.start()
             self.setup = True
@@ -509,19 +504,21 @@ class Network(object):
             # get current time step
             t = self.run_time + i * self.dt
 
+            num_processes = len(self.processes)
+
             ## Tick all nodes
-            for p in self.processes:
-                ticker_conn = p[1]
-                ticker_conn.send(str(t))
+            for proc in xrange(num_processes):
+                self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
+                self.ticker_conn.send(str(t))
 
             ## Wait for all nodes
-            for j in self.processes:
-                ticker_conn = j[1]
-                ticker_conn.recv()
+            for i in xrange(num_processes):
+                self.ticker_conn.recv() # This is the delimiter (discard it)
+                self.ticker_conn.recv()
 
-        for p in self.processes:
-            ticker_conn = p[1]
-            ticker_conn.send("END")
+        for proc in xrange(num_processes):
+            self.ticker_conn.send("", zmq.SNDMORE) #This is the Delimiter
+            self.ticker_conn.send("END")
 
         # update run_time variable
         self.run_time += time
@@ -530,9 +527,10 @@ class Network(object):
 
     # called when the simulation is done (otherwise, procs will hang)
     def clean_up(self):
+        self.ticker_conn.close()
+
         # wait for all procs to end
-        for p in self.processes:
-            proc = p[0]
+        for proc in self.processes:
             proc.join()
 
     def write_data_to_hdf5(self, filename='data'):
