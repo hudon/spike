@@ -24,7 +24,7 @@ class EnsembleProcess:
     :param str name: name of the process
     :param bool is_printing: should the process be printing values to stdout
     """
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name, ticker_socket_def, *args, **kwargs):
         self.name = name
         self.is_printing = kwargs.pop('is_printing', None)
 
@@ -42,7 +42,7 @@ class EnsembleProcess:
         self.poller = zmq.Poller()
 
         self.input_sockets = []
-        self.ticker_conn = None
+        self.ticker_socket_def = ticker_socket_def
 
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already
@@ -57,9 +57,7 @@ class EnsembleProcess:
         for o in self.ensemble.origin.values():
             o.bind_sockets(self.zmq_context)
 
-        # zmq.REP strictly enforces alternating recv/send ordering
-        self.ticker_conn = self.zmq_context.socket(zmq.REP)
-        self.ticker_conn.connect(zmq_utils.TICKER_SOCKET_LOCAL_NAME)
+        self.ticker_conn = self.ticker_socket_def.create_socket(self.zmq_context)
 
     def tick(self):
         """ This process tick is responsible for IPC, keeping the Ensemble
@@ -105,7 +103,7 @@ class EnsembleProcess:
         unique_name = self.ensemble.get_unique_name(kwargs['name'],
                 self.ensemble.decoded_input)
         kwargs['name'] = unique_name
-        
+
         self.input_sockets.append(zmq_utils.Socket(input_socket, unique_name))
 
         return self.ensemble.add_termination(*args, **kwargs)
