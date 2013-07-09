@@ -51,7 +51,7 @@ def test_array():
 
     print "starting simulation"
     if is_spike:
-        net.run(timesteps*dt_step)
+        net.run(timesteps * dt_step)
     else:
         net.run(timesteps * dt_step, print_origin='B')
 

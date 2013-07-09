@@ -503,7 +503,9 @@ class Network(object):
                     proc.start()
             self.setup = True
 
-        for i in range(int(time / self.dt)):
+        ## Our simulation was running for 1 extra tick (compared to theirs).
+        ## So we run for 1 less here
+        for i in range(int(time / self.dt) - 1):
             # get current time step
             t = self.run_time + i * self.dt
 
