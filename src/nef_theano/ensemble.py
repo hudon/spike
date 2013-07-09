@@ -77,6 +77,7 @@ class EnsembleProcess:
                 socket_inst = socket.get_instance()
                 if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
                     print socket.name," NOT READY. in ",self.name," ",os.getpid()
+                    raise Exception("ERROR: Input should always be ready because of 1-tick delay.")
 	            ready = False
                 else:
                     print socket.name," was ready. in ",self.name," ",os.getpid()

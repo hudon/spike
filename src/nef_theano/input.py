@@ -101,6 +101,9 @@ class Input(object):
         self.bind_sockets()
         ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
 
+        ## 1-time tick delay
+        self.tick()
+
         while True:
             print "Before Recv in ",self.name,"",os.getpid()
             msg = ticker_conn.recv()
