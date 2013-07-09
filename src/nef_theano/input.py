@@ -62,6 +62,9 @@ class Input(object):
     def tick(self):
         """Move function input forward in time."""
         if self.zeroed:
+            ## Even if the input is zeroed, we must send output
+            for o in self.origin.values():
+                o.tick()
             return
 
         # zero output
