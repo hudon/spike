@@ -120,26 +120,18 @@ def test_basalganglia():
     import numpy as np
     import matplotlib.pyplot as plt
     import math
+
     import sys
+    sys.path.append(sys.argv[1])
+    import nef_theano as nef
 
     is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
     print str(is_spike)
-    
-    if is_spike:
-        sys.path.append("/home/gretac/dev/spike/src/")
-    else:
-        sys.path.append("/home/gretac/dev/spike/examples/new-theano/")
-
-    import nef_theano as nef
-
-    # import nengo_theano as nef
-    # from .. import templatess
 
     net = nef.Network('BG Test', seed=100)
     def func(x):
         return [math.sin(x), .5,.2]
 
-    
     # if is_spike:
     #     net.make_input('in', value=func, is_printing=True)
     # else:
