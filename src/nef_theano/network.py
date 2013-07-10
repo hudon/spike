@@ -37,19 +37,13 @@ class Network(object):
         self.run_time = 0.0    
         self.seed = seed
         self.fixed_seed = fixed_seed
-        # all the nodes in the network, indexed by name
+
+        # the input and spiking ensemble nodes in the network
         self.nodes = {}
         self.processes = []
+
         self.zmq_context = zmq.Context()
-
         self.setup = False
-
-        # TODO: remove these commented variables if they are not used by direct ensembles
-
-        # the function call to run the theano portions of the model
-        # self.theano_tick = None
-        # the list of nodes that have non-theano code
-        # self.tick_nodes = [] 
 
         self.random = random.Random()
         if seed is not None:
@@ -66,9 +60,6 @@ class Network(object):
         :param Node node: the node to add to this network
 
         """
-        # remake theano_tick function, in case the node has Theano updates 
-        self.theano_tick = None 
-        #self.tick_nodes.append(node)
         self.nodes[node.name] = node
 
         ticker_socket, node_socket = \
@@ -154,10 +145,6 @@ class Network(object):
 
         """
 
-        # reset timer in case the model has been run,
-        # as adding a new node requires rebuilding the theano function 
-        self.theano_tick = None  
-
         # get post Node object from node dictionary
         post = self.get_object(post)
 
@@ -168,9 +155,6 @@ class Network(object):
         pre_origin = self.get_origin(pre_name, func)
         pre_output = pre_origin.decoded_output
         dim_pre = pre_origin.dimensions 
-
-        origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
 
         if transform is not None: 
 
@@ -196,10 +180,9 @@ class Network(object):
 
             # check to see if post side is an encoded connection, case 2 or 3
             #TODO: a better check for this
-            if transform.shape[0] != post.dimensions * post.array_size \
-                                                or len(transform.shape) > 2:
+            if transform.shape[0] != post.dimensions * post.array_size or len(transform.shape) > 2:
 
-                raise Exception("ERROR", "Case 1 and 2 should NOT be reached.")
+                raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
 
                 if transform.shape[0] == post.array_size * post.neurons_num:
                     transform = transform.reshape(
@@ -238,7 +221,8 @@ class Network(object):
 
                     return
 
-                else: # otherwise we're in case 2
+                else: # otherwise we're in case 2 (pre is decoded)
+                    raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
                     assert transform.shape ==  \
                                (post.array_size, post.neurons_num, dim_pre)
 
@@ -252,12 +236,13 @@ class Network(object):
 
                     # pass in the pre population encoded output function
                     # to the post population, connecting them for theano
-                    post.add_termination(input_socket=dest_socket, name=pre_name, pstc=pstc, 
+                    post.add_termination(name=pre_name, pstc=pstc, 
                         encoded_input=encoded_output)
 
-                    pre_origin.add_output(origin_socket)
-
                     return
+
+        origin_socket, destination_socket = \
+            zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
 
         # if decoded-decoded connection (case 1)
         # compute transform if not given, if given make sure shape is correct
@@ -291,14 +276,14 @@ class Network(object):
 
         # separate into node and origin, if specified
         split = name.split(':')
+        nodes = self.nodes
 
         if len(split) == 1:
             # no origin specified
-            return self.nodes[name]
-
+            return nodes[name]
         elif len(split) == 2:
             # origin specified
-            node = self.nodes[split[0]]
+            node = nodes[split[0]]
             return node.origin[split[1]]
 
     def get_origin(self, name, func=None):
@@ -379,24 +364,17 @@ class Network(object):
                 # if no seed provided, get one randomly from the rng
                 kwargs['seed'] = self.random.randrange(0x7fffffff)
 
-        # just in case the model has been run previously,
-        # as adding a new node means we have to rebuild
-        # the theano function
-        self.theano_tick = None
-
         ticker_socket, node_socket = \
             zmq_utils.create_socket_defs_reqrep("ticker", name)
         kwargs['dt'] = self.dt
-        e = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
-        self.nodes[name] = e
 
+        # create ensemble and ensemble process
+        # TODO: currently using separate processes for direct nodes
+        # (Terry wanted them on a single proceses, but need more info for that)
+        e = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
         p = Process(target=e.run, name=name)
         self.processes.append((p, ticker_socket.create_socket(self.zmq_context),))
-
-        # store created ensemble in node dictionary
-        if kwargs.get('mode', None) == 'direct':
-            raise Exception("ERROR", "Do not support 'direct' communication mode")
-            self.tick_nodes.append(e)
+        self.nodes[name] = e
 
         return e
 
@@ -426,8 +404,7 @@ class Network(object):
         """
         return subnetwork.SubNetwork(name, self)
 
-    def make_probe(self, target, name=None, dt_sample=0.01, 
-                   data_type='decoded', **kwargs):
+    def make_probe(self, target, name=None, dt_sample=0.01, data_type='decoded', **kwargs):
         """Add a probe to measure the given target.
 
         :param target: a Theano shared variable to record
@@ -462,22 +439,23 @@ class Network(object):
         self.add(p)
         return p
 
+    # TODO: remove this method if direct ensembles do not need to share processes
     def make_theano_tick(self):
         """Generate the theano function for running the network simulation.
 
         :returns: theano function
         """
-
+        raise Exception("ERROR: Global theano tick not supported.")
         # dictionary for all variables
         # and the theano description of how to compute them 
         updates = OrderedDict()
 
-        # for every node in the network
-        for node in self.nodes.values():
+        # for every direct ensemble in the network
+        for node in self.direct_nodes.values():
             # if there is some variable to update
             if hasattr(node, 'update'):
                 # add it to the list of variables to update every time step
-                updates.update(node.update(self.dt))
+                updates.update(node.update())
 
         # create graph and return optimized update function
         return theano.function([], [], updates=updates.items())
@@ -492,10 +470,6 @@ class Network(object):
         :param float time: the amount of time (in seconds) to run
         :param float dt: the timestep of the update
         """
-        # if theano graph hasn't been calculated yet, retrieve it
-        # if self.theano_tick is None:
-        #     self.theano_tick = self.make_theano_tick() 
-
         if not self.setup:
             for p in self.processes:
                 proc = p[0]

@@ -179,6 +179,7 @@ class Network(object):
             #TODO: a better check for this
             if transform.shape[0] != post.dimensions * post.array_size \
                                                 or len(transform.shape) > 2:
+                raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
 
                 if transform.shape[0] == post.array_size * post.neurons_num:
                     transform = transform.reshape(
@@ -218,6 +219,7 @@ class Network(object):
                     return
                                    
                 else: # otherwise we're in case 2
+                    raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
                     assert transform.shape ==  \
                                (post.array_size, post.neurons_num, dim_pre)
                     
@@ -368,6 +370,7 @@ class Network(object):
         # store created ensemble in node dictionary
         if kwargs.get('mode', None) == 'direct':
             self.tick_nodes.append(e)
+            
         self.nodes[name] = e
         return e
 
@@ -398,7 +401,7 @@ class Network(object):
         return subnetwork.SubNetwork(name, self)
             
 
-    def make_probe(self, target, name=None, dt_sample=0.01, 
+    def make_probe(self, target, name=None, dt_sample=0.01,
                    data_type='decoded', **kwargs):
         """Add a probe to measure the given target.
         
@@ -464,6 +467,7 @@ class Network(object):
         # if theano graph hasn't been calculated yet, retrieve it
         if self.theano_tick is None:
             self.theano_tick = self.make_theano_tick() 
+
         for i in range(int(time / self.dt)):
             # get current time step
             t = self.run_time + i * self.dt
