@@ -1,0 +1,61 @@
+theirs:
+ours:
+theirs:
+ours:
+theirs:
+ours:
+theirs:
+ours:
+theirs:
+ours:
+
+
+
+Forgot to pipe both 1 and 2 to the same file:
+
+robert@robert-ubuntu:~/spike$ rm -rf ~/.theano/
+robert@robert-ubuntu:~/spike$ ./a > out
+
+real	190m20.036s
+user	189m8.605s
+sys	0m28.890s
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+
+real	65m16.854s
+user	179m3.995s
+sys	2m27.329s
+
+real	111m45.977s
+user	111m24.786s
+sys	0m9.821s
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+
+real	67m18.214s
+user	179m43.366s
+sys	2m25.529s
+
+real	111m31.433s
+user	111m11.053s
+sys	0m8.477s
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:437: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
