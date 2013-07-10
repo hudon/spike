@@ -54,15 +54,14 @@ class Input(object):
 
     def theano_tick(self):
         """Move function input forward in time.
-        
         """
         if self.zeroed:
-            self.origin['X'].decoded_output.set_value(
-                np.float32(np.zeros(self.origin['X'].dimensions)))
             return
 
         # zero output
         if self.zero_after_time is not None and self.t > self.zero_after_time:
+            self.origin['X'].decoded_output.set_value(
+                np.float32(np.zeros(self.origin['X'].dimensions)))
             self.zeroed = True
     
         # change value

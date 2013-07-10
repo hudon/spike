@@ -15,7 +15,7 @@ class Input(object):
     Any callable can be used an input function.
 
     """
-    def __init__(self, name, value, zero_after_time=None):
+    def __init__(self, name, value, dt, zero_after_time=None):
         """
         :param string name: name of the function input
         :param value: defines the output decoded_output
@@ -26,6 +26,8 @@ class Input(object):
         """
         self.name = name
         self.t = 0
+        self.dt = dt
+        self.run_time = 0
         self.function = None
         self.zero_after_time = zero_after_time
         self.zeroed = False
@@ -66,7 +68,7 @@ class Input(object):
             return
 
         # zero output
-        if self.zero_after_time is not None and self.t >= self.zero_after_time:
+        if self.zero_after_time is not None and self.t > self.zero_after_time:
             self.origin['X'].decoded_output.set_value(
                 np.float32(np.zeros(self.origin['X'].dimensions)))
             self.zeroed = True
@@ -99,16 +101,14 @@ class Input(object):
         self.bind_sockets()
         ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
 
-        ## 1-time tick delay
-        self.tick()
+        sim_time = float(ticker_conn.recv())
 
-        while True:
-            msg = ticker_conn.recv()
-            if msg == "END":
-                break
-            self.t = float(msg)
+        for i in range(int(sim_time / self.dt)):
+            self.t = self.run_time + i * self.dt
             self.tick()
-            ticker_conn.send("")
+
+        self.run_time += sim_time
+
 
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already

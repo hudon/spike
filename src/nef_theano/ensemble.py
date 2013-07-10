@@ -63,14 +63,16 @@ class EnsembleProcess:
         """ This process tick is responsible for IPC, keeping the Ensemble
         unaware of the details of messaging/sockets.
         """
-        responses = dict(self.poller.poll(1))
 
-        # poll for all inputs, do not receive unless all inputs are available
-        for i, socket in enumerate(self.input_sockets):
-            socket_inst = socket.get_instance()
-            if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
-                raise Exception("ERROR: Input should always be ready because of 1-tick delay.")
-                return
+        # poll for all inputs, do not continue unless all inputs are available
+        is_waiting_for_input = True
+        while is_waiting_for_input:
+            is_waiting_for_input = False
+            responses = dict(self.poller.poll(1))
+            for i, socket in enumerate(self.input_sockets):
+                socket_inst = socket.get_instance()
+                if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
+                    is_waiting_for_input = True
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
@@ -83,19 +85,12 @@ class EnsembleProcess:
         self.bind_sockets()
         self.ensemble.make_tick()
 
-        if self.is_printing:
-            print self.origin['X'].decoded_output.get_value()
+        time = float(self.ticker_conn.recv())
 
-        while True:
-            msg = self.ticker_conn.recv()
-            if msg == "END":
-                break
-
+        for i in range(int(time / self.ensemble.dt)):
             self.tick()
             if self.is_printing:
                 print self.origin['X'].decoded_output.get_value()
-
-            self.ticker_conn.send("")
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't
@@ -441,8 +436,7 @@ class Ensemble:
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates=updates)
 
-        # introduce 1-time-tick delay
-        self.theano_tick()
+        # introduce 1-time-tick delay data
         for o in self.origin.values():
             o.tick()
 
