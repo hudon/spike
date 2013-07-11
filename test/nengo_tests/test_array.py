@@ -12,12 +12,12 @@ import nef_theano as nef
 
 def test_array():
 
-    neurons = 40
+    neurons = 5000
 
     is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
 
     net = nef.Network('Array Test', seed=50)
-    net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
+    net.make_input('in', np.arange(-1, 1, .34))
     #net.make_input('in', value=1, zero_after=1.0)
 
     if is_spike:
@@ -36,7 +36,7 @@ def test_array():
     net.connect('in', 'B2')
     net.connect('A2', 'B')
 
-    timesteps = 200
+    timesteps = 100000
     dt_step = 0.01
     t = np.linspace(dt_step, timesteps*dt_step, timesteps)
     pstc = 0.01
@@ -51,7 +51,7 @@ def test_array():
 
     print "starting simulation"
     if is_spike:
-        net.run(timesteps * dt_step)
+        net.run(timesteps*dt_step)
     else:
         net.run(timesteps * dt_step, print_origin='B')
 

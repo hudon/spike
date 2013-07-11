@@ -1,0 +1,129 @@
+theirs:
+
+real	191m32.382s
+user	190m30.082s
+sys	0m23.421s
+ours:
+/home/robert/spike/test/../src/nef_theano/ensemble.py:442: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:442: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:442: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:442: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+
+real	85m29.304s
+user	205m59.892s
+sys	10m44.948s
+theirs:
+
+real	112m16.038s
+user	111m54.276s
+sys	0m9.709s
+ours:
+/home/robert/spike/test/../src/nef_theano/ensemble.py:442: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:442: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+/home/robert/spike/test/../src/nef_theano/ensemble.py:442: UserWarning: The parameter 'updates' of theano.function() expects an OrderedDict, got <type 'dict'>. Using a standard dictionary here results in non-deterministic behavior. You should use an OrderedDict if you are using Python 2.7, or use a list of (shared, update) pairs. Do not just convert your dictionary to this type before the call as the conversion will still be non-deterministic.
+  self.theano_tick = theano.function([], [], updates=updates)
+Process A:
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
+Process B2:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 258, in _bootstrap
+    self.run()
+    self.run()
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 114, in run
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 114, in run
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 114, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/robert/spike/test/../src/nef_theano/ensemble.py", line 90, in run
+    self.run()
+obert/spike/test/../src/nef_theano/ensemble.py", line 90, in run
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 114, in run
+    msg = self.ticker_conn.recv()
+  File "socket.pyx", line 616, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5961)
+    msg = self.ticker_conn.recv()
+    self._target(*self._args, **self._kwargs)
+  File "/home/robert/spike/test/../src/nef_theano/ensemble.py", line 94, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/robert/spike/test/../src/nef_theano/input.py", line 106, in run
+    self.tick()
+  File "/home/robert/spike/test/../src/nef_theano/ensemble.py", line 80, in tick
+    self.ensemble.tick(inputs)
+  File "/home/robert/spike/test/../src/nef_theano/ensemble.py", line 475, in tick
+    self.theano_tick()
+    msg = ticker_conn.recv()
+  File "socket.pyx", line 616, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5961)
+  File "socket.pyx", line 650, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5832)
+  File "socket.pyx", line 650, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5832)
+  File "socket.pyx", line 650, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5832)
+  File "socket.pyx", line 119, in zmq.core.socket._recv_copy (zmq/core/socket.c:1664)
+  File "socket.pyx", line 119, in zmq.core.socket._recv_copy (zmq/core/socket.c:1664)
+  File "socket.pyx", line 119, in zmq.core.socket._recv_copy (zmq/core/socket.c:1664)
+  File "error.pyx", line 92, in zmq.core.error.ZMQError.__init__ (zmq/core/error.c:936)
+  File "error.pyx", line 92, in zmq.core.error.ZMQError.__init__ (zmq/core/error.c:936)
+  File "error.pyx", line 92, in zmq.core.error.ZMQError.__init__ (zmq/core/error.c:936)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/robert/spike/test/nengo_tests/test_array.py", line 75, in <module>
+    test_array()
+  File "/home/robert/spike/test/nengo_tests/test_array.py", line 54, in test_array
+    net.run(timesteps*dt_step)
+  File "/home/robert/spike/test/../src/nef_theano/network.py", line 520, in run
+    ticker_conn.recv()
+  File "socket.pyx", line 616, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5961)
+  File "socket.pyx", line 650, in zmq.core.socket.Socket.recv (zmq/core/socket.c:5832)
+  File "socket.pyx", line 119, in zmq.core.socket._recv_copy (zmq/core/socket.c:1664)
+  File "error.pyx", line 92, in zmq.core.error.ZMQError.__init__ (zmq/core/error.c:936)
+KeyboardInterrupt
+    outputs = self.fn()
+  File "/usr/local/lib/python2.7/dist-packages/theano/gof/op.py", line 606, in rval
+    r = p(n, [x[0] for x in i], o)
+  File "/home/robert/spike/test/../src/nef_theano/lif.py", line 80, in perform
+    spiketime + tau_ref, refractory_time - dt)
+KeyboardInterrupt
+
+real	71m24.831s
+user	171m21.039s
+sys	8m54.945s
+theirs:
+Traceback (most recent call last):
+  File "/home/robert/spike/test/nengo_tests/test_array.py", line 11, in <module>
+    import nef_theano as nef
+  File "/home/robert/spike/test/../examples/new-theano/nef_theano/__init__.py", line 1, in <module>
+    from .network import Network
+  File "/home/robert/spike/test/../examples/new-theano/nef_theano/network.py", line 5, in <module>
+    import theano
+  File "/usr/local/lib/python2.7/dist-packages/theano/__init__.py", line 40, in <module>
+    import configdefaults
+  File "/usr/local/lib/python2.7/dist-packages/theano/configdefaults.py", line 331, in <module>
+    in_c_key=False)
+
+
+real	0m0.380s
+user	0m0.304s
+sys	0m0.040s
+ours:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site.py", line 68, in <module>
+    import os
+  File "/usr/lib/python2.7/os.py", line 49, in <module>
+    import posixpath as path
+  File "/usr/lib/python2.7/posixpath.py", line 15, in <module>
+    import stat
+  File "/usr/lib/python2.7/stat.py", line 4, in <module>
+    """
+KeyboardInterrupt
+
+real	0m0.040s
+user	0m0.004s
+sys	0m0.008s
+theirs:
