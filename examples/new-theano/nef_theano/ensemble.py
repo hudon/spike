@@ -138,7 +138,6 @@ class Ensemble:
             self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
 
         elif self.mode == 'direct': 
-            
             # make default origin
             self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size) 
             # reset neurons_num to 0
@@ -192,7 +191,7 @@ class Ensemble:
                 name=name, pstc=pstc, source=encoded_input, 
                 shape=(self.array_size, self.neurons_num))
 
-    def add_learned_termination(self, name, pre, error, pstc, 
+    def add_learned_termination(self, name, pre, error, pstc,
                                 learned_termination_class=hPESTermination,
                                 **kwargs):
         """Adds a learned termination to the ensemble.
@@ -324,7 +323,6 @@ class Ensemble:
         return theano.function([], encoders)()
 
     def theano_tick(self):
-
         if self.mode == 'direct': 
             # set up matrix to store accumulated decoded input
             X = np.zeros((self.array_size, self.dimensions))

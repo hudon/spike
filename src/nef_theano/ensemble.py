@@ -30,6 +30,7 @@ class EnsembleProcess:
 
         ## Adapter for Ensemble
         self.ensemble = Ensemble(*args, **kwargs)
+
         self.origin = self.ensemble.origin
         self.dimensions = self.ensemble.dimensions
         self.array_size = self.ensemble.array_size
@@ -80,6 +81,7 @@ class EnsembleProcess:
             inputs[socket.name] = val
 
         self.ensemble.tick(inputs)
+
 
     def run(self):
         self.bind_sockets()
@@ -232,7 +234,6 @@ class Ensemble:
             self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
 
         elif self.mode == 'direct':
-            raise Exception("ERROR", "The 'direct' ensemble mode should not be used.")
             # make default origin
             self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size) 
             # reset neurons_num to 0
@@ -273,11 +274,14 @@ class Ensemble:
         else: assert False
 
         if decoded_input is not None and self.mode is 'direct':
-            raise Exception("ERROR", "Not using the 'direct' mode of ensembles")
-            source = decoded_input
+            # decoded_input is NOT the shared variable at the origin
+            pre_output = theano.shared(decoded_input)
+            source = TT.dot(transform, pre_output)
+
             self.decoded_input[name] = filter.Filter(
                 name=name, pstc=pstc, source=source,
-                shape=(self.array_size, self.dimensions))
+                shape=(self.array_size, self.dimensions),
+                pre_output=pre_output)
 
         # decoded_input in this case will be the output of pre node
         elif decoded_input is not None and self.mode is 'spiking':
@@ -291,7 +295,7 @@ class Ensemble:
                 shape=(self.array_size, self.dimensions),
                 pre_output=pre_output)
 
-        elif encoded_input:
+        elif encoded_input is not None:
             raise Exception("ERROR", "Just deal with decoded_input for ensembles") 
 
             self.encoded_input[name] = filter.Filter(
@@ -374,7 +378,6 @@ class Ensemble:
         # if we're in direct mode then this population is just directly 
         # performing the specified function, use a basic origin
         elif self.mode == 'direct':
-            raise Exception("ERROR", "The 'direct' ensemble mode is not being used.")
             if func is not None:
                 if 'initial_value' not in kwargs.keys():
                     # [func(np.zeros(self.dimensions)) for i in range(self.array_size)]
@@ -436,12 +439,11 @@ class Ensemble:
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates=updates)
 
-        # introduce 1-time-tick delay data
+        # introduce 1-time-tick delay
         for o in self.origin.values():
             o.tick()
 
     def direct_mode_tick(self):
-        raise Exception("ERROR", "Not using 'direct' mode of ensembles")
         if self.mode == 'direct':
             # set up matrix to store accumulated decoded input
             X = np.zeros((self.array_size, self.dimensions))
@@ -450,12 +452,14 @@ class Ensemble:
             for di in self.decoded_input.values(): 
                 # add its values to the total decoded input
                 X += di.value.get_value()
-
+            
             # if we're calculating a function on the decoded input
             for o in self.origin.values():
                 if o.func is not None:
                     val = np.float32([o.func(X[i]) for i in range(len(X))])
                     o.decoded_output.set_value(val.flatten())
+        else:
+            raise Exception("ERROR", "The current ensemble does not have 'direct' mode.")
 
     # Receive the outputs of pre - decoded output - and pass it to filters
     def tick(self, inputs):
@@ -463,6 +467,9 @@ class Ensemble:
         for key in inputs.keys():
             val = inputs[key]
             self.decoded_input[key].set_pre_output(val)
+
+        if self.mode == 'direct':
+            self.direct_mode_tick()
 
         # should be the compiled theano function for this ensemble
         # includes the filters, ensemble, and origins updates
@@ -542,7 +549,6 @@ class Ensemble:
                 updates.update(o.update(self.dt, updates[self.neurons.output]))
 
         if self.mode == 'direct': 
-            raise Exception("ERROR", "The 'direct' ensemble connections not used")
             # if we're in direct mode then just directly pass the decoded_input 
             # to the origins for decoded_output
             for o in self.origin.values(): 

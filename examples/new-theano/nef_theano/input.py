@@ -76,7 +76,6 @@ class Input(object):
         # update output decoded_output
         if self.origin['X'].func is not None:
             value = self.origin['X'].func(self.t)
-
             # if value is a scalar output, make it a list
             if isinstance(value, Number):
                 value = [value] 

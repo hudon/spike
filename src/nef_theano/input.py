@@ -15,16 +15,17 @@ class Input(object):
     Any callable can be used an input function.
 
     """
-    def __init__(self, name, value, dt, zero_after_time=None):
+    def __init__(self, name, value, dt, zero_after_time=None, is_printing=False):
         """
         :param string name: name of the function input
         :param value: defines the output decoded_output
         :type value: float or function
         :param float zero_after_time:
             time after which to set function output = 0 (s)
-        
+        :param bool is_printing: should the process be printing values to stdout
         """
         self.name = name
+        self.is_printing = False#is_printing
         self.t = 0
         self.dt = dt
         self.run_time = 0
@@ -85,7 +86,6 @@ class Input(object):
         # update output decoded_output
         if self.origin['X'].func is not None:
             value = self.origin['X'].func(self.t)
-
             # if value is a scalar output, make it a list
             if isinstance(value, Number):
                 value = [value] 
@@ -106,9 +106,10 @@ class Input(object):
         for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
             self.tick()
+            if self.is_printing:
+                print self.origin['X'].decoded_output.get_value()
 
         self.run_time += sim_time
-
 
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already
