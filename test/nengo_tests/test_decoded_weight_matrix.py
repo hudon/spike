@@ -13,7 +13,9 @@ Tests:
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
 neurons = 100
 dimensions = 1
@@ -24,7 +26,7 @@ net = nef.Network('WeightMatrix Test')
 net.make_input('in1', 1, zero_after_time=2.5)
 net.make_input('in2', [1, .5, -.5])
 net.make('A', neurons=neurons, dimensions=dimensions, intercept=(.1, 1))
-net.make('B', neurons=neurons, dimensions=dimensions) # for test 1
+net.make('B', neurons=neurons, dimensions=dimensions,is_printing=True) # for test 1
 net.make('B2', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 2 
 net.make('B3', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 3 
 net.make('B4', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 4
@@ -52,31 +54,34 @@ dt_step = 0.01
 t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.01
 
-Ip = net.make_probe('in1', dt_sample=dt_step, pstc=pstc)
-I2p = net.make_probe('in2', dt_sample=dt_step, pstc=pstc)
-Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
-Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
-B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
-B3p = net.make_probe('B3', dt_sample=dt_step, pstc=pstc)
-B4p = net.make_probe('B4', dt_sample=dt_step, pstc=pstc)
+#Ip = net.make_probe('in1', dt_sample=dt_step, pstc=pstc)
+#I2p = net.make_probe('in2', dt_sample=dt_step, pstc=pstc)
+#Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
+#Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
+#B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
+#B3p = net.make_probe('B3', dt_sample=dt_step, pstc=pstc)
+#B4p = net.make_probe('B4', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
-net.run(timesteps*dt_step)
+if is_spike:
+    net.run(timesteps * dt_step)
+else:
+    net.run(timesteps * dt_step, print_origin='B')
 
-plt.ioff(); plt.close(); 
-plt.subplot(711); plt.title('Input1')
-plt.plot(Ip.get_data()); 
-plt.subplot(712); plt.title('Input2')
-plt.plot(I2p.get_data()); 
-plt.subplot(713); plt.title('A = In1')
-plt.plot(Ap.get_data())
-plt.subplot(714); plt.title('B = In2(0) inhib by A')
-plt.plot(Bp.get_data())
-plt.subplot(715); plt.title('B2 = In2, network array full inhib by A')
-plt.plot(B2p.get_data())
-plt.subplot(716); plt.title('B3 = In2, B3[2] inhib by A')
-plt.plot(B3p.get_data())
-plt.subplot(717); plt.title('B4 = In2, B3[2] inhib by A')
-plt.plot(B4p.get_data())
-plt.tight_layout()
-plt.show()
+#plt.ioff(); plt.close(); 
+#plt.subplot(711); plt.title('Input1')
+#plt.plot(Ip.get_data()); 
+#plt.subplot(712); plt.title('Input2')
+#plt.plot(I2p.get_data()); 
+#plt.subplot(713); plt.title('A = In1')
+#plt.plot(Ap.get_data())
+#plt.subplot(714); plt.title('B = In2(0) inhib by A')
+#plt.plot(Bp.get_data())
+#plt.subplot(715); plt.title('B2 = In2, network array full inhib by A')
+#plt.plot(B2p.get_data())
+#plt.subplot(716); plt.title('B3 = In2, B3[2] inhib by A')
+#plt.plot(B3p.get_data())
+#plt.subplot(717); plt.title('B4 = In2, B3[2] inhib by A')
+#plt.plot(B4p.get_data())
+#plt.tight_layout()
+#plt.show()
