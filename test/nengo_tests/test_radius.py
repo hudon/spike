@@ -12,7 +12,12 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
+
+is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
+
 
 def sin3(x):
     return math.sin(x) * 3
@@ -28,7 +33,11 @@ net.make_input('in', value=sin3)
 net.make('A', 1000, 1, radius=5)
 net.make('B', 300, 1, radius=.5)
 net.make('C', 1000, 1, radius=10)
-net.make('D', 300, 1, radius=6)
+
+if is_spike:
+    net.make('D', 300, 1, radius=6, is_printing=True)
+else:
+    net.make('D', 300, 1, radius=6)
 
 net.connect('in', 'A')
 net.connect('A', 'B')
@@ -40,21 +49,24 @@ dt_step = 0.01
 t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.01
 
-Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
-Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
-Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
-Cp = net.make_probe('C', dt_sample=dt_step, pstc=pstc)
-Dp = net.make_probe('D', dt_sample=dt_step, pstc=pstc)
+#Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
+#Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
+#Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
+#Cp = net.make_probe('C', dt_sample=dt_step, pstc=pstc)
+#Dp = net.make_probe('D', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
-net.run(timesteps * dt_step)
+if is_spike:
+    net.run(timesteps * dt_step)
+else:
+    net.run(timesteps * dt_step, print_origin='D')
 
-plt.ioff(); plt.clf(); plt.hold(1);
-plt.plot(Ip.get_data())
-plt.plot(Ap.get_data())
-plt.plot(Bp.get_data())
-plt.plot(Cp.get_data())
-plt.plot(Dp.get_data())
-plt.legend(['Input','A','B','C','D'])
-plt.tight_layout()
-plt.show()
+#plt.ioff(); plt.clf(); plt.hold(1);
+#plt.plot(Ip.get_data())
+#plt.plot(Ap.get_data())
+#plt.plot(Bp.get_data())
+#plt.plot(Cp.get_data())
+#plt.plot(Dp.get_data())
+#plt.legend(['Input','A','B','C','D'])
+#plt.tight_layout()
+#plt.show()
