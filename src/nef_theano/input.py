@@ -111,7 +111,7 @@ class Input(object):
             ticker_conn.send("")
 
     def bind_sockets(self):
-        # create a context for this ensemble process if do not have one already
+        # create a context for this input process if do not have one already
         if self.zmq_context is None:
             self.zmq_context = zmq.Context()
 

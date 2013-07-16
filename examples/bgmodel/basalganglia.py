@@ -26,11 +26,11 @@ def make(net, name='Basal Ganglia', dimensions=1, neurons=100,
     # else:
     netbg.make('input', neurons=1, dimensions=dimensions, mode='direct')
     
-    if is_spike:
-        netbg.make('output', neurons=1, dimensions=dimensions, mode='direct',
-            is_printing=True)
-    else:
-        netbg.make('output', neurons=1, dimensions=dimensions, mode='direct')
+    # if is_spike:
+    #     netbg.make('output', neurons=1, dimensions=dimensions, mode='direct',
+    #         is_printing=True)
+    # else:
+    netbg.make('output', neurons=1, dimensions=dimensions, mode='direct')
 
     # connection weights from (Gurney, Prescott, & Redgrave, 2001)
     mm=1; mp=1; me=1; mg=1
@@ -143,27 +143,33 @@ def test_basalganglia():
 
     timesteps = 1000
     dt_step = 0.01
+    # t = np.linspace(dt_step, 1, timesteps)
     t = np.linspace(dt_step, timesteps*dt_step, timesteps)
     pstc = 0.01
 
-    # Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
-    # BGp = net.make_probe('BG.output', dt_sample=dt_step, pstc=pstc)
+    Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
+    BGp = net.make_probe('BG.output', dt_sample=dt_step, pstc=pstc)
 
     print "starting simulation"
     
     if is_spike:
-        net.run(1)#timesteps * dt_step)
+        net.run(timesteps * dt_step)
+        ip_data = net.get_probe_data(Ip)
+        bgp_data = net.get_probe_data(BGp)
     else:
-        net.run(1, print_origin='BG.output')
+        net.run(timesteps * dt_step, print_origin=None)
+        ip_data = Ip.get_data()
+        bgp_data = BGp.get_data()
 
     # plot the results
-    # plt.ioff(); plt.close(); 
-    # plt.subplot(2,1,1)
-    # plt.plot(t, Ip.get_data(), 'x'); plt.title('Input')
-    # plt.subplot(2,1,2)
-    # plt.plot(BGp.get_data()); plt.title('BG.output')
-    # plt.tight_layout()
-    # plt.show()
+    plt.ioff(); plt.close();
+    plt.subplot(2,1,1)
+    plt.plot(t, ip_data, 'x'); plt.title('Input')
+    plt.subplot(2,1,2)
+    plt.plot(bgp_data); plt.title('BG.output')
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == '__main__':
     test_basalganglia()
