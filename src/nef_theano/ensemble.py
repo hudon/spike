@@ -29,7 +29,7 @@ class EnsembleProcess:
         self.is_printing = kwargs.pop('is_printing', None)
 
         ## Adapter for Ensemble
-        self.ensemble = Ensemble(name, *args, **kwargs)
+        self.ensemble = Ensemble(*args, **kwargs)
 
         self.origin = self.ensemble.origin
         self.dimensions = self.ensemble.dimensions
@@ -113,7 +113,7 @@ class Ensemble:
 
     """
 
-    def __init__(self, name, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
+    def __init__(self, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
                  max_rate=(200, 300), intercept=(-1.0, 1.0), radius=1.0,
                  encoders=None, seed=None, neuron_type='lif',
                  array_size=1, eval_points=None, decoder_noise=0.1,
@@ -159,7 +159,6 @@ class Ensemble:
             If noise_type = gaussian, this is the variance.
 
         """
-        self.name = name
         self.dt = dt
 
         if seed is None:
