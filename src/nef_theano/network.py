@@ -412,6 +412,7 @@ class Network(object):
 
     def make_input(self, *args, **kwargs): 
         """Create an input and add it to the network."""
+        kwargs['dt'] = self.dt
         i = input.Input(*args, **kwargs)
         self.add(i)
         return i
@@ -503,37 +504,15 @@ class Network(object):
                     proc.start()
             self.setup = True
 
-        ## Our simulation was running for 1 extra tick (compared to theirs).
-        ## So we run for 1 less here
-        for i in range(int(time / self.dt) - 1):
-            # get current time step
-            t = self.run_time + i * self.dt
-
-            ## Tick all nodes
-            for p in self.processes:
-                ticker_conn = p[1]
-                ticker_conn.send(str(t))
-
-            ## Wait for all nodes
-            for j in self.processes:
-                ticker_conn = j[1]
-                ticker_conn.recv()
-
         for p in self.processes:
             ticker_conn = p[1]
-            ticker_conn.send("END")
+            ticker_conn.send(str(time))
 
-        # update run_time variable
+        for p in self.processes:
+            p[0].join()
+
         self.run_time += time
 
-        self.clean_up()
-
-    # called when the simulation is done (otherwise, procs will hang)
-    def clean_up(self):
-        # wait for all procs to end
-        for p in self.processes:
-            proc = p[0]
-            proc.join()
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the 
