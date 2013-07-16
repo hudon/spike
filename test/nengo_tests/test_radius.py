@@ -28,7 +28,7 @@ def pow(x):
 def mult(x):
     return [xval*2 for xval in x]
 
-net = nef.Network('Encoder Test')
+net = nef.Network('Encoder Test',seed=97)
 net.make_input('in', value=sin3)
 net.make('A', 1000, 1, radius=5)
 net.make('B', 300, 1, radius=.5)

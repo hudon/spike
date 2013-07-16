@@ -13,6 +13,7 @@ NENGO_TESTS_DIR="nengo_tests"
 
 TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_array.py"
+  "${NENGO_TESTS_DIR}/test_radius.py"
 );
 
 compareOutput(){
