@@ -46,7 +46,8 @@ class Probe(object):
     def theano_tick(self):
         """
         """
-        i_samp = int(self.t / self.dt_sample)
+        i_samp = int(round(self.t / self.dt_sample, 5))
+
         if i_samp > self.i:
             # we're as close to a sample point as we're going to get,
             # so take a sample

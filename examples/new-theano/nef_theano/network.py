@@ -59,7 +59,6 @@ class Network(object):
         self.tick_nodes.append(node)
         self.nodes[node.name] = node
 
-        
     def connect(self, pre, post, transform=None, weight=1,
                 index_pre=None, index_post=None, pstc=0.01, 
                 func=None):
@@ -400,7 +399,6 @@ class Network(object):
         """
         return subnetwork.SubNetwork(name, self)
             
-
     def make_probe(self, target, name=None, dt_sample=0.01,
                    data_type='decoded', **kwargs):
         """Add a probe to measure the given target.

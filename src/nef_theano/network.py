@@ -41,6 +41,7 @@ class Network(object):
         # the input and spiking ensemble nodes in the network
         self.nodes = {}
         self.processes = []
+        self.probes = {}
 
         self.zmq_context = zmq.Context()
         self.setup = False
@@ -65,8 +66,11 @@ class Network(object):
         ticker_socket, node_socket = \
             zmq_utils.create_socket_defs_reqrep("ticker", node.name)
         p = Process(target=node.run, args=(node_socket,), name=node.name)
+
         self.processes.append((p,
             ticker_socket.create_socket(self.zmq_context),))
+
+        return self.processes[-1]
 
     def connect(self, pre, post, transform=None, weight=1,
                 index_pre=None, index_post=None, pstc=0.01, 
@@ -408,15 +412,12 @@ class Network(object):
     def make_probe(self, target, name=None, dt_sample=0.01, data_type='decoded', **kwargs):
         """Add a probe to measure the given target.
 
-        :param target: a Theano shared variable to record
+        :param target: the name of the node whose output (the Theano shared var) to record
         :param name: the name of the probe
         :param dt_sample: the sampling frequency of the probe
         :returns: The Probe object
 
         """
-
-        raise Exception("ERROR: Probes are not yet supported by spike.")
-
         i = 0
         target_name = target + '-' + data_type
         while name is None or self.nodes.has_key(name):
@@ -425,9 +426,11 @@ class Network(object):
 
         # get the signal to record
         if data_type == 'decoded':
-            target = self.get_origin(target).decoded_output
+            # target is the VALUE of the origin output shared variable
+            target_output = self.get_origin(target).decoded_output.get_value()
 
         elif data_type == 'spikes':
+            raise Exception("ERROR", "Probes for spikes data type not supported yet..")
             target = self.get_object(target)
             # check to make sure target is an ensemble
             assert isinstance(target, ensemble.Ensemble)
@@ -435,9 +438,20 @@ class Network(object):
             # set the filter to zero
             kwargs['pstc'] = 0
 
-        p = probe.Probe(name=name, target=target, target_name=target_name, 
-            dt_sample=dt_sample, **kwargs)
-        self.add(p)
+        p = probe.Probe(name=name, target=target_output, target_name=target_name,
+            dt_sample=dt_sample, dt=self.dt, **kwargs)
+
+        # connect probe to its target: target sends data to probe using msgs
+        origin_socket, destination_socket = \
+            zmq_utils.create_socket_defs_pushpull(target_name, name)
+
+        traget_origin = self.get_origin(target)
+        traget_origin.add_output(origin_socket)
+        p.add_input(destination_socket) # to receive target output values
+
+        proc, ticker_conn = self.add(p)
+        self.probes[name] = { "connection": ticker_conn, "data": [] }
+
         return p
 
     # TODO: remove this method if direct ensembles do not need to share processes
@@ -482,11 +496,25 @@ class Network(object):
             ticker_conn = p[1]
             ticker_conn.send(str(time))
 
+        for probe in self.probes.keys():
+            ticker_conn = self.probes[probe]["connection"]
+            self.probes[probe]["data"] = ticker_conn.recv_pyobj()
+            ticker_conn.send("ACK")
+
         for p in self.processes:
             p[0].join()
 
         self.run_time += time
 
+    def get_probe_data(self, probe):
+        return self.probes[probe.name]["data"];
+
+    # called when the simulation is done (otherwise, procs will hang)
+    def clean_up(self):
+        # wait for all procs to end
+        for p in self.processes:
+            proc = p[0]
+            proc.join()
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the 
