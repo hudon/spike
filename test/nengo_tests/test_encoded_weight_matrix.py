@@ -12,7 +12,11 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
+
+is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
 
 neurons = 100
 dimensions = 1
@@ -25,7 +29,10 @@ net.make('A', neurons=neurons, dimensions=dimensions, intercept=(.1, 1))
 net.make('B', neurons=neurons, dimensions=dimensions) # for test 1
 net.make('B2', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 2 
 net.make('B3', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 3 
-net.make('B4', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 4
+if is_spike:
+    net.make('B4', neurons=neurons, dimensions=dimensions, array_size=array_size, is_printing=True) # for test 4
+else:
+    net.make('B4', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 4
 
 # setup inhibitory scaling matrix
 weight_matrix_1 = [[1] * neurons * 1] * neurons * 1 # for test 1
@@ -45,28 +52,31 @@ dt_step = 0.01
 t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.01
 
-Ip = net.make_probe('in1', dt_sample=dt_step, pstc=pstc)
-Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
-Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
-B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
-B3p = net.make_probe('B3', dt_sample=dt_step, pstc=pstc)
-B4p = net.make_probe('B4', dt_sample=dt_step, pstc=pstc)
+#Ip = net.make_probe('in1', dt_sample=dt_step, pstc=pstc)
+#Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
+#Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
+#B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
+#B3p = net.make_probe('B3', dt_sample=dt_step, pstc=pstc)
+#B4p = net.make_probe('B4', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
-net.run(timesteps*dt_step)
+if is_spike:
+    net.run(timesteps*dt_step)
+else:
+    net.run(timesteps*dt_step, print_origin='B4')
 
-plt.ioff(); plt.close(); 
-plt.subplot(611); plt.title('Input1')
-plt.plot(Ip.get_data()); 
-plt.subplot(612); plt.title('A')
-plt.plot(Ap.get_data())
-plt.subplot(613); plt.title('B')
-plt.plot(Bp.get_data())
-plt.subplot(614); plt.title('B2')
-plt.plot(B2p.get_data())
-plt.subplot(615); plt.title('B3')
-plt.plot(B3p.get_data())
-plt.subplot(616); plt.title('B4')
-plt.plot(B4p.get_data())
-plt.tight_layout()
-plt.show()
+#plt.ioff(); plt.close(); 
+#plt.subplot(611); plt.title('Input1')
+#plt.plot(Ip.get_data()); 
+#plt.subplot(612); plt.title('A')
+#plt.plot(Ap.get_data())
+#plt.subplot(613); plt.title('B')
+#plt.plot(Bp.get_data())
+#plt.subplot(614); plt.title('B2')
+#plt.plot(B2p.get_data())
+#plt.subplot(615); plt.title('B3')
+#plt.plot(B3p.get_data())
+#plt.subplot(616); plt.title('B4')
+#plt.plot(B4p.get_data())
+#plt.tight_layout()
+#plt.show()
