@@ -435,7 +435,7 @@ class Ensemble:
         return theano.function([], encoders)()
 
     def make_tick(self):
-        updates = {}
+        updates = OrderedDict()
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates=updates)
 
