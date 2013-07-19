@@ -32,6 +32,8 @@ class Probe(object):
         self.target = theano.shared(target)
         self.target_name = target_name
         self.dt_sample = dt_sample
+        self.dt = dt
+        self.run_time = 0
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
@@ -44,7 +46,7 @@ class Probe(object):
         # create a filter to filter the data
         self.filter = Filter(name=name, pstc=pstc, source=self.target)
         updates = {}
-        updates.update(self.update(dt))
+        updates.update(self.update(self.dt))
         self.theano_tick = theano.function([], [], updates=updates)
 
     def update(self, dt):
@@ -81,18 +83,17 @@ class Probe(object):
         self.bind_sockets()
         ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
 
-        while True:
-            msg = ticker_conn.recv()
+        sim_time = float(ticker_conn.recv())
 
-            if msg == "END":
-                ticker_conn.send_pyobj(self.get_data())
-                ticker_conn.recv() # want an ack of receiving the data
-                break
-
-            self.t = float(msg)
+        for i in range(int(sim_time / self.dt)):
+            self.t = self.run_time + i * self.dt
             self.tick()
 
-            ticker_conn.send("")
+        self.run_time += sim_time
+
+        # send all recorded data to the administrator
+        ticker_conn.send_pyobj(self.get_data())
+        ticker_conn.recv() # want an ack of receiving the data
 
     def bind_sockets(self):
         # create a context for this probe process if do not have one already
