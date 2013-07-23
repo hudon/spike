@@ -16,7 +16,6 @@ The main contributors of this project are:
 * [Robert Elder](https://github.com/robertelder)
 * [James Hudon](https://github.com/Hudon)
 * [Artem Pasyechnyk](https://github.com/artemip)
-* 
 
 Requirements
 ------------
