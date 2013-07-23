@@ -19,7 +19,7 @@ class Probe(object):
     """
     buffer_size = 1000
 
-    def __init__(self, name, target, target_name, dt_sample, dt, pstc=0.03):
+    def __init__(self, name, target, target_name, dt_sample, dt, net, pstc=0.03):
         """
         :param string name:
         :param target:
@@ -34,6 +34,7 @@ class Probe(object):
         self.dt_sample = dt_sample
         self.dt = dt
         self.run_time = 0
+        self.net = net
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
@@ -77,7 +78,8 @@ class Probe(object):
             self.i = i_samp
 
     def get_data(self):
-        return self.data[:self.i+1]
+        # access the data for this node, which is stored in the network
+        return self.net.get_probe_data(self.name)
 
     def run(self, ticker_socket_def):
         self.bind_sockets()
@@ -92,7 +94,8 @@ class Probe(object):
         self.run_time += sim_time
 
         # send all recorded data to the administrator
-        ticker_conn.send_pyobj(self.get_data())
+        data = self.data[:self.i+1]
+        ticker_conn.send_pyobj(data)
         ticker_conn.recv() # want an ack of receiving the data
 
     def bind_sockets(self):

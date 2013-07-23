@@ -178,7 +178,6 @@ class Network(object):
             #TODO: a better check for this
             if transform.shape[0] != post.dimensions * post.array_size \
                                                 or len(transform.shape) > 2:
-                raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
 
                 if transform.shape[0] == post.array_size * post.neurons_num:
                     transform = transform.reshape(
@@ -218,7 +217,6 @@ class Network(object):
                     return
                                    
                 else: # otherwise we're in case 2
-                    raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
                     assert transform.shape ==  \
                                (post.array_size, post.neurons_num, dim_pre)
                     

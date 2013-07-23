@@ -26,7 +26,7 @@ net = nef.Network('WeightMatrix Test')
 net.make_input('in1', 1, zero_after_time=2.5)
 net.make_input('in2', [1, .5, -.5])
 net.make('A', neurons=neurons, dimensions=dimensions, intercept=(.1, 1))
-net.make('B', neurons=neurons, dimensions=dimensions,is_printing=True) # for test 1
+net.make('B', neurons=neurons, dimensions=dimensions) # for test 1
 net.make('B2', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 2 
 net.make('B3', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 3 
 net.make('B4', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 4
@@ -63,10 +63,8 @@ pstc = 0.01
 #B4p = net.make_probe('B4', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
-if is_spike:
-    net.run(timesteps * dt_step)
-else:
-    net.run(timesteps * dt_step, print_origin='B')
+
+net.run(timesteps * dt_step)
 
 #plt.ioff(); plt.close(); 
 #plt.subplot(711); plt.title('Input1')

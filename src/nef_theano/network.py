@@ -439,7 +439,7 @@ class Network(object):
             kwargs['pstc'] = 0
 
         p = probe.Probe(name=name, target=target_output, target_name=target_name,
-            dt_sample=dt_sample, dt=self.dt, **kwargs)
+            dt_sample=dt_sample, dt=self.dt, net=self, **kwargs)
 
         # connect probe to its target: target sends data to probe using msgs
         origin_socket, destination_socket = \
@@ -506,8 +506,8 @@ class Network(object):
 
         self.run_time += time
 
-    def get_probe_data(self, probe):
-        return self.probes[probe.name]["data"];
+    def get_probe_data(self, probe_name):
+        return self.probes[probe_name]["data"];
 
     # called when the simulation is done (otherwise, procs will hang)
     def clean_up(self):

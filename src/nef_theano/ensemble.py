@@ -22,11 +22,9 @@ class EnsembleProcess:
     the Ensemble's methods.
 
     :param str name: name of the process
-    :param bool is_printing: should the process be printing values to stdout
     """
     def __init__(self, name, ticker_socket_def, *args, **kwargs):
         self.name = name
-        self.is_printing = kwargs.pop('is_printing', None)
 
         ## Adapter for Ensemble
         self.ensemble = Ensemble(*args, **kwargs)
@@ -91,8 +89,6 @@ class EnsembleProcess:
 
         for i in range(int(time / self.ensemble.dt)):
             self.tick()
-            if self.is_printing:
-                print self.origin['X'].decoded_output.get_value()
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't

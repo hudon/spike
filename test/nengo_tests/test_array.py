@@ -14,8 +14,6 @@ def test_array():
 
     neurons = 40
 
-    is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
-
     net = nef.Network('Array Test', seed=50)
     net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
     #net.make_input('in', value=1, zero_after=1.0)
@@ -36,8 +34,6 @@ def test_array():
     t = np.linspace(dt_step, timesteps*dt_step, timesteps)
     pstc = 0.01
 
-
-    ## TODO: Spike does not support probes yet
     Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
     Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
     A2p = net.make_probe('A2', dt_sample=dt_step, pstc=pstc)
@@ -46,22 +42,13 @@ def test_array():
 
     print "starting simulation"
 
-    if is_spike:
-        net.run(timesteps * dt_step)
+    net.run(timesteps * dt_step)
 
-        ip_data = net.get_probe_data(Ip)
-        ap_data = net.get_probe_data(Ap)
-        a2p_data = net.get_probe_data(A2p)
-        bp_data = net.get_probe_data(Bp)
-        b2p_data = net.get_probe_data(B2p)
-    else:
-        net.run(timesteps * dt_step)
-
-        ip_data = Ip.get_data()
-        ap_data = Ap.get_data()
-        a2p_data = A2p.get_data()
-        bp_data = Bp.get_data()
-        b2p_data = B2p.get_data()
+    ip_data = Ip.get_data()
+    ap_data = Ap.get_data()
+    a2p_data = A2p.get_data()
+    bp_data = Bp.get_data()
+    b2p_data = B2p.get_data()
 
     # plot the results
     plt.ioff(); plt.close();
