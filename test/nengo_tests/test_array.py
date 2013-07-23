@@ -14,20 +14,14 @@ def test_array():
 
     neurons = 40
 
-    is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
-
     net = nef.Network('Array Test', seed=50)
     net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
     #net.make_input('in', value=1, zero_after=1.0)
 
-    # if is_spike:
-    #     net.make('B', neurons=neurons, array_size=3, dimensions=2,
-    #             is_printing=True)
-    # else:
     net.make('B', neurons=neurons, array_size=3, dimensions=2)
-
     net.make_array('A', neurons=neurons, array_size=1, dimensions=6)
     net.make('A2', neurons=neurons, array_size=2, dimensions=3)
+    net.make('B', neurons=neurons, array_size=3, dimensions=2)
     net.make('B2', neurons=neurons, array_size=6, dimensions=1)
 
     net.connect('in', 'A')
@@ -50,6 +44,7 @@ def test_array():
     B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
 
     print "starting simulation"
+
     if is_spike:
         net.run(timesteps * dt_step)
 
@@ -59,7 +54,7 @@ def test_array():
         bp_data = net.get_probe_data(Bp)
         b2p_data = net.get_probe_data(B2p)
     else:
-        net.run(timesteps * dt_step, print_origin=None)
+        net.run(timesteps * dt_step)
 
         ip_data = Ip.get_data()
         ap_data = Ap.get_data()

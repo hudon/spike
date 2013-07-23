@@ -452,7 +452,7 @@ class Network(object):
         # create graph and return optimized update function
         return theano.function([], [], updates=updates.items())
 
-    def run(self, time, print_origin):
+    def run(self, time):
         """Run the simulation.
 
         If called twice, the simulation will continue for *time*
@@ -477,9 +477,6 @@ class Network(object):
 
             # run the theano nodes
             self.theano_tick()
-
-            if print_origin != None:
-                print self.nodes[print_origin].origin['X'].decoded_output.get_value()
 
         # update run_time variable
         self.run_time += time
