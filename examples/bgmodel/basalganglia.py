@@ -89,7 +89,7 @@ def make(net, name='Basal Ganglia', dimensions=1, neurons=100,
 
 def test_basalganglia():
     import numpy as np
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
     import math
 
     import sys
@@ -121,14 +121,19 @@ def test_basalganglia():
     ip_data = Ip.get_data()
     bgp_data = BGp.get_data()
 
+    print "input 'in' probe data"
+    for x in ip_data:
+        print x
+
     # plot the results
-    plt.ioff(); plt.close();
-    plt.subplot(2,1,1)
-    plt.plot(t, ip_data, 'x'); plt.title('Input')
-    plt.subplot(2,1,2)
-    plt.plot(bgp_data); plt.title('BG.output')
-    plt.tight_layout()
-    plt.show()
+
+    # plt.ioff(); plt.close();
+    # plt.subplot(2,1,1)
+    # plt.plot(t, ip_data, 'x'); plt.title('Input')
+    # plt.subplot(2,1,2)
+    # plt.plot(bgp_data); plt.title('BG.output')
+    # plt.tight_layout()
+    # plt.show()
 
 
 if __name__ == '__main__':

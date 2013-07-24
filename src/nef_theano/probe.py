@@ -33,7 +33,7 @@ class Probe(object):
         self.target_name = target_name
         self.dt_sample = dt_sample
         self.dt = dt
-        self.run_time = 0
+        self.run_time = 0.0
         self.net = net
 
         # context should be created when the process is started (bind_sockets)
@@ -61,8 +61,6 @@ class Probe(object):
         val = self.input_socket.get_instance().recv_pyobj()
         self.target.set_value(val)
 
-        self.theano_tick()
-
         # Filter and store the received output value
         i_samp = int(round(self.t / self.dt_sample, 5))
 
@@ -76,6 +74,8 @@ class Probe(object):
             # record the filtered value
             self.data[self.i+1:i_samp+1] = self.filter.value.get_value()
             self.i = i_samp
+
+        self.theano_tick()
 
     def get_data(self):
         # access the data for this node, which is stored in the network

@@ -4,7 +4,7 @@ and by using the array_size parameter in the network.make command.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 import sys
 sys.path.append(sys.argv[1])
@@ -50,20 +50,37 @@ def test_array():
     bp_data = Bp.get_data()
     b2p_data = B2p.get_data()
 
+    print "input 'in' probe data"
+    for x in ip_data:
+        print x
+    print "ensemble 'A' probe data"
+    for x in ap_data:
+        print x
+    print "ensemble 'A2' probe data"
+    for x in a2p_data:
+        print x
+    print "ensemble 'B' probe data"
+    for x in bp_data:
+        print x
+    print "ensemble 'B2' probe data"
+    for x in b2p_data:
+        print x
+
     # plot the results
-    plt.ioff(); plt.close();
-    plt.subplot(5,1,1); plt.ylim([-1.5,1.5])
-    plt.plot(t, ip_data, 'x'); plt.title('Input')
-    plt.subplot(5,1,2); plt.ylim([-1.5,1.5])
-    plt.plot(ap_data); plt.title('A, array_size=1, dim=6')
-    plt.subplot(5,1,3); plt.ylim([-1.5,1.5])
-    plt.plot(a2p_data); plt.title('A2, array_size=2, dim=3')
-    plt.subplot(5,1,4); plt.ylim([-1.5,1.5])
-    plt.plot(bp_data); plt.title('B, array_size=3, dim=2')
-    plt.subplot(5,1,5); plt.ylim([-1.5,1.5])
-    plt.plot(b2p_data); plt.title('B2, array_size=6, dim=1')
-    plt.tight_layout()
-    plt.show()
+
+    # plt.ioff(); plt.close();
+    # plt.subplot(5,1,1); plt.ylim([-1.5,1.5])
+    # plt.plot(t, ip_data, 'x'); plt.title('Input')
+    # plt.subplot(5,1,2); plt.ylim([-1.5,1.5])
+    # plt.plot(ap_data); plt.title('A, array_size=1, dim=6')
+    # plt.subplot(5,1,3); plt.ylim([-1.5,1.5])
+    # plt.plot(a2p_data); plt.title('A2, array_size=2, dim=3')
+    # plt.subplot(5,1,4); plt.ylim([-1.5,1.5])
+    # plt.plot(bp_data); plt.title('B, array_size=3, dim=2')
+    # plt.subplot(5,1,5); plt.ylim([-1.5,1.5])
+    # plt.plot(b2p_data); plt.title('B2, array_size=6, dim=1')
+    # plt.tight_layout()
+    # plt.show()
 
 
 if __name__ == "__main__":
