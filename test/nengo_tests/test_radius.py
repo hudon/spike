@@ -33,11 +33,7 @@ net.make_input('in', value=sin3)
 net.make('A', 1000, 1, radius=5)
 net.make('B', 300, 1, radius=.5)
 net.make('C', 1000, 1, radius=10)
-
-if is_spike:
-    net.make('D', 300, 1, radius=6, is_printing=True)
-else:
-    net.make('D', 300, 1, radius=6)
+net.make('D', 300, 1, radius=6)
 
 net.connect('in', 'A')
 net.connect('A', 'B')
@@ -56,10 +52,8 @@ pstc = 0.01
 #Dp = net.make_probe('D', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
-if is_spike:
-    net.run(timesteps * dt_step)
-else:
-    net.run(timesteps * dt_step, print_origin='D')
+
+net.run(timesteps * dt_step)
 
 #plt.ioff(); plt.clf(); plt.hold(1);
 #plt.plot(Ip.get_data())

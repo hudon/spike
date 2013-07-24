@@ -59,7 +59,6 @@ class Network(object):
         self.tick_nodes.append(node)
         self.nodes[node.name] = node
 
-        
     def connect(self, pre, post, transform=None, weight=1,
                 index_pre=None, index_post=None, pstc=0.01, 
                 func=None):
@@ -179,7 +178,6 @@ class Network(object):
             #TODO: a better check for this
             if transform.shape[0] != post.dimensions * post.array_size \
                                                 or len(transform.shape) > 2:
-                raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
 
                 if transform.shape[0] == post.array_size * post.neurons_num:
                     transform = transform.reshape(
@@ -219,7 +217,6 @@ class Network(object):
                     return
                                    
                 else: # otherwise we're in case 2
-                    raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
                     assert transform.shape ==  \
                                (post.array_size, post.neurons_num, dim_pre)
                     
@@ -400,7 +397,6 @@ class Network(object):
         """
         return subnetwork.SubNetwork(name, self)
             
-
     def make_probe(self, target, name=None, dt_sample=0.01,
                    data_type='decoded', **kwargs):
         """Add a probe to measure the given target.
@@ -454,7 +450,7 @@ class Network(object):
         # create graph and return optimized update function
         return theano.function([], [], updates=updates.items())
 
-    def run(self, time, print_origin):
+    def run(self, time):
         """Run the simulation.
 
         If called twice, the simulation will continue for *time*
@@ -479,9 +475,6 @@ class Network(object):
 
             # run the theano nodes
             self.theano_tick()
-
-            if print_origin != None:
-                print self.nodes[print_origin].origin['X'].decoded_output.get_value()
 
         # update run_time variable
         self.run_time += time

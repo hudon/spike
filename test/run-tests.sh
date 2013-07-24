@@ -18,11 +18,8 @@ TEST_SCRIPTS=(
 );
 
 compareOutput(){
-  ## TODO: write an a test wrapper in python that handles user options.  We're
-  ## using just "target" as an argument for now, to indicate that we're running
-  ## spike code
   ACTUAL_OUT_CMD="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${1}\
-    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR} target"
+    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}"
   EXPECTED_OUT_CMD="${PYTHON}  ${THIS_SCRIPT_DIRECTORY}/${1}\
     ${THIS_SCRIPT_DIRECTORY}/${SOURCE_DIR}"
 
