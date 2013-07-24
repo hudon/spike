@@ -67,10 +67,10 @@ class Network(object):
             zmq_utils.create_socket_defs_reqrep("ticker", node.name)
         p = Process(target=node.run, args=(node_socket,), name=node.name)
 
-        self.processes.append((p,
-            ticker_socket.create_socket(self.zmq_context),))
+        procPair = (p, ticker_socket.create_socket(self.zmq_context))
+        self.processes.append(procPair)
 
-        return self.processes[-1]
+        return procPair
 
     def connect(self, pre, post, transform=None, weight=1,
                 index_pre=None, index_post=None, pstc=0.01, 
@@ -508,13 +508,6 @@ class Network(object):
 
     def get_probe_data(self, probe_name):
         return self.probes[probe_name]["data"];
-
-    # called when the simulation is done (otherwise, procs will hang)
-    def clean_up(self):
-        # wait for all procs to end
-        for p in self.processes:
-            proc = p[0]
-            proc.join()
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the 

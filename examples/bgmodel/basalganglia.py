@@ -124,6 +124,9 @@ def test_basalganglia():
     print "input 'in' probe data"
     for x in ip_data:
         print x
+    print "ensemble 'output' probe data"
+    for x in bgp_data:
+        print x
 
     # plot the results
 
