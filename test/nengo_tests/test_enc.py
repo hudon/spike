@@ -4,7 +4,7 @@ import math
 import time
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 import sys
 sys.path.append(sys.argv[1])
@@ -53,10 +53,7 @@ pstc = 0.01
 build_time_end = time.time()
 
 print "starting simulation"
-if is_spike:
-    net.run(timesteps * dt_step)
-else:
-    net.run(timesteps * dt_step, print_origin='outputD')
+net.run(timesteps * dt_step)
 
 sim_time_end = time.time()
 #print "\nBuild time: %0.10fs" % (build_time_end - build_time_start)
