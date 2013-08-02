@@ -9,19 +9,21 @@ THIS_SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 #  All file locations are relative to this file
 TARGET_DIR="../src"
 SOURCE_DIR="../examples/new-theano"
+BG_MODEL_DIR="../examples/bgmodel"
 NENGO_TESTS_DIR="nengo_tests"
 
 TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_array.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
+  "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
 );
 
 compareOutput(){
   ACTUAL_OUT_CMD="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${1}\
-    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}"
+    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR} ${THIS_SCRIPT_DIRECTORY}/${BG_MODEL_DIR}"
   EXPECTED_OUT_CMD="${PYTHON}  ${THIS_SCRIPT_DIRECTORY}/${1}\
-    ${THIS_SCRIPT_DIRECTORY}/${SOURCE_DIR}"
+    ${THIS_SCRIPT_DIRECTORY}/${SOURCE_DIR} ${THIS_SCRIPT_DIRECTORY}/${BG_MODEL_DIR}"
 
   #  This will compare the output that goes to standard out.  At the moment, we don't
   #  check the output on standard error.
