@@ -11,7 +11,7 @@ Tests:
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 import sys
 sys.path.append(sys.argv[1])
@@ -22,7 +22,7 @@ dimensions = 1
 array_size = 3
 inhib_scale = 10
 
-net = nef.Network('WeightMatrix Test')
+net = nef.Network('WeightMatrix Test',seed=100)
 net.make_input('in1', 1, zero_after_time=2.5)
 net.make_input('in2', [1, .5, -.5])
 net.make('A', neurons=neurons, dimensions=dimensions, intercept=(.1, 1))
@@ -54,17 +54,53 @@ dt_step = 0.01
 t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.01
 
-#Ip = net.make_probe('in1', dt_sample=dt_step, pstc=pstc)
-#I2p = net.make_probe('in2', dt_sample=dt_step, pstc=pstc)
-#Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
-#Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
-#B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
-#B3p = net.make_probe('B3', dt_sample=dt_step, pstc=pstc)
-#B4p = net.make_probe('B4', dt_sample=dt_step, pstc=pstc)
+Ip = net.make_probe('in1', dt_sample=dt_step, pstc=pstc)
+I2p = net.make_probe('in2', dt_sample=dt_step, pstc=pstc)
+Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
+Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
+B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
+B3p = net.make_probe('B3', dt_sample=dt_step, pstc=pstc)
+B4p = net.make_probe('B4', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
 
 net.run(timesteps * dt_step)
+
+ip_data = Ip.get_data()
+i2p_data = I2p.get_data()
+ap_data = Ap.get_data()
+bp_data = Bp.get_data()
+b2p_data = B2p.get_data()
+b3p_data = B3p.get_data()
+b4p_data = B4p.get_data()
+
+print "input 'ip' probe data"
+for x in ip_data:
+    print x
+
+print "input 'i2p' probe data"
+for x in i2p_data:
+    print x
+
+print "input 'ap' probe data"
+for x in ap_data:
+    print x
+
+print "input 'bp' probe data"
+for x in bp_data:
+    print x
+
+print "input 'b2p' probe data"
+for x in b2p_data:
+    print x
+
+print "input 'b3p' probe data"
+for x in b3p_data:
+    print x
+
+print "input 'b4p' probe data"
+for x in b4p_data:
+    print x
 
 #plt.ioff(); plt.close(); 
 #plt.subplot(711); plt.title('Input1')
