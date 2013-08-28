@@ -3,11 +3,13 @@ collections of ensembles.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
-net=nef.Network('Main')
+net=nef.Network('Main', seed=93)
 
 netA=net.make_subnetwork('A')
 netB=net.make_subnetwork('B')
@@ -31,4 +33,56 @@ net.connect('A.C.J','X')    # connection out of a subsubnetwork
 net.connect('A.C.J','B.Z')  # connection across subsubnetworks
 netA.connect('Y','C.J')     # connection across subnetworks
 
-net.run(1) # run for 1 second
+dt_step = 0.01
+pstc = 0.01
+times = 100
+Xp = net.make_probe('X', dt_sample=dt_step, pstc=pstc)
+xp_data = Xp.get_data()
+
+Yp = net.make_probe('A.Y', dt_sample=dt_step, pstc=pstc)
+yp_data = Yp.get_data()
+
+Zp = net.make_probe('B.Z', dt_sample=dt_step, pstc=pstc)
+zp_data = Zp.get_data()
+
+Wp = net.make_probe('B.W', dt_sample=dt_step, pstc=pstc)
+wp_data = Wp.get_data()
+
+Ip = net.make_probe('A.C.I', dt_sample=dt_step, pstc=pstc)
+ip_data = Ip.get_data()
+
+Jp = net.make_probe('A.C.J', dt_sample=dt_step, pstc=pstc)
+jp_data = Jp.get_data()
+
+net.run(times * dt_step) # run for 1 second
+
+print "ensemble 'X' probe data"
+for x in xp_data:
+    print x
+
+print "ensemble 'Y' probe data"
+for x in yp_data:
+    print x
+
+print "ensemble 'Z' probe data"
+for x in zp_data:
+    print x
+
+print "ensemble 'W' probe data"
+for x in wp_data:
+    print x
+
+print "ensemble 'I' probe data"
+for x in ip_data:
+    print x
+
+print "ensemble 'J' probe data"
+for x in jp_data:
+    print x
+
+
+
+
+
+
+
