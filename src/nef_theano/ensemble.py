@@ -264,6 +264,10 @@ class Ensemble:
         :param transform:
             the transform that needs to be applied (dot product) to the 
             decoded output of the pre population
+
+        :param case:
+            used to generate an encoded input by applying the transform matrix
+            onto the decoded pre output is a special way
         """
         # make sure one and only one of
         # (decoded_input, encoded_input) is specified

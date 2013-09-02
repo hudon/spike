@@ -218,8 +218,8 @@ class Network(object):
                         (post.array_size, post.neurons_num,
                          pre.array_size, pre.neurons_num))
 
-                    # pass in the pre population encoded output function
-                    # to the post population, connecting them for theano
+                    # pass in the pre population decoded output value
+                    # to the post population
                     post.add_termination(input_socket=destination_socket,
                         name=pre_name, pstc=pstc,
                         encoded_input= pre_output.get_value(),
@@ -240,8 +240,8 @@ class Network(object):
                         (post.array_size, post.neurons_num,
                          pre.array_size, pre.neurons_num))
 
-                    # pass in the pre population encoded output function
-                    # to the post population, connecting them for theano
+                    # pass in the pre population decoded output value
+                    # to the post population
                     post.add_termination(input_socket=destination_socket,
                         name=pre_name, pstc=pstc,
                         encoded_input= pre_output.get_value(),
