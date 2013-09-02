@@ -15,6 +15,7 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_array.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
+  "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
 );
 
 compareOutput(){
@@ -58,7 +59,7 @@ compareOutput(){
       and ${EXPECTED_RETURN_CODE} from '${EXPECTED_OUT_CMD}' does not match."
     exit 1
   else
-    echo -e ${GREEN_TEXT}"INFO: All Tests Passed."${NORMAL_TEXT}
+    echo -e ${GREEN_TEXT}"INFO: Program outputs are identical."${NORMAL_TEXT}
   fi
 }
 
