@@ -40,6 +40,7 @@ class EnsembleProcess:
         self.zmq_context = None
         self.poller = zmq.Poller()
 
+        self.unique_socket_names = {}
         self.input_sockets = []
         self.ticker_socket_def = ticker_socket_def
 
@@ -80,7 +81,6 @@ class EnsembleProcess:
 
         self.ensemble.tick(inputs)
 
-
     def run(self):
         self.bind_sockets()
         self.ensemble.make_tick()
@@ -95,7 +95,9 @@ class EnsembleProcess:
         ## need to do so and we can then use the unique_name to identify
         ## the input sockets
         unique_name = self.ensemble.get_unique_name(kwargs['name'],
-                self.ensemble.decoded_input)
+                self.unique_socket_names)
+
+        self.unique_socket_names[unique_name] = ""
         kwargs['name'] = unique_name
 
         self.input_sockets.append(zmq_utils.Socket(input_socket, unique_name))
@@ -236,7 +238,7 @@ class Ensemble:
             self.neurons_num = 0
 
     def add_termination(self, name, pstc, decoded_input=None, 
-        encoded_input=None, input_socket=None, transform=None):
+        encoded_input=None, input_socket=None, transform=None, case=None):
         """Accounts for a new termination that takes the given input
         (a theano object) and filters it with the given pstc.
 
@@ -262,6 +264,10 @@ class Ensemble:
         :param transform:
             the transform that needs to be applied (dot product) to the 
             decoded output of the pre population
+
+        :param case:
+            used to generate an encoded input by applying the transform matrix
+            onto the decoded pre output is a special way
         """
         # make sure one and only one of
         # (decoded_input, encoded_input) is specified
@@ -292,11 +298,14 @@ class Ensemble:
                 pre_output=pre_output)
 
         elif encoded_input is not None:
-            raise Exception("ERROR", "Just deal with decoded_input for ensembles") 
+            # encoded_input is NOT the shared variable at the origin
+            pre_output = theano.shared(encoded_input)
+            source = case(transform, pre_output)
 
             self.encoded_input[name] = filter.Filter(
-                name=name, pstc=pstc, source=encoded_input, 
-                shape=(self.array_size, self.neurons_num))
+                name=name, pstc=pstc, source=source,
+                shape=(self.array_size, self.neurons_num),
+                pre_output=pre_output)
 
     def add_learned_termination(self, name, pre, error, pstc, 
                                 learned_termination_class=hPESTermination,
@@ -462,7 +471,13 @@ class Ensemble:
         ## Set the inputs
         for key in inputs.keys():
             val = inputs[key]
-            self.decoded_input[key].set_pre_output(val)
+            # check if val is a decoded or an encoded input
+            if self.decoded_input.has_key(key):
+                self.decoded_input[key].set_pre_output(val)
+            elif self.encoded_input.has_key(key):
+                self.encoded_input[key].set_pre_output(val)
+            else:
+                raise Exception("ERROR", "Cannot identify the received input.")
 
         if self.mode == 'direct':
             self.direct_mode_tick()

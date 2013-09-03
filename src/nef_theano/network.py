@@ -158,7 +158,10 @@ class Network(object):
         # get the origin from the pre Node, CREATE one if does not exist
         pre_origin = self.get_origin(pre_name, func)
         pre_output = pre_origin.decoded_output
-        dim_pre = pre_origin.dimensions 
+        dim_pre = pre_origin.dimensions
+
+        origin_socket, destination_socket = \
+            zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
 
         if transform is not None: 
 
@@ -185,8 +188,6 @@ class Network(object):
             # check to see if post side is an encoded connection, case 2 or 3
             #TODO: a better check for this
             if transform.shape[0] != post.dimensions * post.array_size or len(transform.shape) > 2:
-
-                raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
 
                 if transform.shape[0] == post.array_size * post.neurons_num:
                     transform = transform.reshape(
@@ -216,17 +217,19 @@ class Network(object):
                     case1 = connection.Case1(
                         (post.array_size, post.neurons_num,
                          pre.array_size, pre.neurons_num))
-                    encoded_output = case1(transform, pre_output)
 
-                    # pass in the pre population encoded output function
-                    # to the post population, connecting them for theano
-                    post.add_termination(name=pre_name, pstc=pstc, 
-                        encoded_input=encoded_output)
+                    # pass in the pre population decoded output value
+                    # to the post population
+                    post.add_termination(input_socket=destination_socket,
+                        name=pre_name, pstc=pstc,
+                        encoded_input= pre_output.get_value(),
+                        transform=transform, case=case1)
+
+                    pre_origin.add_output(origin_socket)
 
                     return
 
                 else: # otherwise we're in case 2 (pre is decoded)
-                    raise Exception("ERROR", "Case 2 and 3 should NOT be reached.")
                     assert transform.shape ==  \
                                (post.array_size, post.neurons_num, dim_pre)
 
@@ -236,17 +239,17 @@ class Network(object):
                     case2 = connection.Case2(
                         (post.array_size, post.neurons_num,
                          pre.array_size, pre.neurons_num))
-                    encoded_output = case2(transform, pre_output)
 
-                    # pass in the pre population encoded output function
-                    # to the post population, connecting them for theano
-                    post.add_termination(name=pre_name, pstc=pstc, 
-                        encoded_input=encoded_output)
+                    # pass in the pre population decoded output value
+                    # to the post population
+                    post.add_termination(input_socket=destination_socket,
+                        name=pre_name, pstc=pstc,
+                        encoded_input= pre_output.get_value(),
+                        transform=transform, case=case2)
+
+                    pre_origin.add_output(origin_socket)
 
                     return
-
-        origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
 
         # if decoded-decoded connection (case 1)
         # compute transform if not given, if given make sure shape is correct
@@ -262,8 +265,8 @@ class Network(object):
         # pre output needs to be replaced during execution using IPC
         # pass pre_out and transform + calculate dot product in accumulator
         # passing VALUE of pre output (do not share theano shared vars between processes)
-        post.add_termination(input_socket=destination_socket, name=pre_name, pstc=pstc, 
-            decoded_input=pre_output.get_value(), transform=transform) 
+        post.add_termination(input_socket=destination_socket, name=pre_name,
+            pstc=pstc, decoded_input=pre_output.get_value(), transform=transform)
 
         pre_origin.add_output(origin_socket)
 
