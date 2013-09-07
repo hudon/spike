@@ -12,10 +12,12 @@ from . import filter
 from .hPES_termination import hPESTermination
 from .helpers import map_gemv
 
+from multiprocessing import Process
+
 import zmq
 import zmq_utils
 
-class EnsembleProcess:
+class EnsembleProcess(Process):
     """ A NEFProcess is a wrapper for an ensemble or sub-ensemble. It is
     responsible for infrastructure logic such as setting up messaging,
     printing, process clean-up, etc. It also acts as an Adapter for most of
@@ -24,6 +26,7 @@ class EnsembleProcess:
     :param str name: name of the process
     """
     def __init__(self, name, ticker_socket_def, *args, **kwargs):
+        super(EnsembleProcess, self).__init__(target=self.run, name=name)
         self.name = name
 
         ## Adapter for Ensemble
@@ -89,6 +92,9 @@ class EnsembleProcess:
 
         for i in range(int(time / self.ensemble.dt)):
             self.tick()
+
+        self.ticker_conn.send("FIN") # inform main proc that ens finished
+        self.ticker_conn.recv() # wait for an ACK from main proc before exiting
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't

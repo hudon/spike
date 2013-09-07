@@ -375,12 +375,13 @@ class Network(object):
         # create ensemble and ensemble process
         # TODO: currently using separate processes for direct nodes
         # (Terry wanted them on a single proceses, but need more info for that)
-        e = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
-        p = Process(target=e.run, name=name)
-        self.processes.append((p, ticker_socket.create_socket(self.zmq_context),))
-        self.nodes[name] = e
+        ep = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
 
-        return e
+        ticker_conn = ticker_socket.create_socket(self.zmq_context)
+        self.processes.append((ep, ticker_conn,))
+        self.nodes[name] = ep
+
+        return ep
 
     def make_array(self, name, neurons, array_size, dimensions=1, **kwargs):
         """Generate a network array specifically.
@@ -492,9 +493,14 @@ class Network(object):
                     proc.start()
             self.setup = True
 
-        for p in self.processes:
-            ticker_conn = p[1]
-            ticker_conn.send(str(time))
+        for (p, conn) in self.processes:
+            conn.send(str(time))
+
+        # waiting for a FIN from each ensemble and sending an ACK for it to finish
+        for (p, conn) in self.processes:
+            if isinstance(p, ensemble.EnsembleProcess): conn.recv()
+        for (p, conn) in self.processes:
+            if isinstance(p, ensemble.EnsembleProcess): conn.send("ACK")
 
         for probe in self.probes.keys():
             ticker_conn = self.probes[probe]["connection"]
