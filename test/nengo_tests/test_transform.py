@@ -4,14 +4,16 @@ The transform matrix is post * pre dimensions"""
 import math
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
 def func(x): 
     return [math.sin(x), -math.sin(x)]
 
-net = nef.Network('Transform Test')
+net = nef.Network('Transform Test', seed=97)
 net.make_input('in', value=func)
 net.make('A', neurons=300, dimensions=3)
 net.make('B', neurons=300, array_size=3, dimensions=1)
@@ -32,20 +34,34 @@ Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
 print "starting simulation"
 net.run(timesteps * dt_step)
 
-plt.ioff(); plt.clf(); 
-plt.subplot(411); plt.title('Input')
-plt.plot(Ip.get_data()); plt.legend(['In(0)','In(1)'])
-plt.subplot(412); plt.title('{A,B}(0) = In(1)')
-plt.plot(Ap.get_data()[:,0])
-plt.plot(Bp.get_data()[:,0])
-plt.legend(['A','B'])
-plt.subplot(413); plt.title('{A,B}(1) = In(0)')
-plt.plot(Ap.get_data()[:,1])
-plt.plot(Bp.get_data()[:,1])
-plt.legend(['A','B'])
-plt.subplot(414); plt.title('{A,B}(2) = In(0) - In(1)')
-plt.plot(Ap.get_data()[:,2])
-plt.plot(Bp.get_data()[:,2])
-plt.legend(['A','B'])
-plt.tight_layout()
-plt.show()
+ip_data = Ip.get_data()
+ap_data = Ap.get_data()
+bp_data = Bp.get_data()
+
+print "input 'in' probe data"
+for x in ip_data:
+    print x
+print "ensemble 'A' probe data"
+for x in ap_data:
+    print x
+print "ensemble 'B' probe data"
+for x in bp_data:
+    print x
+
+#plt.ioff(); plt.clf(); 
+#plt.subplot(411); plt.title('Input')
+#plt.plot(Ip.get_data()); plt.legend(['In(0)','In(1)'])
+#plt.subplot(412); plt.title('{A,B}(0) = In(1)')
+#plt.plot(Ap.get_data()[:,0])
+#plt.plot(Bp.get_data()[:,0])
+#plt.legend(['A','B'])
+#plt.subplot(413); plt.title('{A,B}(1) = In(0)')
+#plt.plot(Ap.get_data()[:,1])
+#plt.plot(Bp.get_data()[:,1])
+#plt.legend(['A','B'])
+#plt.subplot(414); plt.title('{A,B}(2) = In(0) - In(1)')
+#plt.plot(Ap.get_data()[:,2])
+#plt.plot(Bp.get_data()[:,2])
+#plt.legend(['A','B'])
+#plt.tight_layout()
+#plt.show()
