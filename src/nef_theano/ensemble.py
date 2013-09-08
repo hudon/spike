@@ -13,24 +13,26 @@ from .hPES_termination import hPESTermination
 from .helpers import map_gemv
 
 from multiprocessing import Process
+from threading import Thread
 
 import zmq
 import zmq_utils
 
 class EnsembleProcess(Process):
-    """ A NEFProcess is a wrapper for an ensemble or sub-ensemble. It is
+    """ An EnsembleProcess is a wrapper for an ensemble or sub-ensemble. It is
     responsible for infrastructure logic such as setting up messaging,
     printing, process clean-up, etc. It also acts as an Adapter for most of
     the Ensemble's methods.
 
     :param str name: name of the process
     """
-    def __init__(self, name, ticker_socket_def, *args, **kwargs):
+    def __init__(self, name, ticker_socket_def, parent_ensemble=None, *args, **kwargs):
         super(EnsembleProcess, self).__init__(target=self.run, name=name)
         self.name = name
 
         ## Adapter for Ensemble
         self.ensemble = Ensemble(*args, **kwargs)
+        self.parent_ensemble = parent_ensemble
 
         self.origin = self.ensemble.origin
         self.dimensions = self.ensemble.dimensions
@@ -118,9 +120,11 @@ class Ensemble:
 
     def __init__(self, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
                  max_rate=(200, 300), intercept=(-1.0, 1.0), radius=1.0,
-                 encoders=None, seed=None, neuron_type='lif',
+                 seed=None, neuron_type='lif',
                  array_size=1, eval_points=None, decoder_noise=0.1,
-                 noise_type='uniform', noise=None, mode='spiking'):
+                 noise_type='uniform', noise=None, mode='spiking',
+                 is_subensemble=False, encoders=None, decoders=None,
+                 bias=None, alpha=None):
         """Construct an ensemble composed of the specific neuron model,
         with the specified neural parameters.
 
@@ -141,7 +145,6 @@ class Ensemble:
         :param float radius:
             the range of input values (-radius:radius)
             per dimension this population is sensitive to
-        :param list encoders: set of possible preferred directions
         :param int seed: seed value for random number generator
         :param string neuron_type:
             type of neuron model to use, options = {'lif'}
@@ -160,7 +163,13 @@ class Ensemble:
             If noise_type = uniform, this is the lower and upper
             bound on the distribution.
             If noise_type = gaussian, this is the variance.
-
+        :param list encoders:
+            set of possible preferred directions OR a portion of the parent
+            ensemble's encoders if this is a sub_ensemble
+        :param bool is_subensemble: is this ensemble whole or a portion?
+        :param list decoders: fraction of parent's decoders for this sub_ensemble
+        :param list bias: fraction of parent's bias for the neurons of this sub_ensemble
+        :param list alpha: fraction of parent's alpha for the neurons of this sub_ensemble
         """
         self.dt = dt
 
@@ -174,6 +183,7 @@ class Ensemble:
         self.noise = noise
         self.noise_type = noise_type
         self.decoder_noise = decoder_noise
+        self.is_subensemble = is_subensemble
 
         self.mode = mode
 
@@ -188,10 +198,13 @@ class Ensemble:
         if isinstance(intercept, (int,float)): intercept = [intercept, 1]
         elif len(intercept) == 1: intercept.append(1) 
 
-        self.cache_key = cache.generate_ensemble_key(neurons=neurons, 
-            dimensions=dimensions, tau_rc=tau_rc, tau_ref=tau_ref, 
-            max_rate=max_rate, intercept=intercept, radius=radius, 
-            encoders=encoders, decoder_noise=decoder_noise, 
+        ## For sub-ensembles, the passed-in encoders are not the
+        ## user-specified encoders, but the ones taken from the split up ensemble
+        self.cache_key = cache.generate_ensemble_key(neurons=neurons,
+            dimensions=dimensions, tau_rc=tau_rc, tau_ref=tau_ref,
+            max_rate=max_rate, intercept=intercept, radius=radius,
+            encoders=(encoders if not is_subensemble else None),
+            decoder_noise=decoder_noise,
             eval_points=eval_points, noise=noise, seed=seed, dt=dt)
 
         # make dictionary for origins
@@ -207,25 +220,32 @@ class Ensemble:
                 size=(array_size, self.neurons_num),
                 tau_rc=tau_rc, tau_ref=tau_ref)
 
-            # compute alpha and bias
             self.srng = RandomStreams(seed=seed)
             self.max_rate = max_rate
-            max_rates = self.srng.uniform(
-                size=(self.array_size, self.neurons_num),
-                low=max_rate[0], high=max_rate[1])  
-            threshold = self.srng.uniform(
-                size=(self.array_size, self.neurons_num),
-                low=intercept[0], high=intercept[1])
-            self.alpha, self.bias = theano.function(
-                [], self.neurons.make_alpha_bias(max_rates, threshold))()
 
-            # force to 32 bit for consistency / speed
-            self.bias = self.bias.astype('float32')
+            if is_subensemble:
+                self.bias = bias
+                self.alpha = alpha
+                self.encoders = encoders
+            else:
+                # compute alpha and bias
+                max_rates = self.srng.uniform(
+                    size=(self.array_size, self.neurons_num),
+                    low=max_rate[0], high=max_rate[1])
+                threshold = self.srng.uniform(
+                    size=(self.array_size, self.neurons_num),
+                    low=intercept[0], high=intercept[1])
+                self.alpha, self.bias = theano.function(
+                    [], self.neurons.make_alpha_bias(max_rates, threshold))()
 
-            # compute encoders
-            self.encoders = self.make_encoders(encoders=encoders)
-            # combine encoders and gain for simplification
-            self.encoders = (self.encoders.T * self.alpha.T).T
+                # force to 32 bit for consistency / speed
+                self.bias = self.bias.astype('float32')
+
+                # compute encoders
+                self.encoders = self.make_encoders(encoders=encoders)
+                # combine encoders and gain for simplification
+                self.encoders = (self.encoders.T * self.alpha.T).T
+
             self.shared_encoders = theano.shared(self.encoders, 
                 name='ensemble.shared_encoders')
 
@@ -235,11 +255,12 @@ class Ensemble:
             self.learned_terminations = []
 
             # make default origin
-            self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
+            self.add_origin('X', func=None, dt=dt,
+                    eval_points=self.eval_points, decoders=decoders)
 
         elif self.mode == 'direct':
             # make default origin
-            self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size) 
+            self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size)
             # reset neurons_num to 0
             self.neurons_num = 0
 
@@ -575,3 +596,64 @@ class Ensemble:
                         updates.update(OrderedDict({o.decoded_output: 
                             TT.flatten(X).astype('float32')}))
         return updates
+
+
+    def get_subensemble_parts(self, num_subs):
+        """
+        Uses encoder, decoder, alpha and bias of this ensemble and divides them
+        into the specified number of parts for the subensembles.
+        """
+        parts = []
+
+        decoder_parts = self.get_subensemble_decoder(num_subs, "X")
+
+        ## We don't split on the first dimension (array_size) of these arrays,
+        ## but on the second dimension (number of neurons).
+        e_size = len(self.encoders[0]) / num_subs
+        b_size = len(self.bias[0]) / num_subs
+        a_size = len(self.alpha[0]) / num_subs
+
+        # create the specified number of subensembles
+        for e_num in range(1, num_subs + 1):
+            encoder_part = []
+            bias_part = []
+            alpha_part = []
+            for i in range(0, self.array_size):
+                encoder_part.append(
+                        self.encoders[i][e_size * (e_num - 1):e_size * e_num])
+                bias_part.append(
+                        self.bias[i][b_size * (e_num - 1):b_size * e_num])
+                alpha_part.append(
+                        self.alpha[i][a_size * (e_num - 1):a_size * e_num])
+
+            parts.append((np.array(encoder_part).astype('float32'),
+                np.array(decoder_parts[e_num - 1]).astype('float32'),
+                np.array(bias_part).astype('float32'),
+                np.array(alpha_part).astype('float32'),))
+
+        return parts
+
+    def get_subensemble_decoder(self, num_subs, origin_name, func=None):
+        """ Gets decoder for a specified origin of the ensemble
+        and divides it into the specified number of parts for subensembles
+        """
+        parts = []
+
+        # create the origin in order to compute a decoder
+        if origin_name not in self.origin:
+            self.add_origin(origin_name, func)
+
+        decoders = self.origin[origin_name].decoders.get_value()
+        d_size = len(decoders[0]) / num_subs
+
+        # create the specified number of decoders
+        for e_num in range(1, num_subs + 1):
+            decoder_part = []
+            for i in range(0, self.array_size):
+                decoder_part.append(
+                        decoders[i][d_size * (e_num - 1):d_size * e_num])
+
+            parts.append(np.array(decoder_part).astype('float32'))
+
+        return parts
+

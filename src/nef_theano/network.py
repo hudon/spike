@@ -15,6 +15,7 @@ from . import subnetwork
 from . import connection
 
 from multiprocessing import Process
+from threading import Thread
 import zmq
 from . import zmq_utils
 
@@ -72,7 +73,7 @@ class Network(object):
 
         return procPair
 
-    def connect(self, pre, post, transform=None, weight=1,
+    def connect(self, pre, post, orig_transform=None, weight=1,
                 index_pre=None, index_post=None, pstc=0.01, 
                 func=None):
         """Connect two nodes in the network.
@@ -149,128 +150,170 @@ class Network(object):
 
         """
 
-        # get post Node object from node dictionary
-        post = self.get_object(post)
+        def __connect(pre, post, pre_sub_index, pre_sub_parent, pre_num_subs):
+            transform = orig_transform # orig_transform is read only
+            pre_name = pre.name
+            # get the origin from the pre Node, CREATE one if does not exist
+            if pre_sub_parent is None:
+                pre_origin = self.get_origin(pre_name, func)
+            else:
+                assert not isinstance(pre, origin.Origin)
+                origin_name = func.__name__ if func is not None else 'X'
+                if origin_name in pre.origin:
+                    pre_origin = pre.origin[origin_name]
+                else:
+                    decoder = pre_sub_parent.get_subensemble_decoder(
+                        pre_num_subs, origin_name, func)[pre_sub_index]
+                    pre_origin = pre.add_origin(pre_name, func, decoder=decoder)
 
-        # get pre object (gets either a Node from node dict or its origin)
-        pre_name = pre
-        pre = self.get_object(pre_name)
-        # get the origin from the pre Node, CREATE one if does not exist
-        # if pre is already an origin, just returns it
-        pre_origin = self.get_origin(pre_name, func)
-        pre_output = pre_origin.decoded_output
-        dim_pre = pre_origin.dimensions
+            pre_output = pre_origin.decoded_output
+            dim_pre = pre_origin.dimensions
 
-        # use the pre_name since pre may be an origin
-        origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(pre_name, post.name)
+            origin_socket, destination_socket = \
+                zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
 
-        if transform is not None: 
+            if transform is not None:
+                # there are 3 cases
+                # 1) pre = decoded, post = decoded
+                #     - in this case, transform will be 
+                #                       (post.dimensions x pre.origin.dimensions)
+                #     - decoded_input will be (post.array_size x post.dimensions)
+                # 2) pre = decoded, post = encoded
+                #     - in this case, transform will be size 
+                #         (post.array_size x post.neurons x pre.origin.dimensions)
+                #     - encoded_input will be (post.array_size x post.neurons_num)
+                # 3) pre = encoded, post = encoded
+                #     - in this case, transform will be (post.array_size x 
+                #             post.neurons_num x pre.array_size x pre.neurons_num)
+                #     - encoded_input will be (post.array_size x post.neurons_num)
 
-            # there are 3 cases
-            # 1) pre = decoded, post = decoded
-            #     - in this case, transform will be 
-            #                       (post.dimensions x pre.origin.dimensions)
-            #     - decoded_input will be (post.array_size x post.dimensions)
-            # 2) pre = decoded, post = encoded
-            #     - in this case, transform will be size 
-            #         (post.array_size x post.neurons x pre.origin.dimensions)
-            #     - encoded_input will be (post.array_size x post.neurons_num)
-            # 3) pre = encoded, post = encoded
-            #     - in this case, transform will be (post.array_size x 
-            #             post.neurons_num x pre.array_size x pre.neurons_num)
-            #     - encoded_input will be (post.array_size x post.neurons_num)
+                # make sure contradicting things aren't simultaneously specified
+                assert ((weight == 1) and (index_pre is None)
+                        and (index_post is None))
 
-            # make sure contradicting things aren't simultaneously specified
-            assert ((weight == 1) and (index_pre is None)
-                    and (index_post is None))
+                transform = np.array(transform)
 
-            transform = np.array(transform)
+                # check to see if post side is an encoded connection, case 2 or 3
+                #TODO: a better check for this
+                if transform.shape[0] != post.dimensions * post.array_size or len(transform.shape) > 2:
 
-            # check to see if post side is an encoded connection, case 2 or 3
-            #TODO: a better check for this
-            if transform.shape[0] != post.dimensions * post.array_size or len(transform.shape) > 2:
-
-                if transform.shape[0] == post.array_size * post.neurons_num:
-                    transform = transform.reshape(
-                                      [post.array_size, post.neurons_num] +\
-                                                list(transform.shape[1:]))
-
-                if len(transform.shape) == 2: # repeat array_size times
-                    transform = np.tile(transform, (post.array_size, 1, 1))
-
-                # check for pre side encoded connection (case 3)
-                if len(transform.shape) > 3 or \
-                       transform.shape[2] == pre.array_size * pre.neurons_num:
-
-                    if transform.shape[2] == pre.array_size * pre.neurons_num: 
+                    if transform.shape[0] == post.array_size * post.neurons_num:
                         transform = transform.reshape(
-                                        [post.array_size, post.neurons_num,  
-                                              pre.array_size, pre.neurons_num])
-                    assert transform.shape == \
-                            (post.array_size, post.neurons_num, 
-                             pre.array_size, pre.neurons_num)
+                                          [post.array_size, post.neurons_num] +\
+                                                    list(transform.shape[1:]))
 
-                    print 'setting pre_output=spikes'
+                    if len(transform.shape) == 2: # repeat array_size times
+                        transform = np.tile(transform, (post.array_size, 1, 1))
 
-                    # get spiking output from pre population
-                    pre_output = pre.neurons.output 
+                    # check for pre side encoded connection (case 3)
+                    if len(transform.shape) > 3 or \
+                           transform.shape[2] == pre.array_size * pre.neurons_num:
 
-                    case1 = connection.Case1(
-                        (post.array_size, post.neurons_num,
-                         pre.array_size, pre.neurons_num))
+                        if transform.shape[2] == pre.array_size * pre.neurons_num: 
+                            transform = transform.reshape(
+                                            [post.array_size, post.neurons_num,  
+                                                  pre.array_size, pre.neurons_num])
+                        assert transform.shape == \
+                                (post.array_size, post.neurons_num,
+                                 pre.array_size, pre.neurons_num)
 
-                    # pass in the pre population decoded output value
-                    # to the post population
-                    post.add_termination(input_socket=destination_socket,
-                        name=pre_name, pstc=pstc,
-                        encoded_input= pre_output.get_value(),
-                        transform=transform, case=case1)
+                        print 'setting pre_output=spikes'
 
-                    pre_origin.add_output(origin_socket)
+                        # get spiking output from pre population
+                        pre_output = pre.neurons.output
 
-                    return
+                        case1 = connection.Case1(
+                            (post.array_size, post.neurons_num,
+                             pre.array_size, pre.neurons_num))
 
-                else: # otherwise we're in case 2 (pre is decoded)
-                    assert transform.shape ==  \
-                               (post.array_size, post.neurons_num, dim_pre)
+                        # pass in the pre population decoded output value
+                        # to the post population
+                        post.add_termination(input_socket=destination_socket,
+                            name=pre_name, pstc=pstc,
+                            encoded_input= pre_output.get_value(),
+                            transform=transform, case=case1)
 
-                    # can't specify a function with either side encoded connection
-                    assert func == None 
+                        pre_origin.add_output(origin_socket)
 
-                    case2 = connection.Case2(
-                        (post.array_size, post.neurons_num,
-                         pre.array_size, pre.neurons_num))
+                        return
 
-                    # pass in the pre population decoded output value
-                    # to the post population
-                    post.add_termination(input_socket=destination_socket,
-                        name=pre_name, pstc=pstc,
-                        encoded_input= pre_output.get_value(),
-                        transform=transform, case=case2)
+                    else: # otherwise we're in case 2 (pre is decoded)
+                        assert transform.shape ==  \
+                                   (post.array_size, post.neurons_num, dim_pre)
 
-                    pre_origin.add_output(origin_socket)
+                        # can't specify a function with either side encoded connection
+                        assert func == None
 
-                    return
+                        # TODO CONNECTION? WHATS THAT
+                        case2 = connection.Case2(
+                            (post.array_size, post.neurons_num,
+                             pre.array_size, pre.neurons_num))
 
-        # if decoded-decoded connection (case 1)
-        # compute transform if not given, if given make sure shape is correct
-        transform = connection.compute_transform(
-            dim_pre=dim_pre,
-            dim_post=post.dimensions,
-            array_size=post.array_size,
-            weight=weight,
-            index_pre=index_pre,
-            index_post=index_post, 
-            transform=transform)
+                        # TODO MIGHT NEED TO CHANGE THIS NEXT PART
+                        # pass in the pre population decoded output value
+                        # to the post population
+                        post.add_termination(input_socket=destination_socket,
+                            name=pre_name, pstc=pstc,
+                            encoded_input= pre_output.get_value(),
+                            transform=transform, case=case2)
 
-        # pre output needs to be replaced during execution using IPC
-        # pass pre_out and transform + calculate dot product in accumulator
-        # passing VALUE of pre output (do not share theano shared vars between processes)
-        post.add_termination(input_socket=destination_socket, name=pre_name,
-            pstc=pstc, decoded_input=pre_output.get_value(), transform=transform)
+                        pre_origin.add_output(origin_socket)
 
-        pre_origin.add_output(origin_socket)
+                        return
+
+            # if decoded-decoded connection (case 1)
+            # compute transform if not given, if given make sure shape is correct
+            transform = connection.compute_transform(
+                dim_pre=dim_pre,
+                dim_post=post.dimensions,
+                array_size=post.array_size,
+                weight=weight,
+                index_pre=index_pre,
+                index_post=index_post, 
+                transform=transform)
+
+# TODO MIGHT NEED TO CHANGE THIS NEXT PART
+            # pre output needs to be replaced during execution using IPC
+            # pass pre_out and transform + calculate dot product in accumulator
+            # passing VALUE of pre output (do not share theano shared vars between processes)
+            post.add_termination(input_socket=destination_socket, name=pre_name,
+                pstc=pstc, decoded_input=pre_output.get_value(),
+                transform=transform)
+
+            pre_origin.add_output(origin_socket)
+
+        def __get_subensembles(parent_name):
+            """ Gets all subensembles for given parent name
+            """
+            subnodes = []
+            for node in self.nodes.values():
+                if not isinstance(node, ensemble.EnsembleProcess): continue
+                names = node.name.split('-SUB-')
+                if node.ensemble.is_subensemble and names[0] == parent_name:
+                    node.sub_index = int(names[1])
+                    subnodes.append(node)
+            return subnodes
+
+        ## If pre is not in self.nodes, we can assume that it has been split
+        ## and that its *sub-ensembles* are in self.nodes. Similarly for post.
+        if pre in self.nodes:
+            pres = [self.nodes[pre]]
+        else:
+            pres = __get_subensembles(pre)
+
+        if post in self.nodes:
+            posts = [self.nodes[post]]
+        else:
+            posts = __get_subensembles(post)
+
+        for pre_node in pres:
+            for post_node in posts:
+                #__connect(pre_node, post_node)
+                if hasattr(pre_node, 'sub_index'):
+                    __connect(pre_node, post_node, pre_node.sub_index,
+                        pre_node.parent_ensemble, len(pres))
+                else:
+                    __connect(pre_node, post_node, None, None, 1)
 
     def get_object(self, name):
         """This is a method for parsing input to return the proper object.
@@ -359,6 +402,7 @@ class Network(object):
         Note that all ensembles are actually arrays of length 1.
 
         :param string name: name of the ensemble (must be unique)
+        :param int num_subs: The number of subensembles to split ensemble into
         :param int seed:
             Random number seed to use.
             If this is None and the Network was constructed
@@ -366,6 +410,10 @@ class Network(object):
         :returns: the newly created ensemble      
 
         """
+        num_subs = kwargs.pop('num_subs', 1)
+        if num_subs < 1:
+            raise Exception("ERROR", "num_subs must be greater than 0")
+
         if 'seed' not in kwargs.keys():
             if self.fixed_seed is not None:
                 kwargs['seed'] = self.fixed_seed
@@ -373,20 +421,57 @@ class Network(object):
                 # if no seed provided, get one randomly from the rng
                 kwargs['seed'] = self.random.randrange(0x7fffffff)
 
-        ticker_socket, node_socket = \
-            zmq_utils.create_socket_defs_reqrep("ticker", name)
         kwargs['dt'] = self.dt
 
-        # create ensemble and ensemble process
-        # TODO: currently using separate processes for direct nodes
-        # (Terry wanted them on a single proceses, but need more info for that)
-        ep = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
+        if num_subs == 1:
+            ticker_socket, node_socket = \
+                zmq_utils.create_socket_defs_reqrep("ticker", name)
 
-        ticker_conn = ticker_socket.create_socket(self.zmq_context)
-        self.processes.append((ep, ticker_conn,))
-        self.nodes[name] = ep
+            # create ensemble and ensemble process
+            ep = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
+            ticker_conn = ticker_socket.create_socket(self.zmq_context)
+            self.processes.append((ep, ticker_conn,))
+            self.nodes[name] = ep
 
-        return ep
+            return ep
+
+        # Otherwise, create subensembles
+
+        # We must first have an ensemble that we'll use to copy chunks of into
+        # sub-ensembles
+        orig_ensemble = ensemble.Ensemble(*args, **kwargs)
+        e_num = 0
+        for encoder, decoder, bias, alpha in \
+            orig_ensemble.get_subensemble_parts(num_subs):
+
+            sub_name = name + "-SUB-" + str(e_num)
+            e_num += 1
+
+            # remove the encoders if the user specified them, as we'll be
+            # using the ones from orig_ensemble
+            kwargs.pop('encoders', None)
+
+            ticker_socket, node_socket = \
+                zmq_utils.create_socket_defs_reqrep("ticker", sub_name)
+
+            if len(args) > 3:
+                raise Exception("ERROR: sub-ensemble doesn't support creating "
+                "ensembles with non-keyword arguments beyond 'neurons', "
+                "'dimensions' and 'dt'. All other arguments should have a "
+                "keyword (eg. 'tau_rc=0.03').")
+
+            ## Overwrite the parts of kwargs that must be split
+            kwargs["dimensions"] = orig_ensemble.dimensions
+            kwargs["neurons"] = orig_ensemble.neurons_num / num_subs
+            kwargs["encoders"] = encoder
+            kwargs["decoders"] = decoder
+            kwargs["bias"] = bias
+            kwargs["alpha"] = alpha
+            ep_sub = ensemble.EnsembleProcess(sub_name, node_socket,
+                    is_subensemble=True, parent_ensemble=orig_ensemble, **kwargs)
+            self.processes.append((ep_sub,
+                ticker_socket.create_socket(self.zmq_context), ))
+            self.nodes[sub_name] = ep_sub
 
     def make_array(self, name, neurons, array_size, dimensions=1, **kwargs):
         """Generate a network array specifically.

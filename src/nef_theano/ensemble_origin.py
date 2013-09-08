@@ -12,7 +12,8 @@ from .origin import Origin
 from helpers import map_gemv
 
 class EnsembleOrigin(Origin):
-    def __init__(self, ensemble, dt, func=None, eval_points=None):
+    def __init__(self, ensemble, dt, func=None, eval_points=None,
+            decoders=None):
         """The output from a population of neurons (ensemble),
         performing a transformation (func) on the represented value.
 
@@ -21,11 +22,17 @@ class EnsembleOrigin(Origin):
         :param function func:
             the transformation to perform to the ensemble's
             represented values to get the output value
+        :param list decoders: optional list of decoders to use instead of
+            computing them
 
         """
         self.ensemble = ensemble
-        # sets up self.decoders
-        func_size = self.compute_decoders(func, dt, eval_points) 
+        if decoders is None:
+            # sets up self.decoders
+            func_size = self.compute_decoders(func, dt, eval_points)
+        else:
+            self.decoders = theano.shared(decoders)
+            func_size = decoders.shape[2]
         # decoders is array_size * neurons_num * func_dimensions, 
         # initial value should have array_size values * func_dimensions
         initial_value = np.zeros(self.ensemble.array_size * func_size) 

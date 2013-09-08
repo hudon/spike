@@ -10,7 +10,7 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
+is_spike = len(sys.argv) > 2 and sys.argv[2] == 'is_spike'
 
 build_time_start = time.time()
 
@@ -19,16 +19,15 @@ dt_step = 0.001
 net = nef.Network('Encoder Test', dt=dt_step,seed=103)
 net.make_input('in1', math.sin)
 net.make_input('in2', math.cos)
-net.make('A', 100, 1)
+if is_spike:
+    net.make('A', 100, 1, num_subs=2)
+else:
+    net.make('A', 100, 1)
 net.make('B', 100, 1, encoders=[[1]], intercept=(0, 1.0))
 net.make('C', 100, 2, radius=1.5)
 net.make('D', 100, 2, encoders=[[1,1],[1,-1],[-1,-1],[-1,1]], radius=1.5)
 net.make('outputC', 1, 1, mode='direct')
-
-if is_spike:
-    net.make('outputD', 1, 1, mode='direct', is_printing=True)
-else:
-    net.make('outputD', 1, 1, mode='direct')
+net.make('outputD', 1, 1, mode='direct')
 
 net.connect('in1', 'A')
 net.connect('A', 'B')

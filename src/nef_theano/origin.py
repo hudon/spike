@@ -44,7 +44,7 @@ class Origin(object):
         # theano internal state defining output value
         self.decoded_output = theano.shared(initial_value,
             name='origin.decoded_output') 
-    
+
         # find number of parameters of the projected value
         if dimensions is None: dimensions = len(initial_value)
         self.dimensions = dimensions

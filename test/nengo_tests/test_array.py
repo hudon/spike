@@ -20,7 +20,10 @@ def test_array():
 
     net.make('B', neurons=neurons, array_size=3, dimensions=2)
     net.make_array('A', neurons=neurons, array_size=1, dimensions=6)
-    net.make('A2', neurons=neurons, array_size=2, dimensions=3)
+    if len(sys.argv) > 2 and sys.argv[2] == 'is_spike':
+        net.make('A2', neurons=neurons, array_size=2, dimensions=3, num_subs=2)
+    else:
+        net.make('A2', neurons=neurons, array_size=2, dimensions=3)
     net.make('B2', neurons=neurons, array_size=6, dimensions=1)
 
     net.connect('in', 'A')
@@ -36,7 +39,7 @@ def test_array():
 
     Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
     Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
-    A2p = net.make_probe('A2', dt_sample=dt_step, pstc=pstc)
+    #A2p = net.make_probe('A2', dt_sample=dt_step, pstc=pstc)
     Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
     B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
 
@@ -46,7 +49,7 @@ def test_array():
 
     ip_data = Ip.get_data()
     ap_data = Ap.get_data()
-    a2p_data = A2p.get_data()
+    #a2p_data = A2p.get_data()
     bp_data = Bp.get_data()
     b2p_data = B2p.get_data()
 
@@ -57,8 +60,8 @@ def test_array():
     for x in ap_data:
         print x
     print "ensemble 'A2' probe data"
-    for x in a2p_data:
-        print x
+    #for x in a2p_data:
+        #print x
     print "ensemble 'B' probe data"
     for x in bp_data:
         print x
