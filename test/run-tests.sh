@@ -15,6 +15,7 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_subnetwork.py"
   "${NENGO_TESTS_DIR}/test_transform.py"
   "${NENGO_TESTS_DIR}/test_noise.py"
+  "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
   "${NENGO_TESTS_DIR}/test_array.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
