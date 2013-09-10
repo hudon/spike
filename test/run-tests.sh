@@ -12,6 +12,7 @@ SOURCE_DIR="../examples/new-theano"
 NENGO_TESTS_DIR="nengo_tests"
 
 TEST_SCRIPTS=(
+  "${NENGO_TESTS_DIR}/test_cleanup.py"
   "${NENGO_TESTS_DIR}/test_subnetwork.py"
   "${NENGO_TESTS_DIR}/test_transform.py"
   "${NENGO_TESTS_DIR}/test_noise.py"

@@ -1,18 +1,19 @@
 import nose
 import numpy as np
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
 
 def test_cleanup():
-    raise nose.SkipTest()
 
     net = nef.Network('Cleanup',seed=3)
 
-    D = 128
-    M = 50000
-    N1 = 100
-    N2 = 50
+    D = 5
+    M = 5
+    N1 = 1
+    N2 = 5
     index = 0
 
     def make_vector():
@@ -39,15 +40,25 @@ def test_cleanup():
     net.make_input('input', words[index])
     net.connect('input', 'A', pstc=0.1)
 
-    net.run(0.001)
+    Ap = net.make_probe('A', dt_sample=0.001, pstc=0.1)
+    Bp = net.make_probe('B', dt_sample=0.001, pstc=0.1)
+    Cp = net.make_probe('C', dt_sample=0.001, pstc=0.1)
 
-    import time
-    start = time.time()
-
-    for i in range(5000):
-        #print i,net.ensemble['A'].origin['X'].value.get_value()
-        print i, words[index, :4],
-        print net.nodes['C'].accumulator[0.1].projected_value.get_value()[:4]
-
+    for i in range(10):
         net.run(0.001)
-        print (time.time() - start) / (i + 1)
+
+    ap_data = Ap.get_data()
+    bp_data = Bp.get_data()
+    cp_data = Cp.get_data()
+
+    print "ensemble 'A' probe data"
+    for x in ap_data:
+        print x
+    print "ensemble 'B' probe data"
+    for x in bp_data:
+        print x
+    print "ensemble 'C' probe data"
+    for x in cp_data:
+        print x
+	
+test_cleanup()
