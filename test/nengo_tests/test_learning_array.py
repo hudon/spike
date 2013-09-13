@@ -19,11 +19,13 @@
 import math
 import time
 
-import itertools
+#import itertools
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
 neurons = 30  # number of neurons in all ensembles
 N = 2 # number of dimensions for multi-dimensional ensembles
@@ -67,7 +69,7 @@ for i in range(test_cases.shape[0]):
     print 'test_dim', dims
     print
 
-    net = nef.Network('Learning Test')
+    net = nef.Network('Learning Test',seed=97)
     net.make_input('in', value=[0.8,-.5])
 
     timer = time.time()
@@ -103,19 +105,34 @@ for i in range(test_cases.shape[0]):
 
     start_time = time.time()
     net.run(t_final)
-    print 'Simulated in ', time.time() - start_time, 'seconds'
 
-    plt.ioff(); plt.close()
+    ip_data = Ip.get_data()
+    ap_data = Ap.get_data()
+    bp_data = Bp.get_data()
+    e1p_data = E1p.get_data()
 
-    t = np.linspace(0, t_final, len(Ap.get_data()))
+    print "input 'in' probe data"
+    for x in ip_data:
+        print x
+    print "ensemble 'A' probe data"
+    for x in ap_data:
+        print x
+    print "ensemble 'B' probe data"
+    for x in bp_data:
+        print x
+    print "ensemble 'E1p' probe data"
+    for x in e1p_data:
+        print x
 
-    plt.plot(t, Ap.get_data())
-    plt.plot(t, Bp.get_data())
-    plt.plot(t, E1p.get_data())
-    plt.legend( ['A'] * array_sizes[0] * dims[0] + 
-                ['B'] * array_sizes[1] * dims[1] + 
-                ['error'] * array_sizes[2] * dims[2] )
-    plt.title('Normal learning')
-    plt.tight_layout()
-    plt.show()
+    #plt.ioff(); plt.close()
+
+    #t = np.linspace(0, t_final, len(Ap.get_data()))
+
+    #plt.plot(t, Ap.get_data())
+    #plt.plot(t, Bp.get_data())
+    #plt.plot(t, E1p.get_data())
+    #plt.legend( ['A'] * array_sizes[0] * dims[0] + ['B'] * array_sizes[1] * dims[1] + ['error'] * array_sizes[2] * dims[2] )
+    #plt.title('Normal learning')
+    #plt.tight_layout()
+    #plt.show()
 
