@@ -3,11 +3,13 @@
 import math
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
-net = nef.Network('Function Test')
+net = nef.Network('Function Test',seed=91)
 net.make_input('in', value=math.sin)
 net.make('A', neurons=250, dimensions=1)
 net.make('B', neurons=250, dimensions=3)
@@ -31,11 +33,24 @@ Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
 print "starting simulation"
 net.run(timesteps * dt_step)
 
+ip_data = Ip.get_data()
+ap_data = Ap.get_data()
+bp_data = Bp.get_data()
+
+print "input 'in' probe data"
+for x in ip_data:
+    print x
+print "ensemble 'A' probe data"
+for x in ap_data:
+    print x
+print "ensemble 'B' probe data"
+for x in bp_data:
+    print x
 # plot the results
-plt.ioff(); plt.clf(); plt.hold(1);
-plt.plot(Ip.get_data())
-plt.plot(Ap.get_data())
-plt.plot(Bp.get_data())
-plt.legend(['Input','A','B0','B1','B2'])
-plt.tight_layout()
-plt.show()
+#plt.ioff(); plt.clf(); plt.hold(1);
+#plt.plot(Ip.get_data())
+#plt.plot(Ap.get_data())
+#plt.plot(Bp.get_data())
+#plt.legend(['Input','A','B0','B1','B2'])
+#plt.tight_layout()
+#plt.show()
