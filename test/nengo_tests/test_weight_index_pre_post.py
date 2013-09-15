@@ -7,9 +7,11 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
-net = nef.Network('Weight, Index_Pre, and Index_Post Test')
+net = nef.Network('Weight, Index_Pre, and Index_Post Test',seed=97)
 net.make_input('in', value=math.sin)
 net.make('A', 300, 1)
 net.make('B', 300, 1)
@@ -40,20 +42,50 @@ Fp = net.make_probe('F', dt_sample=dt_step, pstc=pstc)
 print "starting simulation"
 net.run(timesteps*dt_step)
 
-plt.ioff(); plt.close(); 
-plt.subplot(711); plt.title('Input')
-plt.plot(Ip.get_data())
-plt.subplot(712); plt.title('A = Input * .5')
-plt.plot(Ap.get_data())
-plt.subplot(713); plt.title('B = A * 2')
-plt.plot(Bp.get_data())
-plt.subplot(714); plt.title('C(0) = 0, C(1) = A')
-plt.plot(Cp.get_data())
-plt.subplot(715); plt.title('D(0:2) = A')
-plt.plot(Dp.get_data())
-plt.subplot(716); plt.title('E(0:1) = C(1)')
-plt.plot(Ep.get_data())
-plt.subplot(717); plt.title('F(0) = C(1)')
-plt.plot(Fp.get_data())
-plt.tight_layout()
-plt.show()
+ip_data = Ip.get_data()
+ap_data = Ap.get_data()
+bp_data = Bp.get_data()
+cp_data = Cp.get_data()
+dp_data = Dp.get_data()
+ep_data = Ep.get_data()
+fp_data = Fp.get_data()
+
+print "input 'in' probe data"
+for x in ip_data:
+    print x
+print "ensemble 'A' probe data"
+for x in ap_data:
+    print x
+print "ensemble 'B' probe data"
+for x in bp_data:
+    print x
+print "ensemble 'C' probe data"
+for x in cp_data:
+    print x
+print "ensemble 'D' probe data"
+for x in dp_data:
+    print x
+print "ensemble 'E' probe data"
+for x in ep_data:
+    print x
+print "ensemble 'F' probe data"
+for x in fp_data:
+    print x
+
+#plt.ioff(); plt.close(); 
+#plt.subplot(711); plt.title('Input')
+#plt.plot(Ip.get_data())
+#plt.subplot(712); plt.title('A = Input * .5')
+#plt.plot(Ap.get_data())
+#plt.subplot(713); plt.title('B = A * 2')
+#plt.plot(Bp.get_data())
+#plt.subplot(714); plt.title('C(0) = 0, C(1) = A')
+#plt.plot(Cp.get_data())
+#plt.subplot(715); plt.title('D(0:2) = A')
+#plt.plot(Dp.get_data())
+#plt.subplot(716); plt.title('E(0:1) = C(1)')
+#plt.plot(Ep.get_data())
+#plt.subplot(717); plt.title('F(0) = C(1)')
+#plt.plot(Fp.get_data())
+#plt.tight_layout()
+#plt.show()
