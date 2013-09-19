@@ -24,6 +24,7 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
   "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
+  "${NENGO_TESTS_DIR}/test_direct.py"
 );
 
 compareOutput(){
