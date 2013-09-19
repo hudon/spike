@@ -452,6 +452,7 @@ class Ensemble:
 
         # introduce 1-time-tick delay
         for o in self.origin.values():
+            if o.func is not None and self.mode == 'direct': continue
             o.tick()
 
     def direct_mode_tick(self):
