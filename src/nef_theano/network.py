@@ -152,16 +152,18 @@ class Network(object):
         # get post Node object from node dictionary
         post = self.get_object(post)
 
-        # get pre Node object from node dictionary
+        # get pre object (gets either a Node from node dict or its origin)
         pre_name = pre
-        pre = self.get_object(pre)
+        pre = self.get_object(pre_name)
         # get the origin from the pre Node, CREATE one if does not exist
+        # if pre is already an origin, just returns it
         pre_origin = self.get_origin(pre_name, func)
         pre_output = pre_origin.decoded_output
         dim_pre = pre_origin.dimensions
 
+        # use the pre_name since pre may be an origin
         origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
+            zmq_utils.create_socket_defs_pushpull(pre_name, post.name)
 
         if transform is not None: 
 
