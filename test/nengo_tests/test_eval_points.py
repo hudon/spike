@@ -18,15 +18,17 @@ This tests:
 import math
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-from .. import nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
 # create the list of evaluation points
 eval_points1 = np.arange(-1, 0, .5)
 eval_points2 = np.array([[1,1],[-1,1],[-1,-1],[1,-1]]).T
 
-net = nef.Network('EvalPoints Test')
+net = nef.Network('EvalPoints Test',seed=5)
 net.make_input('in', value=math.sin)
 
 # for test 1
@@ -50,9 +52,9 @@ def pow(x):
 
 # create origins with eval_points
 # for test 1
-net.nodes['A1'].add_origin('pow', func=pow, eval_points=eval_points1)
+net.nodes['A1'].add_origin(name='pow', dt=0.01, func=pow, eval_points=eval_points1)
 # for test 3
-net.nodes['A3'].add_origin('pow', func=pow, eval_points=eval_points1)
+net.nodes['A3'].add_origin(name='pow', dt=0.01, func=pow, eval_points=eval_points1)
 
 net.connect('in', 'A1')
 net.connect('in', 'A2')
@@ -69,25 +71,67 @@ t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.01
 
 Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
-A1p = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
-A2p = net.make_probe('C', dt_sample=dt_step, pstc=pstc)
-A3p = net.make_probe('D', dt_sample=dt_step, pstc=pstc)
-A4p = net.make_probe('E', dt_sample=dt_step, pstc=pstc)
+A1p = net.make_probe('A1', dt_sample=dt_step, pstc=pstc)
+A2p = net.make_probe('A2', dt_sample=dt_step, pstc=pstc)
+A3p = net.make_probe('A3', dt_sample=dt_step, pstc=pstc)
+A4p = net.make_probe('A4', dt_sample=dt_step, pstc=pstc)
+Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
+Cp = net.make_probe('C', dt_sample=dt_step, pstc=pstc)
+Dp = net.make_probe('D', dt_sample=dt_step, pstc=pstc)
+Ep = net.make_probe('E', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
 net.run(timesteps*dt_step)
 
+ip_data = Ip.get_data()
+a1p_data = A1p.get_data()
+a2p_data = A2p.get_data()
+a3p_data = A3p.get_data()
+a4p_data = A4p.get_data()
+bp_data = Bp.get_data()
+cp_data = Cp.get_data()
+dp_data = Dp.get_data()
+ep_data = Ep.get_data()
+
+print "input 'in' probe data"
+for x in ip_data:
+    print x
+print "input 'a1p' probe data"
+for x in a1p_data:
+    print x
+print "input 'a2p' probe data"
+for x in a2p_data:
+    print x
+print "input 'a3p' probe data"
+for x in a3p_data:
+    print x
+print "input 'a4p' probe data"
+for x in a4p_data:
+    print x
+print "input 'bp' probe data"
+for x in bp_data:
+    print x
+print "input 'cp' probe data"
+for x in cp_data:
+    print x
+print "input 'dp' probe data"
+for x in dp_data:
+    print x
+print "input 'ep' probe data"
+for x in ep_data:
+    print x
+
 # plot the results
-plt.ioff(); plt.clf(); 
-plt.subplot(511); plt.title('Input')
-plt.plot(Ip.get_data())
-plt.subplot(512); plt.title('A1')
-plt.plot(A1p.get_data())
-plt.subplot(513); plt.title('A2')
-plt.plot(A2p.get_data())
-plt.subplot(514); plt.title('A3')
-plt.plot(A3p.get_data())
-plt.subplot(515); plt.title('A4')
-plt.plot(A4p.get_data())
-plt.tight_layout()
-plt.show()
+#plt.ioff(); plt.clf(); 
+#plt.subplot(511); plt.title('Input')
+#plt.plot(Ip.get_data())
+#plt.subplot(512); plt.title('A1')
+#plt.plot(A1p.get_data())
+#plt.subplot(513); plt.title('A2')
+#plt.plot(A2p.get_data())
+#plt.subplot(514); plt.title('A3')
+#plt.plot(A3p.get_data())
+#plt.subplot(515); plt.title('A4')
+#plt.plot(A4p.get_data())
+#plt.tight_layout()
+#plt.show()
