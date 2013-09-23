@@ -10,7 +10,7 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-net = nef.Network('SimpleNode Test',seed=92)
+net = nef.Network('SimpleNode Test', seed=92)
 
 class TrainingInput(nef.simplenode.SimpleNode):
     def init(self):
@@ -18,10 +18,15 @@ class TrainingInput(nef.simplenode.SimpleNode):
         self.period_length = 2
         self.choose_time = 0.0
 
+        # Note: seeding this random number is necessary for comparing outputs
+        # can be removed otherwise
+        self.random = random.Random()
+        self.random.seed(92)
+
     def origin_test1(self):
         if (self.t >= self.choose_time):
             # choose an input randomly from the set
-            self.index = random.randint(0, 9)
+            self.index = self.random.randint(0, 9)
             if (self.index < 5):
                 # specify the correct response for this input
                 self.correct_response = [.5]
