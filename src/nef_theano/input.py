@@ -7,7 +7,6 @@ import numpy as np
 from . import origin
 
 import zmq
-import zmq_utils
 
 class Input(object):
     """Inputs are objects that provide real-valued input to ensembles.
@@ -31,6 +30,7 @@ class Input(object):
         self.zeroed = False
         self.change_time = None
         self.origin = {}
+        self.set_ticker_connection = None
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
@@ -95,9 +95,12 @@ class Input(object):
         for o in self.origin.values():
             o.tick()
 
-    def run(self, ticker_socket_def):
+    def set_ticker_conn(self, ticker_socket_def):
+        self.ticker_socket_def = ticker_socket_def
+
+    def run(self):
         self.bind_sockets()
-        ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
+        ticker_conn = self.ticker_socket_def.create_socket(self.zmq_context)
 
         ## 1-time tick delay
         self.tick()

@@ -6,17 +6,16 @@ import theano
 from theano import tensor as TT
 import numpy as np
 
-from . import ensemble
-from . import simplenode
-from . import probe
-from . import origin
-from . import input
-from . import subnetwork
-from . import connection
-
-from multiprocessing import Process
 import zmq
-from . import zmq_utils
+
+from . import connection
+from . import distribution_admin
+from . import ensemble
+from . import input
+from . import origin
+from . import probe
+from . import simplenode
+from . import subnetwork
 
 class Network(object):
     def __init__(self, name, seed=None, fixed_seed=None, dt=.001):
@@ -39,8 +38,10 @@ class Network(object):
         self.fixed_seed = fixed_seed
         # all the nodes in the network, indexed by name
         self.nodes = {}
-        self.processes = []
+        self.workers = []
         self.zmq_context = zmq.Context()
+        self.admin = distribution_admin.DistributionAdmin(host_list=["localhost"], 
+                                                          distribute=True)
 
         self.setup = False
 
@@ -71,10 +72,12 @@ class Network(object):
         #self.tick_nodes.append(node)
         self.nodes[node.name] = node
 
-        ticker_socket, node_socket = \
-            zmq_utils.create_socket_defs_reqrep("ticker", node.name)
-        p = Process(target=node.run, args=(node_socket,), name=node.name)
-        self.processes.append((p,
+        ticker_socket, node_socket, worker = \
+            self.admin.create_reqrep_pair("ticker", node)
+
+        node.set_ticker_conn(node_socket)
+
+        self.workers.append((worker,
             ticker_socket.create_socket(self.zmq_context),))
 
     def connect(self, pre, post, transform=None, weight=1,
@@ -169,8 +172,8 @@ class Network(object):
         pre_output = pre_origin.decoded_output
         dim_pre = pre_origin.dimensions 
 
-        origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
+        origin_socket, destination_socket, worker = \
+            self.admin.create_pushpull_pair(pre.name, post)
 
         if transform is not None: 
 
@@ -384,14 +387,16 @@ class Network(object):
         # the theano function
         self.theano_tick = None
 
-        ticker_socket, node_socket = \
-            zmq_utils.create_socket_defs_reqrep("ticker", name)
         kwargs['dt'] = self.dt
-        e = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
-        self.nodes[name] = e
+        e = ensemble.EnsembleProcess(name, *args, **kwargs)
 
-        p = Process(target=e.run, name=name)
-        self.processes.append((p, ticker_socket.create_socket(self.zmq_context),))
+        ticker_socket, node_socket, worker = \
+            self.admin.create_reqrep_pair("ticker", e)
+
+        e.set_ticker_conn(node_socket)
+        self.nodes[name] = e
+        
+        self.workers.append((worker, ticker_socket.create_socket(self.zmq_context),))
 
         # store created ensemble in node dictionary
         if kwargs.get('mode', None) == 'direct':
@@ -497,10 +502,9 @@ class Network(object):
         #     self.theano_tick = self.make_theano_tick() 
 
         if not self.setup:
-            for p in self.processes:
-                proc = p[0]
-                if not proc.is_alive():
-                    proc.start()
+            for p in self.workers:
+                worker = p[0]
+                worker.start()
             self.setup = True
 
         for i in range(int(time / self.dt)):
@@ -508,16 +512,16 @@ class Network(object):
             t = self.run_time + i * self.dt
 
             ## Tick all nodes
-            for p in self.processes:
+            for p in self.workers:
                 ticker_conn = p[1]
                 ticker_conn.send(str(t))
 
             ## Wait for all nodes
-            for j in self.processes:
+            for j in self.workers:
                 ticker_conn = j[1]
                 ticker_conn.recv()
 
-        for p in self.processes:
+        for p in self.workers:
             ticker_conn = p[1]
             ticker_conn.send("END")
 
@@ -529,9 +533,9 @@ class Network(object):
     # called when the simulation is done (otherwise, procs will hang)
     def clean_up(self):
         # wait for all procs to end
-        for p in self.processes:
-            proc = p[0]
-            proc.join()
+        for p in self.workers:
+            worker = p[0]
+            worker.stop()
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the 

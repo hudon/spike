@@ -24,7 +24,7 @@ class EnsembleProcess:
     :param str name: name of the process
     :param bool is_printing: should the process be printing values to stdout
     """
-    def __init__(self, name, ticker_socket_def, *args, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         self.name = name
         self.is_printing = kwargs.pop('is_printing', None)
 
@@ -42,6 +42,9 @@ class EnsembleProcess:
         self.poller = zmq.Poller()
 
         self.input_sockets = []
+        self.ticker_socket_def = None
+
+    def set_ticker_conn(self, ticker_socket_def):
         self.ticker_socket_def = ticker_socket_def
 
     def bind_sockets(self):
