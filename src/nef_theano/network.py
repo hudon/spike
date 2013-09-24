@@ -150,9 +150,8 @@ class Network(object):
 
         """
 
-        def __connect(pre, post, pre_sub_index, pre_sub_parent, pre_num_subs):
+        def __connect(pre, pre_name, post, pre_sub_index, pre_sub_parent, pre_num_subs):
             transform = orig_transform # orig_transform is read only
-            pre_name = pre.name
             # get the origin from the pre Node, CREATE one if does not exist
             if pre_sub_parent is None:
                 pre_origin = self.get_origin(pre_name, func)
@@ -170,7 +169,7 @@ class Network(object):
             dim_pre = pre_origin.dimensions
 
             origin_socket, destination_socket = \
-                zmq_utils.create_socket_defs_pushpull(pre.name, post.name)
+                zmq_utils.create_socket_defs_pushpull(pre_name, post.name)
 
             if transform is not None:
                 # there are 3 cases
@@ -285,35 +284,36 @@ class Network(object):
         def __get_subensembles(parent_name):
             """ Gets all subensembles for given parent name
             """
-            subnodes = []
+            subnodes = {}
             for node in self.nodes.values():
                 if not isinstance(node, ensemble.EnsembleProcess): continue
                 names = node.name.split('-SUB-')
                 if node.ensemble.is_subensemble and names[0] == parent_name:
                     node.sub_index = int(names[1])
-                    subnodes.append(node)
+                    subnodes[node.name] = node
             return subnodes
 
         ## If pre is not in self.nodes, we can assume that it has been split
         ## and that its *sub-ensembles* are in self.nodes. Similarly for post.
         if pre in self.nodes:
-            pres = [self.nodes[pre]]
+            pres = { pre: self.get_object(pre) }
         else:
             pres = __get_subensembles(pre)
 
         if post in self.nodes:
-            posts = [self.nodes[post]]
+            posts = { post: self.get_object(post) }
         else:
             posts = __get_subensembles(post)
 
-        for pre_node in pres:
-            for post_node in posts:
-                #__connect(pre_node, post_node)
+        for pre_key in pres:
+            for post_key in posts:
+                pre_node = pres[pre_key]
+                post_node = posts[post_key]
                 if hasattr(pre_node, 'sub_index'):
-                    __connect(pre_node, post_node, pre_node.sub_index,
+                    __connect(pre_node, pre_key, post_node, pre_node.sub_index,
                         pre_node.parent_ensemble, len(pres))
                 else:
-                    __connect(pre_node, post_node, None, None, 1)
+                    __connect(pre_node, pre_key, post_node, None, None, 1)
 
     def get_object(self, name):
         """This is a method for parsing input to return the proper object.
