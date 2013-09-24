@@ -15,7 +15,6 @@ from . import subnetwork
 from . import connection
 
 from multiprocessing import Process
-from threading import Thread
 import zmq
 from . import zmq_utils
 
@@ -243,12 +242,10 @@ class Network(object):
                         # can't specify a function with either side encoded connection
                         assert func == None
 
-                        # TODO CONNECTION? WHATS THAT
                         case2 = connection.Case2(
                             (post.array_size, post.neurons_num,
                              pre.array_size, pre.neurons_num))
 
-                        # TODO MIGHT NEED TO CHANGE THIS NEXT PART
                         # pass in the pre population decoded output value
                         # to the post population
                         post.add_termination(input_socket=destination_socket,
@@ -271,7 +268,6 @@ class Network(object):
                 index_post=index_post, 
                 transform=transform)
 
-# TODO MIGHT NEED TO CHANGE THIS NEXT PART
             # pre output needs to be replaced during execution using IPC
             # pass pre_out and transform + calculate dot product in accumulator
             # passing VALUE of pre output (do not share theano shared vars between processes)

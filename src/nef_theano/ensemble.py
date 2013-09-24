@@ -13,7 +13,6 @@ from .hPES_termination import hPESTermination
 from .helpers import map_gemv
 
 from multiprocessing import Process
-from threading import Thread
 
 import zmq
 import zmq_utils
