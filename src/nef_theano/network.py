@@ -395,7 +395,7 @@ class Network(object):
 
         e.set_ticker_conn(node_socket)
         self.nodes[name] = e
-        
+
         self.workers.append((worker, ticker_socket.create_socket(self.zmq_context),))
 
         # store created ensemble in node dictionary

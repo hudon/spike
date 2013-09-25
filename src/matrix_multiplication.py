@@ -1,6 +1,7 @@
 # Perform matrix multiplication on arbitrary matrices
 
 import nef_theano as nef
+import functions
 
 net=nef.Network('Matrix Multiplication', 100, 100) #Create the network object
 
@@ -57,10 +58,8 @@ net.connect('B','C',transform=transformB)
 # now compute the products and do the appropriate summing
 net.make_array('D',50,D1*D3,radius=radius, is_printing=True)
 
-def product(x):
-    return x[0]*x[1]
 # the mapping for this transformation is much easier, since we want to
 # combine D2 pairs of elements (we sum D2 products together)    
-net.connect('C','D',index_post=[i/D2 for i in range(D1*D2*D3)],func=product)
+net.connect('C','D',index_post=[i/D2 for i in range(D1*D2*D3)],func=functions.product)
 
 net.run(1) # run for 1 second

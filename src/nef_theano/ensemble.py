@@ -15,7 +15,7 @@ from .helpers import map_gemv
 import zmq
 import zmq_utils
 
-class EnsembleProcess:
+class EnsembleProcess(object):
     """ A NEFProcess is a wrapper for an ensemble or sub-ensemble. It is
     responsible for infrastructure logic such as setting up messaging,
     printing, process clean-up, etc. It also acts as an Adapter for most of
@@ -34,8 +34,6 @@ class EnsembleProcess:
         self.dimensions = self.ensemble.dimensions
         self.array_size = self.ensemble.array_size
         self.neurons_num = self.ensemble.neurons_num
-        self.add_origin = self.ensemble.add_origin
-        self.update = self.ensemble.update
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
@@ -43,6 +41,12 @@ class EnsembleProcess:
 
         self.input_sockets = []
         self.ticker_socket_def = None
+        
+    def add_origin(self, name, func, **kwargs):
+        self.ensemble.add_origin(name, func, **kwargs)
+    
+    def update(self):
+        return self.ensemble.update()
 
     def set_ticker_conn(self, ticker_socket_def):
         self.ticker_socket_def = ticker_socket_def
@@ -66,7 +70,7 @@ class EnsembleProcess:
         """ This process tick is responsible for IPC, keeping the Ensemble
         unaware of the details of messaging/sockets.
         """
-        responses = dict(self.poller.poll(1))
+        responses = dict(self.poller.poll(1000))
 
         # poll for all inputs, do not receive unless all inputs are available
         for i, socket in enumerate(self.input_sockets):

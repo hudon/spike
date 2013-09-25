@@ -26,6 +26,9 @@ class DistributionAdmin:
     def create_reqrep_pair(self, src_name, dest_node):
         """ 
         Create a pair of socket definitions for a REQ/REP connection.
+        Origin TCP sockets always include the IP of the destination, plus an allocated port.
+        Destination TCP sockets are always 'localhost:<allocated port>'.
+        An endpoint worker definition is generated to maintain a reference to the soon-to-be allocated worker.
 
         Returns a tuple: (origin_socket_defn, destination_socket_defn, destination_worker_defn)
         """
@@ -51,6 +54,9 @@ class DistributionAdmin:
     def create_pushpull_pair(self, src_name, dest_node):
         """ 
         Create a pair of socket definitions for a PUSH/PULL connection.
+        Origin TCP sockets always include the IP of the destination, plus an allocated port.
+        Destination TCP sockets are always 'localhost:<allocated port>'.
+        An endpoint worker definition is generated to maintain a reference to the soon-to-be allocated worker.
 
         Returns a tuple: (origin_socket_defn, destination_socket_defn, destination_worker_defn)
         """
@@ -75,7 +81,7 @@ class DistributionAdmin:
         
     def start_worker(self, name, worker):
         if self.distribute:
-            self._send_object_to_endpoint(worker.node, "%s:10010" % worker.host)
+            self._send_object_to_endpoint(worker.node, "tcp://%s:10010" % worker.host)
         else:
             Process(target=worker.node.run).start()
             
@@ -94,11 +100,11 @@ class DistributionAdmin:
 
         poller = zmq.Poller()
         poller.register(socket, zmq.POLLIN)
-
+        print "Sending object to distributor at %s: %s" % (endpoint, obj_to_send)
         socket.send_pyobj(obj_to_send)
 
         if poller.poll(10000): #10s timeout
-            response = socket.recv()
+            socket.recv()
         else:
             # Handle no-response scenario
             pass
