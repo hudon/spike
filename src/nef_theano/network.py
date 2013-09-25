@@ -277,29 +277,17 @@ class Network(object):
 
             pre_origin.add_output(origin_socket)
 
-        def __get_subensembles(parent_name):
-            """ Gets all subensembles for given parent name
-            """
-            subnodes = {}
-            for node in self.nodes.values():
-                if not isinstance(node, ensemble.EnsembleProcess): continue
-                names = node.name.split('-SUB-')
-                if node.ensemble.is_subensemble and names[0] == parent_name:
-                    node.sub_index = int(names[1])
-                    subnodes[node.name] = node
-            return subnodes
-
         ## If pre is not in self.nodes, we can assume that it has been split
         ## and that its *sub-ensembles* are in self.nodes. Similarly for post.
         if pre in self.nodes:
             pres = { pre: self.get_object(pre) }
         else:
-            pres = __get_subensembles(pre)
+            pres = self.__get_subensembles(pre)
 
         if post in self.nodes:
             posts = { post: self.get_object(post) }
         else:
-            posts = __get_subensembles(post)
+            posts = self.__get_subensembles(post)
 
         for pre_key in pres:
             for post_key in posts:
@@ -310,6 +298,18 @@ class Network(object):
                         pre_node.parent_ensemble, len(pres))
                 else:
                     __connect(pre_node, pre_key, post_node, None, None, 1)
+
+    def __get_subensembles(self, parent_name):
+        """ Gets all subensembles for given parent name
+        """
+        subnodes = {}
+        for node in self.nodes.values():
+            if not isinstance(node, ensemble.EnsembleProcess): continue
+            names = node.name.split('-SUB-')
+            if node.ensemble.is_subensemble and names[0] == parent_name:
+                node.sub_index = int(names[1])
+                subnodes[node.name] = node
+        return subnodes
 
     def get_object(self, name):
         """This is a method for parsing input to return the proper object.
@@ -506,40 +506,55 @@ class Network(object):
 
         """
         i = 0
-        target_name = target + '-' + data_type
         while name is None or self.nodes.has_key(name):
             i += 1
             name = ("Probe%d" % i)
 
+        def __create_probe(name, target, target_output):
+            target_name = target + '-' + data_type
+            p = probe.Probe(name=name, target=target_output, target_name=target_name,
+                dt_sample=dt_sample, dt=self.dt, net=self, **kwargs)
+
+            # connect probe to its target: target sends data to probe using msgs
+            origin_socket, destination_socket = \
+                zmq_utils.create_socket_defs_pushpull(target_name, name)
+
+            traget_origin = self.get_origin(target)
+            traget_origin.add_output(origin_socket)
+            p.add_input(destination_socket) # to receive target output values
+
+            return p
+
         # get the signal to record
         if data_type == 'decoded':
-            # target is the VALUE of the origin output shared variable
-            target_output = self.get_origin(target).decoded_output.get_value()
+            # this if is required to check whether the target node is a normal
+            # ensemble or a parent ensemble (i.e. has sub-ensembles)
+            if target in self.nodes:
+                target_output = self.get_origin(target).decoded_output.get_value()
+                res_probe = __create_probe(name, target, target_output)
+            else:
+                targets = self.__get_subensembles(target)
+                res_probe = probe.AggregatorProbe(name, self)
+                for target in targets:
+                    target_output = self.get_origin(target).decoded_output.get_value()
+                    subensemble_probe = __create_probe(name, target, target_output)
+                    res_probe.add(subensemble_probe)
 
         elif data_type == 'spikes':
             raise Exception("ERROR", "Probes for spikes data type not supported yet..")
             target = self.get_object(target)
             # check to make sure target is an ensemble
             assert isinstance(target, ensemble.Ensemble)
-            target = target.neurons.output
+            target_output = target.neurons.output
             # set the filter to zero
             kwargs['pstc'] = 0
+            res_probe = __create_probe(name, target, target_output)
 
-        p = probe.Probe(name=name, target=target_output, target_name=target_name,
-            dt_sample=dt_sample, dt=self.dt, net=self, **kwargs)
-
-        # connect probe to its target: target sends data to probe using msgs
-        origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(target_name, name)
-
-        traget_origin = self.get_origin(target)
-        traget_origin.add_output(origin_socket)
-        p.add_input(destination_socket) # to receive target output values
-
-        proc, ticker_conn = self.add(p)
+        # add the probe to the network
+        proc, ticker_conn = self.add(res_probe)
         self.probes[name] = { "connection": ticker_conn, "data": [] }
 
-        return p
+        return res_probe
 
     # TODO: remove this method if direct ensembles do not need to share processes
     def make_theano_tick(self):

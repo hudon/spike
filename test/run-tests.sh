@@ -22,7 +22,7 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
   "${NENGO_TESTS_DIR}/test_eval_points.py"
   "${NENGO_TESTS_DIR}/test_array.py"
-  "${NENGO_TESTS_DIR}/test_array_subs.py"
+  # "${NENGO_TESTS_DIR}/test_array_subs.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
   "${NENGO_TESTS_DIR}/test_basal_ganglia.py"

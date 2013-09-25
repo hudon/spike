@@ -39,7 +39,7 @@ def test_array():
 
     Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
     #Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
-    #A2p = net.make_probe('A2', dt_sample=dt_step, pstc=pstc)
+    A2p = net.make_probe('A2', dt_sample=dt_step, pstc=pstc)
     Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
     #B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
 
@@ -49,7 +49,7 @@ def test_array():
 
     ip_data = Ip.get_data()
     #ap_data = Ap.get_data()
-    #a2p_data = A2p.get_data()
+    a2p_data = A2p.get_data()
     bp_data = Bp.get_data()
     #b2p_data = B2p.get_data()
 
@@ -59,9 +59,9 @@ def test_array():
     #print "ensemble 'A' probe data"
     #for x in ap_data:
         #print x
-    #print "ensemble 'A2' probe data"
-    #for x in a2p_data:
-        #print x
+    print "ensemble 'A2' probe data"
+    for x in a2p_data:
+        print x
     print "ensemble 'B' probe data"
     for x in bp_data:
         print x
