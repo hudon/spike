@@ -502,8 +502,8 @@ class Network(object):
         #     self.theano_tick = self.make_theano_tick() 
 
         if not self.setup:
-            for p in self.workers:
-                worker = p[0]
+            for w in self.workers:
+                worker = w[0]
                 worker.start()
             self.setup = True
 
@@ -512,17 +512,19 @@ class Network(object):
             t = self.run_time + i * self.dt
 
             ## Tick all nodes
-            for p in self.workers:
-                ticker_conn = p[1]
+            for w in self.workers:
+                ticker_conn = w[1]
+                print "Sending message %s to ticker_conn %s" % (str(t), ticker_conn)
                 ticker_conn.send(str(t))
 
             ## Wait for all nodes
-            for j in self.workers:
-                ticker_conn = j[1]
+            for w in self.workers:
+                ticker_conn = w[1]
+                print "Waiting for response from %s" % (ticker_conn)
                 ticker_conn.recv()
 
-        for p in self.workers:
-            ticker_conn = p[1]
+        for w in self.workers:
+            ticker_conn = w[1]
             ticker_conn.send("END")
 
         # update run_time variable
@@ -533,8 +535,8 @@ class Network(object):
     # called when the simulation is done (otherwise, procs will hang)
     def clean_up(self):
         # wait for all procs to end
-        for p in self.workers:
-            worker = p[0]
+        for w in self.workers:
+            worker = w[0]
             worker.stop()
 
     def write_data_to_hdf5(self, filename='data'):

@@ -70,7 +70,7 @@ class EnsembleProcess(object):
         """ This process tick is responsible for IPC, keeping the Ensemble
         unaware of the details of messaging/sockets.
         """
-        responses = dict(self.poller.poll(1000))
+        responses = dict(self.poller.poll(1))
 
         # poll for all inputs, do not receive unless all inputs are available
         for i, socket in enumerate(self.input_sockets):
@@ -448,7 +448,7 @@ class Ensemble:
         updates.update(self.update())
         self.theano_tick = theano.function([], [], updates=updates)
 
-        # introduce 1-time-tick delay
+        # introduce 1-time-tick delays
         self.theano_tick()
         for o in self.origin.values():
             o.tick()

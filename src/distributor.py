@@ -15,6 +15,7 @@ class Distributor:
 
     def daemonize_worker(self, worker):
         # No arguments. just call run()
+        print "Starting worker %s" % worker.name
         worker = Process(target=worker.run)
         self.spawned_workers.append(worker)
         worker.start()
