@@ -6,6 +6,7 @@ import numpy as np
 
 from . import origin
 
+import os
 import zmq
 import zmq_utils
 
@@ -99,11 +100,15 @@ class Input(object):
         self.bind_sockets()
         ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
 
+        print "Input run function getting sim_time.  Before recv.",os.getpid()
         sim_time = float(ticker_conn.recv())
+        print "Input run function getting sim_time.  After recv.",os.getpid()
 
         for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
+            print "Input run function i has value ",i,".  Before self.tick.",os.getpid()
             self.tick()
+            print "Input run function i has value ",i,".  After self.tick.",os.getpid()
 
         self.run_time += sim_time
 

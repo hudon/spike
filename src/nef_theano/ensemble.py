@@ -14,6 +14,7 @@ from .helpers import map_gemv
 
 from multiprocessing import Process
 
+import os
 import zmq
 import zmq_utils
 
@@ -79,7 +80,9 @@ class EnsembleProcess(Process):
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
+            print "EnsembleProcess tick function.  Before recv_pyobj.",os.getpid()," ",self.name
             val = socket.get_instance().recv_pyobj()
+            print "EnsembleProcess tick function.  After recv_pyobj.",os.getpid()," ",self.name
             inputs[socket.name] = val
 
         self.ensemble.tick(inputs)
@@ -88,13 +91,19 @@ class EnsembleProcess(Process):
         self.bind_sockets()
         self.ensemble.make_tick()
 
+        print "EnsembleProcess run function getting time.  Before recv.",os.getpid()," ",self.name
         time = float(self.ticker_conn.recv())
+        print "EnsembleProcess run function getting time.  After recv.",os.getpid()," ",self.name
 
         for i in range(int(time / self.ensemble.dt)):
             self.tick()
 
+        print "EnsembleProcess run function sending FIN.  Before send.",os.getpid()," ",self.name
         self.ticker_conn.send("FIN") # inform main proc that ens finished
+        print "EnsembleProcess run function sending FIN.  After send.",os.getpid()," ",self.name
+        print "EnsembleProcess run function getting ACK.  Before recv.",os.getpid()," ",self.name
         self.ticker_conn.recv() # wait for an ACK from main proc before exiting
+        print "EnsembleProcess run function getting ACK.  After recv.",os.getpid()," ",self.name
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't
@@ -491,11 +500,15 @@ class Ensemble:
 
         # should be the compiled theano function for this ensemble
         # includes the filters, ensemble, and origins updates
+        print "Ensemble tick function.  Before theano_tick.",os.getpid()
         self.theano_tick()
+        print "Ensemble tick function.  After theano_tick.",os.getpid()
 
         # continue the tick in the origins
         for o in self.origin.values():
+            print "Ensemble tick function.  Before o.tick.",os.getpid()
             o.tick()
+            print "Ensemble tick function.  After o.tick.",os.getpid()
 
     # Using the dt that was passed to the ensemble at construction time
     def update(self):

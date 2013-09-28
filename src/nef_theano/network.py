@@ -15,6 +15,7 @@ from . import subnetwork
 from . import connection
 
 from multiprocessing import Process
+import os
 import zmq
 from . import zmq_utils
 
@@ -499,18 +500,30 @@ class Network(object):
             self.setup = True
 
         for (p, conn) in self.processes:
+            print "Network run function sending str time.  Before send.",os.getpid()," ",self.name
             conn.send(str(time))
+            print "Network run function sending str time.  After send.",os.getpid()," ",self.name
 
         # waiting for a FIN from each ensemble and sending an ACK for it to finish
         for (p, conn) in self.processes:
-            if isinstance(p, ensemble.EnsembleProcess): conn.recv()
+            if isinstance(p, ensemble.EnsembleProcess):
+                print "Network run function.  Before recv.",os.getpid()," ",self.name
+                conn.recv()
+                print "Network run function.  After recv.",os.getpid()," ",self.name
         for (p, conn) in self.processes:
-            if isinstance(p, ensemble.EnsembleProcess): conn.send("ACK")
+            if isinstance(p, ensemble.EnsembleProcess):
+                print "Network run function sending ACK.  Before send.",os.getpid()," ",self.name
+                conn.send("ACK")
+                print "Network run function sending ACK.  After send.",os.getpid()," ",self.name
 
         for probe in self.probes.keys():
             ticker_conn = self.probes[probe]["connection"]
+            print "Network run function probe keys.  Before recv_pyobj.",os.getpid()," ",self.name
             self.probes[probe]["data"] = ticker_conn.recv_pyobj()
+            print "Network run function probe keys.  After recv_pyobj.",os.getpid()," ",self.name
+            print "Network run function probe keys.  Before send ACK.",os.getpid()," ",self.name
             ticker_conn.send("ACK")
+            print "Network run function probe keys.  After send ACK.",os.getpid()," ",self.name
 
         for p in self.processes:
             p[0].join()

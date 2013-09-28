@@ -10,6 +10,7 @@ import theano.tensor as TT
 
 from .filter import Filter
 
+import os
 import zmq
 import zmq_utils
 
@@ -58,7 +59,9 @@ class Probe(object):
 
     def tick(self):
         # Wait to receive the origin output from the ensemble
+        print "Probe tick function get sim_time Before recv_pyobj.",os.getpid()," ",self.name
         val = self.input_socket.get_instance().recv_pyobj()
+        print "Probe tick function get sim_time After recv_pyobj.",os.getpid()," ",self.name
         self.target.set_value(val)
 
         # Filter and store the received output value
@@ -75,7 +78,9 @@ class Probe(object):
             self.data[self.i+1:i_samp+1] = self.filter.value.get_value()
             self.i = i_samp
 
+        print "Probe tick function Before theano_tick.",os.getpid()," ",self.name
         self.theano_tick()
+        print "Probe tick function After theano_tick.",os.getpid()," ",self.name
 
     def get_data(self):
         # access the data for this node, which is stored in the network
@@ -85,7 +90,9 @@ class Probe(object):
         self.bind_sockets()
         ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
 
+        print "Probe run function get sim_time Before recv.",os.getpid()," ",self.name
         sim_time = float(ticker_conn.recv())
+        print "Probe run function get sim_time After recv.",os.getpid()," ",self.name
 
         for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
@@ -95,8 +102,12 @@ class Probe(object):
 
         # send all recorded data to the administrator
         data = self.data[:self.i+1]
+        print "Probe run function Before send_pyobj.",os.getpid()," ",self.name
         ticker_conn.send_pyobj(data)
+        print "Probe run function After send_pyobj.",os.getpid()," ",self.name
+        print "Probe run function Before recv.",os.getpid()," ",self.name
         ticker_conn.recv() # want an ack of receiving the data
+        print "Probe run function After recv.",os.getpid()," ",self.name
 
     def bind_sockets(self):
         # create a context for this probe process if do not have one already
