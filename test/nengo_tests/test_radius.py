@@ -40,7 +40,7 @@ net.connect('A', 'B')
 net.connect('A', 'C', func=pow)
 net.connect('A', 'D', func=mult)
 
-timesteps = 500
+timesteps = 0.2
 dt_step = 0.01
 t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.01
