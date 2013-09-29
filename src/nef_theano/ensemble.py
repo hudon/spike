@@ -47,6 +47,7 @@ class EnsembleProcess(Process):
         self.unique_socket_names = {}
         self.input_sockets = []
         self.ticker_socket_def = ticker_socket_def
+        self.n = 0
 
     def bind_sockets(self):
         # create a context for this ensemble process if do not have one already
@@ -70,22 +71,31 @@ class EnsembleProcess(Process):
 
         # poll for all inputs, do not continue unless all inputs are available
         is_waiting_for_input = True
+        ggg = 0
         while is_waiting_for_input:
+            ggg = ggg + 1
             is_waiting_for_input = False
             responses = dict(self.poller.poll(1))
             for i, socket in enumerate(self.input_sockets):
                 socket_inst = socket.get_instance()
                 if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
                     is_waiting_for_input = True
+                    if (ggg > 3000):
+                        print "Over 3000 times, hang forever.",os.getpid()," ",self.name
+                        while True:
+                           pass
+
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
-            print "EnsembleProcess tick function.  Before recv_pyobj.",os.getpid()," ",self.name
+            print "EnsembleProcess tick function.  -----",self.n,"----- Before recv_pyobj.",self.name
             val = socket.get_instance().recv_pyobj()
-            print "EnsembleProcess tick function.  After recv_pyobj.",os.getpid()," ",self.name
+            print "EnsembleProcess tick function.  -----",self.n,"----- After recv_pyobj.",self.name
             inputs[socket.name] = val
 
+        self.n = self.n + 1
         self.ensemble.tick(inputs)
+        print "EnsembleProcess tick function.  After self.ensemble.tick.",os.getpid()," ",self.name
 
     def run(self):
         self.bind_sockets()
@@ -96,7 +106,9 @@ class EnsembleProcess(Process):
         print "EnsembleProcess run function getting time.  After recv.",os.getpid()," ",self.name
 
         for i in range(int(time / self.ensemble.dt)):
+            #print "EnsembleProcess run Before self.tick with i=",i," ",os.getpid()," ",self.name
             self.tick()
+            #print "EnsembleProcess run After self.tick with i=",i," ",os.getpid()," ",self.name
 
         print "EnsembleProcess run function sending FIN.  Before send.",os.getpid()," ",self.name
         self.ticker_conn.send("FIN") # inform main proc that ens finished
@@ -509,6 +521,7 @@ class Ensemble:
             print "Ensemble tick function.  Before o.tick.",os.getpid()
             o.tick()
             print "Ensemble tick function.  After o.tick.",os.getpid()
+        print "Ensemble tick function.  Completed o.ticks.",os.getpid()
 
     # Using the dt that was passed to the ensemble at construction time
     def update(self):

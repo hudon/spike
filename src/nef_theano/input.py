@@ -106,9 +106,9 @@ class Input(object):
 
         for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
-            print "Input run function i has value ",i,".  Before self.tick.",os.getpid()
+            print "Input run --------------------",i,".  Before *** self.tick.",os.getpid()
             self.tick()
-            print "Input run function i has value ",i,".  After self.tick.",os.getpid()
+            print "Input run --------------------",i,".  After *** self.tick.",os.getpid()
 
         self.run_time += sim_time
 
