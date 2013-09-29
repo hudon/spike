@@ -14,6 +14,8 @@ from .helpers import map_gemv
 
 from multiprocessing import Process
 
+from pprint import pprint
+
 import os
 import zmq
 import zmq_utils
@@ -80,10 +82,16 @@ class EnsembleProcess(Process):
                 socket_inst = socket.get_instance()
                 if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
                     is_waiting_for_input = True
-                    if (ggg > 3000):
-                        print "Over 3000 times, hang forever.",os.getpid()," ",self.name
-                        while True:
-                           pass
+            if (ggg > 3000):
+                print "Over 3000 times, hang forever.",os.getpid()," ",self.name
+                for i, socket in enumerate(self.input_sockets):
+                    socket_inst = socket.get_instance()
+                    if socket_inst not in responses:
+                        print socket.name," not in responses.",os.getpid()," ",self.name
+                    if socket_inst in responses and responses[socket_inst] != zmq.POLLIN:
+                        print socket.name," was zmq.POLLIN.",os.getpid()," ",self.name
+                while True:
+                   pass
 
 
         inputs = {}
