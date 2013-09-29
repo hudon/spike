@@ -49,6 +49,8 @@ class Socket(object):
         self.instance = None
 
     def get_instance(self):
+        if self.instance is None:
+            print "HOLY FUCK IT WAS NULL************************************************************"
         return self.instance
 
     def init(self, zmq_context):
