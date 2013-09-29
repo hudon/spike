@@ -16,9 +16,10 @@ class Distributor:
     def daemonize_worker(self, worker):
         # No arguments. just call run()
         print "Starting worker %s" % worker.name
-        worker = Process(target=worker.run)
-        self.spawned_workers.append(worker)
-        worker.start()
+        worker_process = Process(target=worker.run)
+        self.spawned_workers.append(worker_process)
+        worker_process.start()
+        print "Worker %s: PID %s" % (worker.name, worker_process.pid)
 
     def listen(self, endpoint):
         self.listener_socket = self.zmq_context.socket(zmq.REP)
