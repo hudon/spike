@@ -106,7 +106,9 @@ class EnsembleProcess(Process):
         print "EnsembleProcess tick function.  After self.ensemble.tick.",os.getpid()," ",self.name
 
     def run(self):
+        print "EnsembleProcess run Before bind_sockets.",os.getpid()," ",self.name
         self.bind_sockets()
+        print "EnsembleProcess run After bind_sockets.",os.getpid()," ",self.name
         self.ensemble.make_tick()
 
         print "EnsembleProcess run function getting time.  Before recv.",os.getpid()," ",self.name
