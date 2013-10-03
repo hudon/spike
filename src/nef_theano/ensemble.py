@@ -98,7 +98,6 @@ class EnsembleProcess(Process):
             inputs[socket.name] = val
 
         self.n = self.n + 1
-        self.ensemble.tick(inputs)
         print "EnsembleProcess tick function.  After self.ensemble.tick.",os.getpid()," ",self.name
 
     def run(self):
@@ -222,15 +221,6 @@ class Ensemble:
         for o in self.origin.values():
             if o.func is not None and self.mode == 'direct': continue
             o.tick()
-
-    # Receive the outputs of pre - decoded output - and pass it to filters
-    def tick(self, inputs):
-        # continue the tick in the origins
-        for o in self.origin.values():
-            print "Ensemble tick function.  Before o.tick.",os.getpid()
-            o.tick()
-            print "Ensemble tick function.  After o.tick.",os.getpid()
-        print "Ensemble tick function.  Completed o.ticks.",os.getpid()
 
     # Using the dt that was passed to the ensemble at construction time
     def update(self):
