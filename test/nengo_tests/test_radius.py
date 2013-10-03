@@ -16,20 +16,15 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-def sin3(x):
-    return math.sin(x) * 3
-
 net = nef.Network('Encoder Test',seed=97)
-net.make_input('in', value=sin3)
+net.make_input('in', value=1)
 net.make('A', 10, 1)
 net.make('B', 3, 1)
 net.make('C', 10, 1)
-net.make('D', 3, 1)
 
 net.connect('in', 'A')
 net.connect('A', 'B')
 net.connect('A', 'C')
-net.connect('A', 'D')
 
 timesteps = 0.1
 dt_step = 0.01
