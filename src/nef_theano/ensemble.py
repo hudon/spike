@@ -7,7 +7,6 @@ from . import origin
 from . import cache
 from . import filter
 from .hPES_termination import hPESTermination
-from .helpers import map_gemv
 
 from multiprocessing import Process
 
