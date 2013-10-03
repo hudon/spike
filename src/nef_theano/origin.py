@@ -43,8 +43,7 @@ class Origin(object):
         initial_value = np.float32(initial_value)
 
         # theano internal state defining output value
-        self.decoded_output = theano.shared(initial_value,
-            name='origin.decoded_output') 
+        self.decoded_output = initial_value
     
         # find number of parameters of the projected value
         if dimensions is None: dimensions = len(initial_value)
@@ -64,7 +63,7 @@ class Origin(object):
     def tick(self):
         for socket in self.output_sockets:
             print "Origin tick function.  Before send_pyobj.",os.getpid()
-            aaa = self.decoded_output.get_value()
+            aaa = self.decoded_output
             print "send_pyobj sending :",aaa
             socket.get_instance().send_pyobj(aaa)
             print "Origin tick function.  After send_pyobj.",os.getpid()

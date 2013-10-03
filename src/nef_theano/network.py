@@ -223,7 +223,7 @@ class Network(object):
                     # to the post population
                     post.add_termination(input_socket=destination_socket,
                         name=pre_name, pstc=pstc,
-                        encoded_input= pre_output.get_value(),
+                        encoded_input= pre_output,
                         transform=transform, case=case1)
 
                     pre_origin.add_output(origin_socket)
@@ -245,7 +245,7 @@ class Network(object):
                     # to the post population
                     post.add_termination(input_socket=destination_socket,
                         name=pre_name, pstc=pstc,
-                        encoded_input= pre_output.get_value(),
+                        encoded_input= pre_output,
                         transform=transform, case=case2)
 
                     pre_origin.add_output(origin_socket)
@@ -266,7 +266,7 @@ class Network(object):
         # pre output needs to be replaced during execution using IPC
         # pass pre_out and transform + calculate dot product in accumulator
         post.add_termination(input_socket=destination_socket, name=pre_name,
-            pstc=pstc, decoded_input=pre_output.get_value(), transform=transform)
+            pstc=pstc, decoded_input=pre_output, transform=transform)
 
         pre_origin.add_output(origin_socket)
 

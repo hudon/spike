@@ -92,7 +92,6 @@ class Input(object):
             # cast as float32 for consistency / speed,
             # but _after_ it's been made a list
             print "Input tick function Before setting float.",os.getpid()
-            self.origin['X'].decoded_output.set_value(np.float32(value)) 
             print "Input tick function After settingfloat.",os.getpid()
 
         for o in self.origin.values():
