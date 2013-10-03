@@ -355,14 +355,6 @@ class Ensemble:
             self.origin[name] = origin.Origin(func=func, **kwargs) 
 
     def get_unique_name(self, name, dic):
-        """A helper function that runs through a dictionary
-        and checks for the key name, adds a digit to the end
-        until a unique key has been created.
-
-        :param string name: desired key name
-        :param dict dic: the dictionary to search through
-        :returns string: a unique key name for dic
-        """
         i = 0
         while dic.has_key(name + '_' + str(i)): 
             i += 1
@@ -372,7 +364,6 @@ class Ensemble:
     def make_tick(self):
         updates = OrderedDict()
         updates.update(self.update())
-        #self.theano_tick = theano.function([], [], updates=updates)
 
         # introduce 1-time-tick delay
         for o in self.origin.values():
@@ -383,7 +374,6 @@ class Ensemble:
         if self.mode == 'direct':
             # set up matrix to store accumulated decoded input
             X = np.zeros((self.array_size, self.dimensions))
-            # updates is an ordered dictionary of theano variables to update
 
             for di in self.decoded_input.values(): 
                 # add its values to the total decoded input
@@ -408,17 +398,7 @@ class Ensemble:
 
     # Using the dt that was passed to the ensemble at construction time
     def update(self):
-        """Compute the set of theano updates needed for this ensemble.
-
-        Returns a dictionary with new neuron state,
-        termination, and origin values.
-        """
-
-        ### find the total input current to this population of neurons
-
-        # set up matrix to store accumulated decoded input
         X = None 
-        # updates is an ordered dictionary of theano variables to update
         updates = OrderedDict()
 
         for ii, di in enumerate(self.decoded_input.values()):
@@ -434,46 +414,9 @@ class Ensemble:
         # calculate new neuron activities for output
         if self.mode == 'spiking':
 
-            # apply respective biases to neurons in the population 
-            #J = TT.as_tensor_variable(np.array(self.bias))
-
-            #for ei in self.encoded_input.values():
-                # add its values directly to the input current
-                #J += (ei.value.T * self.alpha.T).T
-            #    updates.update(ei.update(self.dt))
-
-            # only do this if there is decoded_input
-            #if X is not None:
-                # add to input current for each neuron as
-                # represented input signal x preferred direction
-            #    J = map_gemv(1.0, self.shared_encoders, X, 1.0, J)
-
-            # if noise has been specified for this neuron,
-            #if self.noise: 
-                # generate random noise values, one for each input_current element, 
-                # with standard deviation = sqrt(self.noise=std**2)
-                # When simulating white noise, the noise process must be scaled by
-                # sqrt(dt) instead of dt. Hence, we divide the std by sqrt(dt).
-                #if self.noise_type.lower() == 'gaussian':
-                #    J += self.srng.normal(
-                #        size=self.bias.shape, std=np.sqrt(self.noise/self.dt))
-                #elif self.noise_type.lower() == 'uniform':
-                #    J += self.srng.uniform(
-                #        size=self.bias.shape, 
-                #        low=-self.noise/np.sqrt(self.dt), 
-                #        high=self.noise/np.sqrt(self.dt))
-
-            # pass that total into the neuron model to produce
-            # the main theano computation
-            #updates.update(self.neurons.update(J, self.dt))
-
             for l in self.learned_terminations:
                 # also update the weight matrices on learned terminations
                 updates.update(l.update(self.dt))
-
-            # and compute the decoded origin decoded_input from the neuron output
-            #for o in self.origin.values():
-            #    updates.update(o.update(self.dt, updates[self.neurons.output]))
 
         if self.mode == 'direct': 
             # if we're in direct mode then just directly pass the decoded_input 

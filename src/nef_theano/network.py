@@ -461,27 +461,6 @@ class Network(object):
 
         return p
 
-    # TODO: remove this method if direct ensembles do not need to share processes
-    def make_theano_tick(self):
-        """Generate the theano function for running the network simulation.
-
-        :returns: theano function
-        """
-        raise Exception("ERROR: Global theano tick not supported.")
-        # dictionary for all variables
-        # and the theano description of how to compute them 
-        updates = OrderedDict()
-
-        # for every direct ensemble in the network
-        for node in self.direct_nodes.values():
-            # if there is some variable to update
-            if hasattr(node, 'update'):
-                # add it to the list of variables to update every time step
-                updates.update(node.update())
-
-        # create graph and return optimized update function
-        return theano.function([], [], updates=updates.items())
-
     def run(self, time):
         """Run the simulation.
 
