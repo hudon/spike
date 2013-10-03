@@ -189,12 +189,6 @@ class Ensemble:
             # make default origin
             self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
 
-        elif self.mode == 'direct':
-            # make default origin
-            self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size) 
-            # reset neurons_num to 0
-            self.neurons_num = 0
-
     def add_termination(self, name, pstc, decoded_input=None, 
         encoded_input=None, input_socket=None, transform=None, case=None):
         pass
@@ -214,9 +208,6 @@ class Ensemble:
         return name + '_' + str(i)
 
     def make_tick(self):
-        updates = OrderedDict()
-        updates.update(self.update())
-
         # introduce 1-time-tick delay
         for o in self.origin.values():
             if o.func is not None and self.mode == 'direct': continue
