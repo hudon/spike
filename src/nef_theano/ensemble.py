@@ -1,6 +1,3 @@
-import theano
-from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-from theano import tensor as TT
 import numpy as np
 from _collections import OrderedDict
 
@@ -163,7 +160,7 @@ class Ensemble:
         :param float tau_ref: length of refractory period
         :param float tau_rc:
             RC constant; approximately how long until 2/3
-            of the threshold voltage is accumulated
+            of the voltage is accumulated
         :param tuple max_rate:
             lower and upper bounds on randomly generated
             firing rates for each neuron
@@ -239,15 +236,6 @@ class Ensemble:
                 size=(array_size, self.neurons_num),
                 tau_rc=tau_rc, tau_ref=tau_ref)
 
-            # compute alpha and bias
-            self.srng = RandomStreams(seed=seed)
-            self.max_rate = max_rate
-            max_rates = self.srng.uniform(
-                size=(self.array_size, self.neurons_num),
-                low=max_rate[0], high=max_rate[1])  
-            threshold = self.srng.uniform(
-                size=(self.array_size, self.neurons_num),
-                low=intercept[0], high=intercept[1])
 
 
             # set up a dictionary for encoded_input connections
