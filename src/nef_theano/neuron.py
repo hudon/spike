@@ -1,5 +1,3 @@
-import theano
-from theano import tensor as TT
 import numpy as np
 
 # types registry (plugin pattern)

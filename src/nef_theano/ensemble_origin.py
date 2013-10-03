@@ -1,9 +1,5 @@
 from _collections import OrderedDict
 
-import theano
-from theano import tensor as TT
-#from theano.tensor.shared_randomstreams import RandomStreams
-from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 import numpy as np
 
 from . import neuron
@@ -33,13 +29,13 @@ class EnsembleOrigin(Origin):
         self.func_size = func_size
 
     def update(self, dt, spikes):
-        """the theano computation for converting neuron output
+        """the computation for converting neuron output
         into a decoded value.
 
         returns a dictionary with the decoded output value
 
         :param array spikes:
-            theano object representing the instantaneous spike raster
+            object representing the instantaneous spike raster
             from the attached population
 
         """
