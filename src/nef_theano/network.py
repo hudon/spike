@@ -2,8 +2,6 @@ import random
 from _collections import OrderedDict
 import quantities
 
-import theano
-from theano import tensor as TT
 import numpy as np
 
 from . import ensemble
@@ -52,12 +50,12 @@ class Network(object):
             self.random.seed(seed)
 
     def add(self, node):
-        """Add an arbitrary non-theano node to the network.
+        """Add an arbitrary non-node to the network.
 
         Used for inputs, SimpleNodes, and Probes. These nodes will be
         added to the Theano graph if the node has an "update()" function,
         but will also be triggered explicitly at every tick
-        via the node's `theano_tick()` function.
+        via the node's `()` function.
 
         :param Node node: the node to add to this network
 
@@ -267,7 +265,6 @@ class Network(object):
 
         # pre output needs to be replaced during execution using IPC
         # pass pre_out and transform + calculate dot product in accumulator
-        # passing VALUE of pre output (do not share theano shared vars between processes)
         post.add_termination(input_socket=destination_socket, name=pre_name,
             pstc=pstc, decoded_input=pre_output.get_value(), transform=transform)
 
@@ -393,7 +390,7 @@ class Network(object):
         """Generate a network array specifically.
 
         This function is depricated; use for legacy code
-        or non-theano API compatibility.
+        or non-API compatibility.
         """
         return self.make(
             name=name, neurons=neurons, dimensions=dimensions,
