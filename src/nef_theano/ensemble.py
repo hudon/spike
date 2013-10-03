@@ -385,32 +385,4 @@ class Ensemble:
 
     # Using the dt that was passed to the ensemble at construction time
     def update(self):
-        X = None 
-        updates = OrderedDict()
-
-        for ii, di in enumerate(self.decoded_input.values()):
-            # add its values to the total decoded input
-            if ii == 0:
-                X = di.value
-            else:
-                X += di.value
-
-            updates.update(di.update(self.dt))
-
-        # if we're in spiking mode, then look at the input current and 
-        # calculate new neuron activities for output
-        if self.mode == 'spiking':
-
-            for l in self.learned_terminations:
-                # also update the weight matrices on learned terminations
-                updates.update(l.update(self.dt))
-
-        if self.mode == 'direct': 
-            # if we're in direct mode then just directly pass the decoded_input 
-            # to the origins for decoded_output
-            for o in self.origin.values(): 
-                if o.func is None:
-                    if len(self.decoded_input) > 0:
-                        updates.update(OrderedDict({o.decoded_output: 
-                            TT.flatten(X).astype('float32')}))
-        return updates
+        return OrderedDict()
