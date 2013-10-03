@@ -21,7 +21,7 @@ def sin3(x):
 
 net = nef.Network('Encoder Test',seed=97)
 net.make_input('in', value=sin3)
-net.make('A', 1000, 1, radius=5)
+net.make('A', 1000, 1)
 net.make('B', 300, 1)
 net.make('C', 1000, 1)
 net.make('D', 300, 1)
