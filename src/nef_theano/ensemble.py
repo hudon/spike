@@ -4,7 +4,6 @@ from _collections import OrderedDict
 from . import neuron
 from . import ensemble_origin
 from . import origin
-from . import cache
 from . import filter
 from .hPES_termination import hPESTermination
 
@@ -149,47 +148,6 @@ class Ensemble:
                  encoders=None, seed=None, neuron_type='lif',
                  array_size=1, eval_points=None, decoder_noise=0.1,
                  noise_type='uniform', noise=None, mode='spiking'):
-        """Construct an ensemble composed of the specific neuron model,
-        with the specified neural parameters.
-
-        :param int neurons: number of neurons in this population
-        :param int dimensions:
-            number of dimensions in the vector space
-            that these neurons represent
-        :param float tau_ref: length of refractory period
-        :param float tau_rc:
-            RC constant; approximately how long until 2/3
-            of the voltage is accumulated
-        :param tuple max_rate:
-            lower and upper bounds on randomly generated
-            firing rates for each neuron
-        :param tuple intercept:
-            lower and upper bounds on randomly generated
-            x offsets for each neuron
-        :param float radius:
-            the range of input values (-radius:radius)
-            per dimension this population is sensitive to
-        :param list encoders: set of possible preferred directions
-        :param int seed: seed value for random number generator
-        :param string neuron_type:
-            type of neuron model to use, options = {'lif'}
-        :param int array_size: number of sub-populations for network arrays
-        :param list eval_points:
-            specific set of points to optimize decoders over by default
-        :param float decoder_noise: amount of noise to assume when computing 
-            decoder    
-        :param string noise_type:
-            the type of noise added to the input current.
-            Possible options = {'uniform', 'gaussian'}.
-            Default is 'uniform' to match the Nengo implementation.
-        :param float noise:
-            noise parameter for noise added to input current,
-            sampled at every timestep.
-            If noise_type = uniform, this is the lower and upper
-            bound on the distribution.
-            If noise_type = gaussian, this is the variance.
-
-        """
         self.dt = dt
 
         if seed is None:
@@ -216,12 +174,6 @@ class Ensemble:
         if isinstance(intercept, (int,float)): intercept = [intercept, 1]
         elif len(intercept) == 1: intercept.append(1) 
 
-        self.cache_key = cache.generate_ensemble_key(neurons=neurons, 
-            dimensions=dimensions, tau_rc=tau_rc, tau_ref=tau_ref, 
-            max_rate=max_rate, intercept=intercept, radius=radius, 
-            encoders=encoders, decoder_noise=decoder_noise, 
-            eval_points=eval_points, noise=noise, seed=seed, dt=dt)
-
         # make dictionary for origins
         self.origin = {}
         # set up a dictionary for decoded_input
@@ -234,13 +186,6 @@ class Ensemble:
             self.neurons = neuron.types[neuron_type](
                 size=(array_size, self.neurons_num),
                 tau_rc=tau_rc, tau_ref=tau_ref)
-
-
-
-            # set up a dictionary for encoded_input connections
-            self.encoded_input = {}
-            # list of learned terminations on ensemble
-            self.learned_terminations = []
 
             # make default origin
             self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
