@@ -1,4 +1,3 @@
-import theano
 import numpy as np
 
 def compute_transform(dim_pre, dim_post, array_size, weight=1,
@@ -65,7 +64,7 @@ def compute_transform(dim_pre, dim_post, array_size, weight=1,
     return transform
 
 
-class Case1(theano.Op):
+class Case1():
     """
     XXX doc: see network.py for why this is called case1
     """
@@ -80,10 +79,7 @@ class Case1(theano.Op):
 
     def make_node(self, transform, pre_output):
         # TODO: more accurate broadcasting output pattern
-        return theano.Apply(self,
-                map(theano.tensor.as_tensor_variable, [transform, pre_output]),
-                [theano.tensor.matrix()])
-
+        return transform
     def perform(self, node, inputs, outstor):
         transform, pre_output = inputs
         # TODO: implement with np.dot
@@ -101,7 +97,7 @@ class Case1(theano.Op):
         outstor[0][0] = encoded_output
 
 
-class Case2(theano.Op):
+class Case2():
     """
     XXX doc: see network.py for why this is called case2
     """
@@ -116,9 +112,7 @@ class Case2(theano.Op):
 
     def make_node(self, transform, pre_output):
         # TODO: more accurate broadcasting output pattern
-        return theano.Apply(self,
-                map(theano.tensor.as_tensor_variable, [transform, pre_output]),
-                [theano.tensor.matrix()])
+        return transform
 
     def perform(self, node, inputs, outstor):
         transform, pre_output = inputs
