@@ -248,16 +248,7 @@ class Ensemble:
             threshold = self.srng.uniform(
                 size=(self.array_size, self.neurons_num),
                 low=intercept[0], high=intercept[1])
-            #self.alpha, self.bias = theano.function( [], self.neurons.make_alpha_bias(max_rates, threshold))()
 
-            # force to 32 bit for consistency / speed
-            #self.bias = self.bias.astype('float32')
-
-            # compute encoders
-            #self.encoders = self.make_encoders(encoders=encoders)
-            # combine encoders and gain for simplification
-            #self.encoders = (self.encoders.T * self.alpha.T).T
-            #self.shared_encoders = theano.shared(self.encoders, name='ensemble.shared_encoders')
 
             # set up a dictionary for encoded_input connections
             self.encoded_input = {}
@@ -275,73 +266,7 @@ class Ensemble:
 
     def add_termination(self, name, pstc, decoded_input=None, 
         encoded_input=None, input_socket=None, transform=None, case=None):
-        """Accounts for a new termination that takes the given input
-        (a theano object) and filters it with the given pstc.
-
-        Adds its contributions to the set of decoded, encoded,
-        or learn input with the same pstc. Decoded inputs
-        are represented signals, encoded inputs are
-        decoded_output * weight matrix, learn input is
-        activities * weight_matrix.
-
-        Can only have one of decoded OR encoded OR learn input != None.
-
-        :param float pstc: post-synaptic time constant
-        :param decoded_input:
-            theano object representing the decoded output of
-            the pre population (just value, not a shared variable)
-        :param encoded_input:
-            theano object representing the encoded output of
-            the pre population multiplied by a connection weight matrix
-        :param learn_input:
-            theano object representing the learned output of
-            the pre population multiplied by a connection weight matrix
-
-        :param transform:
-            the transform that needs to be applied (dot product) to the 
-            decoded output of the pre population
-
-        :param case:
-            used to generate an encoded input by applying the transform matrix
-            onto the decoded pre output is a special way
-        """
-        # make sure one and only one of
-        # (decoded_input, encoded_input) is specified
-        if decoded_input is not None: assert (encoded_input is None)
-        elif encoded_input is not None: assert (decoded_input is None) 
-        else: assert False
-
-        if decoded_input is not None and self.mode is 'direct':
-            # decoded_input is NOT the shared variable at the origin
-            pre_output = theano.shared(decoded_input)
-            source = TT.dot(transform, pre_output)
-
-            self.decoded_input[name] = filter.Filter(
-                name=name, pstc=pstc, source=source,
-                shape=(self.array_size, self.dimensions),
-                pre_output=pre_output)
-
-        # decoded_input in this case will be the output of pre node
-        elif decoded_input is not None and self.mode is 'spiking':
-            # decoded_input is NOT the shared variable at the origin
-            pre_output = theano.shared(decoded_input)
-            source = TT.dot(transform, pre_output)
-            source = TT.true_div(source, self.radius)
-
-            self.decoded_input[name] = filter.Filter(
-                name=name, pstc=pstc, source=source,
-                shape=(self.array_size, self.dimensions),
-                pre_output=pre_output)
-
-        elif encoded_input is not None:
-            # encoded_input is NOT the shared variable at the origin
-            pre_output = theano.shared(encoded_input)
-            source = case(transform, pre_output)
-
-            self.encoded_input[name] = filter.Filter(
-                name=name, pstc=pstc, source=source,
-                shape=(self.array_size, self.neurons_num),
-                pre_output=pre_output)
+        pass
 
     def add_learned_termination(self, name, pre, error, pstc, 
                                 learned_termination_class=hPESTermination,
@@ -474,26 +399,6 @@ class Ensemble:
 
     # Receive the outputs of pre - decoded output - and pass it to filters
     def tick(self, inputs):
-        ## Set the inputs
-        for key in inputs.keys():
-            val = inputs[key]
-            # check if val is a decoded or an encoded input
-            if self.decoded_input.has_key(key):
-                self.decoded_input[key].set_pre_output(val)
-            elif self.encoded_input.has_key(key):
-                self.encoded_input[key].set_pre_output(val)
-            else:
-                raise Exception("ERROR", "Cannot identify the received input.")
-
-        if self.mode == 'direct':
-            self.direct_mode_tick()
-
-        # should be the compiled theano function for this ensemble
-        # includes the filters, ensemble, and origins updates
-        print "Ensemble tick function.  Before theano_tick.",os.getpid()
-        #self.theano_tick()
-        print "Ensemble tick function.  After theano_tick.",os.getpid()
-
         # continue the tick in the origins
         for o in self.origin.values():
             print "Ensemble tick function.  Before o.tick.",os.getpid()
