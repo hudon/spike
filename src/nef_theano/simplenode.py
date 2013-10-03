@@ -2,7 +2,6 @@ from numbers import Number
 import inspect
 
 import numpy as np
-import theano
 
 from . import origin
 

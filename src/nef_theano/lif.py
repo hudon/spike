@@ -1,12 +1,10 @@
 from _collections import OrderedDict
 
 import numpy as np
-import theano
-from theano import tensor as TT
 
 import neuron
 
-class LIF_Op(theano.Op):
+class LIF_Op():
     def __init__(self, tau_ref, tau_rc, upsample=1):
         self.tau_ref = tau_ref
         self.tau_rc = tau_rc
@@ -27,15 +25,14 @@ class LIF_Op(theano.Op):
             input_current, dt):
         orig_inputs = [voltage, refractory_time,
                 input_current, dt]
-        tsor_inputs = map(theano.tensor.as_tensor_variable,
-                orig_inputs)
+        tsor_inputs = orig_inputs
 
         new_voltage = voltage.type()
         new_refractory_time = refractory_time.type()
         spiked = voltage.type()  # XXX should be ints?
         outputs = [new_voltage, new_refractory_time, spiked]
 
-        return theano.Apply(self, tsor_inputs, outputs)
+        return outputs
 
     def perform(self, node, inputs, outstor):
         #alpha, j_bias, voltage, refractory_time, input_current, dt = inputs
@@ -99,10 +96,8 @@ class LIFNeuron(neuron.Neuron):
         neuron.Neuron.__init__(self, size)
         self.tau_rc = tau_rc
         self.tau_ref  = tau_ref
-        self.voltage = theano.shared(
-            np.zeros(size).astype('float32'), name='lif.voltage')
-        self.refractory_time = theano.shared(
-            np.zeros(size).astype('float32'), name='lif.refractory_time')
+        self.voltage = np.zeros(size).astype('float32')
+        self.refractory_time = np.zeros(size).astype('float32')
 
     #TODO: make this generic so it can be applied to any neuron model
     # (by running the neurons and finding their response function),
