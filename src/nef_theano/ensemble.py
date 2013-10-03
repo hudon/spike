@@ -255,91 +255,12 @@ class Ensemble:
         encoded_input=None, input_socket=None, transform=None, case=None):
         pass
 
-    def add_learned_termination(self, name, pre, error, pstc, 
-                                learned_termination_class=hPESTermination,
-                                **kwargs):
-        """Adds a learned termination to the ensemble.
-
-        Input added to encoded_input, and a learned_termination object
-        is created to keep track of the pre and post
-        (self) spike times, and adjust the weight matrix according
-        to the specified learning rule.
-
-        :param Ensemble pre: the pre-synaptic population
-        :param Ensemble error: the Origin that provides the error signal
-        :param float pstc:
-        :param learned_termination_class:
-        """
-        raise Exception("ERRPR", "Learned connections are not usable yet.")
-
-        #TODO: is there ever a case we wouldn't want this?
-        assert error.dimensions == self.dimensions * self.array_size
-
-        # generate an initial weight matrix if none provided,
-        # random numbers between -.001 and .001
-        if 'weight_matrix' not in kwargs.keys():
-            weight_matrix = np.random.uniform(
-                size=(self.array_size * pre.array_size,
-                      self.neurons_num, pre.neurons_num),
-                low=-.001, high=.001)
-            kwargs['weight_matrix'] = weight_matrix
-        else:
-            # make sure it's an np.array
-            #TODO: error checking to make sure it's the right size
-            kwargs['weight_matrix'] = np.array(kwargs['weight_matrix']) 
-
-        learned_term = learned_termination_class(
-            pre=pre, post=self, error=error, **kwargs)
-
-        learn_projections = [TT.dot(
-            pre.neurons.output[learned_term.pre_index(i)],  
-            learned_term.weight_matrix[i % self.array_size]) 
-            for i in range(self.array_size * pre.array_size)]
-
-        # now want to sum all the output to each of the post ensembles 
-        # going to reshape and sum along the 0 axis
-        learn_output = TT.sum( 
-            TT.reshape(learn_projections, 
-            (pre.array_size, self.array_size, self.neurons_num)), axis=0)
-        # reshape to make it (array_size x neurons_num)
-        learn_output = TT.reshape(learn_output, 
-            (self.array_size, self.neurons_num))
-
-        # the input_current from this connection during simulation
-        self.add_termination(name=name, pstc=pstc, encoded_input=learn_output)
-        self.learned_terminations.append(learned_term)
-        return learned_term
-
     def add_origin(self, name, func, **kwargs):
-        """Create a new origin to perform a given function
-        on the represented signal.
-
-        :param string name: name of origin
-        :param function func:
-            desired transformation to perform over represented signal
-        :param list eval_points:
-            specific set of points to optimize decoders over for this origin
-        """
-
-        # Create an ensemble_origin with decoders
         if self.mode == 'spiking':
             if 'eval_points' not in kwargs.keys():
                 kwargs['eval_points'] = self.eval_points
             self.origin[name] = ensemble_origin.EnsembleOrigin(
                 ensemble=self, func=func, **kwargs)
-
-        # if we're in direct mode then this population is just directly 
-        # performing the specified function, use a basic origin
-        elif self.mode == 'direct':
-            if func is not None:
-                if 'initial_value' not in kwargs.keys():
-                    # [func(np.zeros(self.dimensions)) for i in range(self.array_size)]
-                    init = func(np.zeros(self.dimensions))
-                    init = np.array([init for i in range(self.array_size)])
-                    kwargs['initial_value'] = init.flatten()
-
-            if kwargs.has_key('dt'): del kwargs['dt']
-            self.origin[name] = origin.Origin(func=func, **kwargs) 
 
     def get_unique_name(self, name, dic):
         i = 0
@@ -356,23 +277,6 @@ class Ensemble:
         for o in self.origin.values():
             if o.func is not None and self.mode == 'direct': continue
             o.tick()
-
-    def direct_mode_tick(self):
-        if self.mode == 'direct':
-            # set up matrix to store accumulated decoded input
-            X = np.zeros((self.array_size, self.dimensions))
-
-            for di in self.decoded_input.values(): 
-                # add its values to the total decoded input
-                X += di.value.get_value()
-            
-            # if we're calculating a function on the decoded input
-            for o in self.origin.values():
-                if o.func is not None:
-                    val = np.float32([o.func(X[i]) for i in range(len(X))])
-                    o.decoded_output.set_value(val.flatten())
-        else:
-            raise Exception("ERROR", "The current ensemble does not have 'direct' mode.")
 
     # Receive the outputs of pre - decoded output - and pass it to filters
     def tick(self, inputs):
