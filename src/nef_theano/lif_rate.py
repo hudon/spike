@@ -1,7 +1,5 @@
 from _collections import OrderedDict
 
-import theano
-from theano import tensor as TT
 
 import neuron
 

@@ -1,11 +1,8 @@
 from _collections import OrderedDict
 
 import numpy as np
-import theano
-import theano.tensor as TT
 
 class Filter:
-    """Filter an arbitrary theano.shared"""
 
     def __init__(self, pstc, name=None, source=None, shape=None, 
         pre_output=None):
@@ -35,7 +32,6 @@ class Filter:
             raise Exception("Either \"source\" or \"shape\" must define filter shape")
             
         ### create shared variable to store the filtered value
-        self.value = theano.shared(value, name=name)
         self.name = name
 
     # TODO: will set_value always work in this case?

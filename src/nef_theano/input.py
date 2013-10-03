@@ -1,7 +1,5 @@
 from numbers import Number
 
-import theano
-from theano import tensor as TT
 import numpy as np
 
 from . import origin

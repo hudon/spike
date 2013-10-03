@@ -50,7 +50,3 @@ class SubNetwork(object):
         """
         return self.network.make_subnetwork('%s.%s'%(self.name, name), *args, **kwargs)
 
-    def theano_tick(self): 
-        """Call the theano tick function for the network
-        """
-        self.network.theano_tick()
