@@ -1,12 +1,9 @@
 import collections
 
 import numpy as np
-import theano
 import collections
 
 import numpy as np
-import theano
-import theano.tensor as TT
 
 from .filter import Filter
 
@@ -30,7 +27,6 @@ class Probe(object):
         :param float pstc:
         """
         self.name = name
-        self.target = theano.shared(target)
         self.target_name = target_name
         self.dt_sample = dt_sample
         self.dt = dt
@@ -49,7 +45,6 @@ class Probe(object):
         self.filter = Filter(name=name, pstc=pstc, source=self.target)
         updates = {}
         updates.update(self.update(self.dt))
-        self.theano_tick = theano.function([], [], updates=updates)
 
     def update(self, dt):
         """
@@ -78,9 +73,6 @@ class Probe(object):
             self.data[self.i+1:i_samp+1] = self.filter.value.get_value()
             self.i = i_samp
 
-        print "Probe tick function Before theano_tick.",os.getpid()," ",self.name
-        self.theano_tick()
-        print "Probe tick function After theano_tick.",os.getpid()," ",self.name
 
     def get_data(self):
         # access the data for this node, which is stored in the network

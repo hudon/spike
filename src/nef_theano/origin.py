@@ -2,7 +2,6 @@ from numbers import Number
 import collections
 
 import numpy as np
-import theano
 
 import os
 import zmq
@@ -42,7 +41,6 @@ class Origin(object):
             initial_value = [initial_value]
         initial_value = np.float32(initial_value)
 
-        # theano internal state defining output value
         self.decoded_output = initial_value
     
         # find number of parameters of the projected value

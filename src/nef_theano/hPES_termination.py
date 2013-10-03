@@ -1,8 +1,6 @@
 from _collections import OrderedDict
 
 import numpy as np
-import theano
-import theano.tensor as TT
 
 from . import neuron
 from .learned_termination import LearnedTermination
@@ -24,7 +22,6 @@ class hPESTermination(LearnedTermination):
         """
         super(hPESTermination, self).__init__(*args, **kwargs)
 
-        # get the theano instantaneous spike raster
         # of the pre- and post-synaptic neurons
         self.pre_spikes = self.pre.neurons.output
         self.post_spikes = self.post.neurons.output
@@ -40,12 +37,7 @@ class hPESTermination(LearnedTermination):
             size=(self.post.array_size, self.post.neurons_num)))
         # Assumption: high gain -> high theta
         self.initial_theta *= self.gains
-        self.theta = theano.shared(self.initial_theta, name='hPES.theta')
 
-        self.pre_filtered = theano.shared(
-            self.pre_spikes.get_value(), name='hPES.pre_filtered')
-        self.post_filtered = theano.shared(
-            self.post_spikes.get_value(), name='hPES.post_filtered')
 
     def reset(self):
         """
@@ -61,7 +53,6 @@ class hPESTermination(LearnedTermination):
             (self.post.array_size, 1, self.post.dimensions)) , axis=-1)
 
         supervised_rate = self.learning_rate
-        #TODO: more efficient rewrite with theano batch command? 
         delta_supervised = [
             supervised_rate * 
             self.pre_filtered[self.pre_index(i)][None,:] *
@@ -70,7 +61,6 @@ class hPESTermination(LearnedTermination):
 
         unsupervised_rate = TT.cast(
             self.learning_rate * self.scaling_factor, dtype='float32')
-        #TODO: more efficient rewrite with theano batch command? 
         delta_unsupervised = [
             unsupervised_rate * self.pre_filtered[self.pre_index(i)][None,:] *
             ( 
