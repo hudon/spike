@@ -96,31 +96,3 @@ class Case1():
         encoded_output.shape = self.shape4[:2]
         outstor[0][0] = encoded_output
 
-
-class Case2():
-    """
-    XXX doc: see network.py for why this is called case2
-    """
-    def __init__(self, shape4):
-        self.shape4 = shape4
-
-    def __hash__(self):
-        return hash((type(self), self.shape4))
-
-    def __eq__(self, other):
-        return type(self) == type(other) and self.shape4 == other.shape4
-
-    def make_node(self, transform, pre_output):
-        # TODO: more accurate broadcasting output pattern
-        return transform
-
-    def perform(self, node, inputs, outstor):
-        transform, pre_output = inputs
-        post_array_size, post_neurons_num = self.shape4[:2]
-        pre_array_size, pre_neurons_num = self.shape4[2:]
-
-        encoded_output = np.zeros((post_array_size, post_neurons_num),
-                dtype=node.outputs[0].dtype)
-        for ii in xrange(post_neurons_num):
-            encoded_output[:, ii] = np.dot(transform[:, ii], pre_output)
-        outstor[0][0] = encoded_output
