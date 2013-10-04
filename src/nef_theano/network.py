@@ -332,25 +332,6 @@ class Network(object):
 
         return obj
 
-    def learn(self, pre, post, error, pstc=0.01, **kwargs):
-        """Add a connection with learning between pre and post,
-        modulated by error. Error can be a Node, or an origin. If no 
-        origin is specified in the format node:origin, then 'X' is used.
-
-        :param Ensemble pre: the pre-synaptic population
-        :param Ensemble post: the post-synaptic population
-        :param Ensemble error: the population that provides the error signal
-        :param list weight_matrix:
-            the initial connection weights with which to start
-
-        """
-        pre_name = pre
-        pre = self.get_object(pre)
-        post = self.get_object(post)
-        error = self.get_origin(error)
-        return post.add_learned_termination(name=pre_name, pre=pre, error=error, 
-            pstc=pstc, **kwargs)
-
     def make(self, name, *args, **kwargs): 
         """Create and return an ensemble of neurons.
 
@@ -403,61 +384,6 @@ class Network(object):
         self.add(i)
         return i
 
-    def make_subnetwork(self, name):
-        """Create a subnetwork.  This has no functional purpose other than
-        to help organize the model.  Components within a subnetwork can
-        be accessed through a dotted name convention, so an element B inside
-        a subnetwork A can be referred to as A.B.       
-
-        :param name: the name of the subnetwork to create        
-        """
-        return subnetwork.SubNetwork(name, self)
-
-    def make_probe(self, target, name=None, dt_sample=0.01, data_type='decoded', **kwargs):
-        """Add a probe to measure the given target.
-
-        :param target: the name of the node whose output (the Theano shared var) to record
-        :param name: the name of the probe
-        :param dt_sample: the sampling frequency of the probe
-        :returns: The Probe object
-
-        """
-        i = 0
-        target_name = target + '-' + data_type
-        while name is None or self.nodes.has_key(name):
-            i += 1
-            name = ("Probe%d" % i)
-
-        # get the signal to record
-        if data_type == 'decoded':
-            # target is the VALUE of the origin output shared variable
-            target_output = self.get_origin(target).decoded_output.get_value()
-
-        elif data_type == 'spikes':
-            raise Exception("ERROR", "Probes for spikes data type not supported yet..")
-            target = self.get_object(target)
-            # check to make sure target is an ensemble
-            assert isinstance(target, ensemble.Ensemble)
-            target = target.neurons.output
-            # set the filter to zero
-            kwargs['pstc'] = 0
-
-        p = probe.Probe(name=name, target=target_output, target_name=target_name,
-            dt_sample=dt_sample, dt=self.dt, net=self, **kwargs)
-
-        # connect probe to its target: target sends data to probe using msgs
-        origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(target_name, name)
-
-        traget_origin = self.get_origin(target)
-        traget_origin.add_output(origin_socket)
-        p.add_input(destination_socket) # to receive target output values
-
-        proc, ticker_conn = self.add(p)
-        self.probes[name] = { "connection": ticker_conn, "data": [] }
-
-        return p
-
     def run(self, time):
         """Run the simulation.
 
@@ -509,64 +435,3 @@ class Network(object):
     def get_probe_data(self, probe_name):
         return self.probes[probe_name]["data"];
 
-    def write_data_to_hdf5(self, filename='data'):
-        """This is a function to call after simulation that writes the 
-        data of all probes to filename using the Neo HDF5 IO module.
-
-        :param string filename: the name of the file to write out to
-        """
-        import neo
-        from neo import hdf5io
-
-        # get list of probes 
-        probe_list = [self.nodes[node] for node in self.nodes 
-                      if node[:5] == 'Probe']
-
-        # if no probes then just return
-        if len(probe_list) == 0: return
-
-        # open up hdf5 file
-        if not filename.endswith('.hd5'): filename += '.hd5'
-        iom = hdf5io.NeoHdf5IO(filename=filename)
-
-        #TODO: set up to write multiple trials/segments to same block 
-        #      for trials run at different points
-        # create the all encompassing block structure
-        block = neo.Block()
-        # create the segment, representing a trial
-        segment = neo.Segment()
-        # put the segment in the block
-        block.segments.append(segment)
-
-        # create the appropriate Neo structures from the Probes data
-        #TODO: pair any analog signals and spike trains from the same
-        #      population together into a RecordingChannel
-        for probe in probe_list:
-            # decoded signals become AnalogSignals
-            if probe.target_name.endswith('decoded'):
-                segment.analogsignals.append(
-                    neo.AnalogSignal(
-                        probe.get_data() * quantities.dimensionless, 
-                        sampling_period=probe.dt_sample * quantities.s,
-                        target_name=probe.target_name) )
-            # spikes become spike trains
-            elif probe.target_name.endswith('spikes'):
-                # have to change spike train of 0s and 1s to list of times
-                for neuron in probe.get_data().T:
-                    segment.spiketrains.append(
-                        neo.SpikeTrain(
-                            [
-                                t * probe.dt_sample 
-                                for t, val in enumerate(neuron[0]) 
-                                if val > 0
-                            ] * quantities.s,
-                            t_stop=len(probe.data),
-                            target_name=probe.target_name) )
-            else: 
-                print 'Do not know how to write %s to NeoHDF5 file'%probe.target_name
-                assert False
-
-        # write block to file
-        iom.save(block)
-        # close up hdf5 file
-        iom.close()
