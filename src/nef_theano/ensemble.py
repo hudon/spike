@@ -89,6 +89,7 @@ class EnsembleProcess(Process):
                 while True:
                    pass
 
+        print "EnsembleProcess tick function.  Finished query poll state.",self.name
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
