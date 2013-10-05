@@ -11,15 +11,20 @@ class SocketDefinition(object):
         self.endpoint = endpoint
         self.socket_type = socket_type
         self.is_server = is_server
+        self.socket = None
 
-    def create_socket(self, context):
-        socket = context.socket(self.socket_type)
-        if self.is_server:
-            socket.bind(self.endpoint)
+    def create_socket(self, context, name):
+        if self.socket is None:
+            self.socket = context.socket(self.socket_type)
+            print "|||||||||||||||made a socket ",self.endpoint
+            if self.is_server:
+                self.socket.bind(self.endpoint)
+            else:
+                self.socket.connect(self.endpoint)
         else:
-            socket.connect(self.endpoint)
+            print "|||||||||||||||ALREADY EXISTED",self.endpoint
 
-        return socket
+        return self.socket
 
 def create_socket_defs_reqrep(src, dest):
     socket_name = "ipc:///tmp/spike.node_connection.{src_str}-to-{dest_str}".format(
@@ -54,6 +59,6 @@ class Socket(object):
         return self.instance
 
     def init(self, zmq_context):
-        self.instance = self.definition.create_socket(zmq_context)
+        self.instance = self.definition.create_socket(zmq_context,self.name)
         return self.instance
 

@@ -99,7 +99,7 @@ class Input(object):
 
     def run(self, ticker_socket_def):
         self.bind_sockets()
-        ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
+        ticker_conn = ticker_socket_def.create_socket(self.zmq_context,'i')
 
         print "Input run function getting sim_time.  Before recv.",os.getpid()
         sim_time = float(ticker_conn.recv())
@@ -112,6 +112,13 @@ class Input(object):
             print "Input run --------------------",i,".  After *** self.tick.",os.getpid()
 
         self.run_time += sim_time
+
+        print "Input run function sending FIN.  Before send.",os.getpid()
+        ticker_conn.send("FIN") # inform main proc that ens finished
+        print "Input run function sending FIN.  After send.",os.getpid()
+        print "Input run function getting ACK.  Before recv.",os.getpid()
+        ticker_conn.recv() # wait for an ACK from main proc before exiting
+        print "Input run function getting ACK.  After recv.",os.getpid()
 
     def bind_sockets(self):
         # create a context for this input process if do not have one already

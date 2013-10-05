@@ -66,7 +66,7 @@ class Network(object):
             zmq_utils.create_socket_defs_reqrep("ticker", node.name)
         p = Process(target=node.run, args=(node_socket,), name=node.name)
 
-        procPair = (p, ticker_socket.create_socket(self.zmq_context))
+        procPair = (p, ticker_socket.create_socket(self.zmq_context,node.name))
         self.processes.append(procPair)
 
         return procPair
@@ -361,7 +361,7 @@ class Network(object):
         # (Terry wanted them on a single proceses, but need more info for that)
         ep = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
 
-        ticker_conn = ticker_socket.create_socket(self.zmq_context)
+        ticker_conn = ticker_socket.create_socket(self.zmq_context,'asdf')
         self.processes.append((ep, ticker_conn,))
         self.nodes[name] = ep
 
@@ -408,15 +408,28 @@ class Network(object):
 
         # waiting for a FIN from each ensemble and sending an ACK for it to finish
         for (p, conn) in self.processes:
-            if isinstance(p, ensemble.EnsembleProcess):
-                print "Network run function.  Before recv.",os.getpid()," ",self.name
+            if not isinstance(p, ensemble.EnsembleProcess):
+                print "Network run function INPUT.  Before recv.",os.getpid()," ",self.name
                 conn.recv()
-                print "Network run function.  After recv.",os.getpid()," ",self.name
+                print "Network run function INPUT.  After recv.",os.getpid()," ",self.name
+        for (p, conn) in self.processes:
+            if not isinstance(p, ensemble.EnsembleProcess):
+                print "Network run function sending ACK INPUT.  Before send.",os.getpid()," ",self.name
+                conn.send("ACK")
+                print "Network run function sending ACK INPUT.  After send.",os.getpid()," ",self.name
+
+
+        # waiting for a FIN from each ensemble and sending an ACK for it to finish
         for (p, conn) in self.processes:
             if isinstance(p, ensemble.EnsembleProcess):
-                print "Network run function sending ACK.  Before send.",os.getpid()," ",self.name
+                print "Network run function PROCS.  Before recv.",os.getpid()," ",self.name
+                conn.recv()
+                print "Network run function PROCS.  After recv.",os.getpid()," ",self.name
+        for (p, conn) in self.processes:
+            if isinstance(p, ensemble.EnsembleProcess):
+                print "Network run function sending ACK PROCS.  Before send.",os.getpid()," ",self.name
                 conn.send("ACK")
-                print "Network run function sending ACK.  After send.",os.getpid()," ",self.name
+                print "Network run function sending ACK PROCS.  After send.",os.getpid()," ",self.name
 
         for probe in self.probes.keys():
             ticker_conn = self.probes[probe]["connection"]

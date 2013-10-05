@@ -54,12 +54,13 @@ class EnsembleProcess(Process):
         # create socket connections for inputs
         for socket in self.input_sockets:
             socket.init(self.zmq_context)
-            self.poller.register(socket.get_instance(), zmq.POLLIN)
+            self.poller.register(socket.get_instance(), zmq.POLLIN|zmq.POLLOUT)
 
         for o in self.ensemble.origin.values():
             o.bind_sockets(self.zmq_context)
 
-        self.ticker_conn = self.ticker_socket_def.create_socket(self.zmq_context)
+
+        self.ticker_conn = self.ticker_socket_def.create_socket(self.zmq_context,'a')
 
     def tick(self):
         """ This process tick is responsible for IPC, keeping the Ensemble
@@ -78,6 +79,10 @@ class EnsembleProcess(Process):
                 socket_inst = socket.get_instance()
                 if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
                     is_waiting_for_input = True
+                if socket_inst in responses and responses[socket_inst] != zmq.POLLIN:
+                    print "not pollin."
+                    while True:
+                       pass
             if (ggg > 3000):
                 print "Over 3000 times, hang forever.",os.getpid()," ",self.name
                 for i, socket in enumerate(self.input_sockets):
