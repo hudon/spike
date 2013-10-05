@@ -42,6 +42,7 @@ class Network(object):
         self.nodes = {}
         self.processes = []
         self.probes = {}
+        self.inputs = {}
 
         self.zmq_context = zmq.Context()
         self.setup = False
@@ -402,7 +403,8 @@ class Network(object):
         """Create an input and add it to the network."""
         kwargs['dt'] = self.dt
         i = input.Input(*args, **kwargs)
-        self.add(i)
+        proc, ticker_conn = self.add(i)
+        self.inputs[args[0]] = { "connection": ticker_conn }
         return i
 
     def make_subnetwork(self, name):
@@ -500,6 +502,12 @@ class Network(object):
 
         for (p, conn) in self.processes:
             conn.send(str(time))
+
+        # waiting for a FIN from each input and sending an ACK for it to finish
+        for key in self.inputs.keys():
+            ticker_conn = self.inputs[key]["connection"]
+            ticker_conn.recv()
+            ticker_conn.send("ACK")
 
         # waiting for a FIN from each ensemble and sending an ACK for it to finish
         for (p, conn) in self.processes:
