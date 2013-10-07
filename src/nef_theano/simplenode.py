@@ -119,15 +119,14 @@ class SimpleNode(object):
 
         sim_time = float(ticker_conn.recv())
 
-        #TODO: note that the examples of simple node have only origins
-        # documentation above states that they can have a termination, but I don't see how
-        # monitor whether deadlocks ever occur with simple node
-        # if deadlocks occur, we'll need to have a FIN/ACK comm with main proc
         for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
             self.main_tick()
 
         self.run_time += sim_time
+
+        ticker_conn.send("FIN") # inform main proc that node finished
+        ticker_conn.recv() # wait for an ACK from main proc before exiting
 
     def bind_sockets(self):
         # create a context for this input process if do not have one already

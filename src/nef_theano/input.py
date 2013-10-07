@@ -107,6 +107,9 @@ class Input(object):
 
         self.run_time += sim_time
 
+        ticker_conn.send("FIN") # inform main proc that input finished
+        ticker_conn.recv() # wait for an ACK from main proc before exiting
+
     def bind_sockets(self):
         # create a context for this input process if do not have one already
         if self.zmq_context is None:
