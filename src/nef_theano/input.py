@@ -107,7 +107,7 @@ class Input(object):
 
         self.run_time += sim_time
 
-        ticker_conn.send("FIN") # inform main proc that ens finished
+        ticker_conn.send("FIN") # inform main proc that input finished
         ticker_conn.recv() # wait for an ACK from main proc before exiting
 
     def bind_sockets(self):
