@@ -35,7 +35,7 @@ class EnsembleOrigin(Origin):
             func_size = decoders.shape[2]
         # decoders is array_size * neurons_num * func_dimensions, 
         # initial value should have array_size values * func_dimensions
-        initial_value = np.zeros(self.ensemble.array_size * func_size) 
+        initial_value = np.zeros(self.ensemble.array_size * func_size)
         Origin.__init__(self, func=func, initial_value=initial_value)
         self.func_size = func_size
 

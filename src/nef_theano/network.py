@@ -72,7 +72,7 @@ class Network(object):
 
         return procPair
 
-    def connect(self, pre, post, orig_transform=None, weight=1,
+    def connect(self, pre, post, transform=None, weight=1,
                 index_pre=None, index_post=None, pstc=0.01, 
                 func=None):
         """Connect two nodes in the network.
@@ -150,7 +150,7 @@ class Network(object):
         """
 
         def __connect(pre, pre_name, post, pre_sub_index, pre_sub_parent, pre_num_subs):
-            transform = orig_transform # orig_transform is read only
+            new_transform = transform # transform is read only
             # get the origin from the pre Node, CREATE one if does not exist
             if pre_sub_parent is None:
                 pre_origin = self.get_origin(pre_name, func)
@@ -170,18 +170,18 @@ class Network(object):
             origin_socket, destination_socket = \
                 zmq_utils.create_socket_defs_pushpull(pre_name, post.name)
 
-            if transform is not None:
+            if new_transform is not None:
                 # there are 3 cases
                 # 1) pre = decoded, post = decoded
-                #     - in this case, transform will be 
+                #     - in this case, new_transform will be
                 #                       (post.dimensions x pre.origin.dimensions)
                 #     - decoded_input will be (post.array_size x post.dimensions)
                 # 2) pre = decoded, post = encoded
-                #     - in this case, transform will be size 
+                #     - in this case, new_transform will be size
                 #         (post.array_size x post.neurons x pre.origin.dimensions)
                 #     - encoded_input will be (post.array_size x post.neurons_num)
                 # 3) pre = encoded, post = encoded
-                #     - in this case, transform will be (post.array_size x 
+                #     - in this case, new_transform will be (post.array_size x
                 #             post.neurons_num x pre.array_size x pre.neurons_num)
                 #     - encoded_input will be (post.array_size x post.neurons_num)
 
@@ -189,29 +189,29 @@ class Network(object):
                 assert ((weight == 1) and (index_pre is None)
                         and (index_post is None))
 
-                transform = np.array(transform)
+                new_transform = np.array(new_transform)
 
                 # check to see if post side is an encoded connection, case 2 or 3
                 #TODO: a better check for this
-                if transform.shape[0] != post.dimensions * post.array_size or len(transform.shape) > 2:
+                if new_transform.shape[0] != post.dimensions * post.array_size or len(new_transform.shape) > 2:
 
-                    if transform.shape[0] == post.array_size * post.neurons_num:
-                        transform = transform.reshape(
+                    if new_transform.shape[0] == post.array_size * post.neurons_num:
+                        new_transform = new_transform.reshape(
                                           [post.array_size, post.neurons_num] +\
-                                                    list(transform.shape[1:]))
+                                                    list(new_transform.shape[1:]))
 
-                    if len(transform.shape) == 2: # repeat array_size times
-                        transform = np.tile(transform, (post.array_size, 1, 1))
+                    if len(new_transform.shape) == 2: # repeat array_size times
+                        new_transform = np.tile(new_transform, (post.array_size, 1, 1))
 
                     # check for pre side encoded connection (case 3)
-                    if len(transform.shape) > 3 or \
-                           transform.shape[2] == pre.array_size * pre.neurons_num:
+                    if len(new_transform.shape) > 3 or \
+                           new_transform.shape[2] == pre.array_size * pre.neurons_num:
 
-                        if transform.shape[2] == pre.array_size * pre.neurons_num: 
-                            transform = transform.reshape(
+                        if new_transform.shape[2] == pre.array_size * pre.neurons_num:
+                            new_transform = new_transform.reshape(
                                             [post.array_size, post.neurons_num,  
                                                   pre.array_size, pre.neurons_num])
-                        assert transform.shape == \
+                        assert new_transform.shape == \
                                 (post.array_size, post.neurons_num,
                                  pre.array_size, pre.neurons_num)
 
@@ -229,14 +229,14 @@ class Network(object):
                         post.add_termination(input_socket=destination_socket,
                             name=pre_name, pstc=pstc,
                             encoded_input= pre_output.get_value(),
-                            transform=transform, case=case1)
+                            transform=new_transform, case=case1)
 
                         pre_origin.add_output(origin_socket)
 
                         return
 
                     else: # otherwise we're in case 2 (pre is decoded)
-                        assert transform.shape ==  \
+                        assert new_transform.shape ==  \
                                    (post.array_size, post.neurons_num, dim_pre)
 
                         # can't specify a function with either side encoded connection
@@ -251,7 +251,7 @@ class Network(object):
                         post.add_termination(input_socket=destination_socket,
                             name=pre_name, pstc=pstc,
                             encoded_input= pre_output.get_value(),
-                            transform=transform, case=case2)
+                            transform=new_transform, case=case2)
 
                         pre_origin.add_output(origin_socket)
 
@@ -259,27 +259,28 @@ class Network(object):
 
             # if decoded-decoded connection (case 1)
             # compute transform if not given, if given make sure shape is correct
-            transform = connection.compute_transform(
+            new_transform = connection.compute_transform(
                 dim_pre=dim_pre,
                 dim_post=post.dimensions,
                 array_size=post.array_size,
                 weight=weight,
                 index_pre=index_pre,
                 index_post=index_post, 
-                transform=transform)
+                transform=new_transform)
 
             # pre output needs to be replaced during execution using IPC
             # pass pre_out and transform + calculate dot product in accumulator
             # passing VALUE of pre output (do not share theano shared vars between processes)
             post.add_termination(input_socket=destination_socket, name=pre_name,
                 pstc=pstc, decoded_input=pre_output.get_value(),
-                transform=transform)
+                transform=new_transform)
 
             pre_origin.add_output(origin_socket)
 
-        ## If pre is not in self.nodes, we can assume that it has been split
+        ## If pre is not in self.nodes or if pre is an origin,
+        ## we can assume that it has been split
         ## and that its *sub-ensembles* are in self.nodes. Similarly for post.
-        if pre in self.nodes:
+        if pre in self.nodes or len(pre.split(':')) == 2:
             pres = { pre: self.get_object(pre) }
         else:
             pres = self.__get_subensembles(pre)
@@ -424,7 +425,9 @@ class Network(object):
                 zmq_utils.create_socket_defs_reqrep("ticker", name)
 
             # create ensemble and ensemble process
-            ep = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
+            # necessary to pass in None to EnsembleProcess init in case args
+            # contains values that need to be matched positionally
+            ep = ensemble.EnsembleProcess(name, node_socket, None, *args, **kwargs)
             ticker_conn = ticker_socket.create_socket(self.zmq_context)
             self.processes.append((ep, ticker_conn,))
             self.nodes[name] = ep
