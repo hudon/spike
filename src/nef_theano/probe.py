@@ -94,6 +94,9 @@ class Probe(object):
 
         self.run_time += sim_time
 
+        ticker_conn.send("FIN") # inform main proc that probe finished
+        ticker_conn.recv() # wait for an ACK from main proc before finishing
+
         # send all recorded data to the administrator
         data = self.data[:self.i+1]
         ticker_conn.send_pyobj(data)

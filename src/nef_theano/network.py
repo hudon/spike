@@ -603,9 +603,9 @@ class Network(object):
 
         # waiting for a FIN from each ensemble and sending an ACK for it to finish
         for (p, conn) in self.processes:
-            if isinstance(p, ensemble.EnsembleProcess): conn.recv()
+            conn.recv()
         for (p, conn) in self.processes:
-            if isinstance(p, ensemble.EnsembleProcess): conn.send("ACK")
+            conn.send("ACK")
 
         print("All procs have finished, got all ACKs")
         for probe in self.probes.keys():
