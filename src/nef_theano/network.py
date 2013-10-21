@@ -34,7 +34,7 @@ class Network(object):
         """
         self.name = name
         self.dt = dt
-        self.run_time = 0.0    
+        self.run_time = 0.0
         self.seed = seed
         self.fixed_seed = fixed_seed
 
@@ -73,7 +73,7 @@ class Network(object):
         return procPair
 
     def connect(self, pre, post, transform=None, weight=1,
-                index_pre=None, index_post=None, pstc=0.01, 
+                index_pre=None, index_post=None, pstc=0.01,
                 func=None):
         """Connect two nodes in the network.
 
@@ -83,7 +83,7 @@ class Network(object):
         *pre* and *post* can be strings giving the names of the nodes,
         or they can be the nodes themselves (Inputs and Ensembles are
         supported). They can also be actual Origins or Terminations,
-        or any combination of the above. 
+        or any combination of the above.
 
         If transform is not None, it is used as the transformation matrix
         for the new termination. You can also use *weight*, *index_pre*,
@@ -98,7 +98,7 @@ class Network(object):
         - post.neurons * pre.dimensions:
           Overwrites post encoders, i.e. inhibitory connections
         - post.neurons * pre.neurons:
-          Fully specify the connection weight matrix 
+          Fully specify the connection weight matrix
 
         If *func* is not None, a new Origin will be created on the
         pre-synaptic ensemble that will compute the provided function.
@@ -133,7 +133,7 @@ class Network(object):
             The indexes of the post-synaptic dimensions to use.
             Ignored if *transform* is not None.
             See :func:`connection.compute_transform()`
-        :type index_post: List of integers or a single integer 
+        :type index_post: List of integers or a single integer
         :param function func:
             Function to be computed by this connection.
             If None, computes ``f(x)=x``.
@@ -162,7 +162,8 @@ class Network(object):
                 else:
                     decoder = pre_sub_parent.get_subensemble_decoder(
                         pre_num_subs, origin_name, func)[pre_sub_index]
-                    pre_origin = pre.add_origin(pre_name, func, decoder=decoder)
+                    pre.add_origin(pre_name, func, dt=self.dt, decoders=decoder)
+                    pre_origin = self.get_origin(pre_name, func)
 
             pre_output = pre_origin.decoded_output
             dim_pre = pre_origin.dimensions
@@ -209,7 +210,7 @@ class Network(object):
 
                         if new_transform.shape[2] == pre.array_size * pre.neurons_num:
                             new_transform = new_transform.reshape(
-                                            [post.array_size, post.neurons_num,  
+                                            [post.array_size, post.neurons_num,
                                                   pre.array_size, pre.neurons_num])
                         assert new_transform.shape == \
                                 (post.array_size, post.neurons_num,
@@ -265,7 +266,7 @@ class Network(object):
                 array_size=post.array_size,
                 weight=weight,
                 index_pre=index_pre,
-                index_post=index_post, 
+                index_post=index_post,
                 transform=new_transform)
 
             # pre output needs to be replaced during execution using IPC
@@ -336,7 +337,7 @@ class Network(object):
             return node.origin[split[1]]
 
     def get_origin(self, name, func=None):
-        """This method takes in a string and returns the decoded_output function 
+        """This method takes in a string and returns the decoded_output function
         of this object. If no origin is specified in name then 'X' is used.
 
         :param string name: the name of the object(and optionally :origin) from
@@ -352,7 +353,7 @@ class Network(object):
             # take default identity decoded output from obj population
             origin_name = 'X'
 
-            if func is not None: 
+            if func is not None:
                 # if this connection should compute a function
 
                 # set name as the function being calculated
@@ -376,7 +377,7 @@ class Network(object):
 
     def learn(self, pre, post, error, pstc=0.01, **kwargs):
         """Add a connection with learning between pre and post,
-        modulated by error. Error can be a Node, or an origin. If no 
+        modulated by error. Error can be a Node, or an origin. If no
         origin is specified in the format node:origin, then 'X' is used.
 
         :param Ensemble pre: the pre-synaptic population
@@ -390,10 +391,10 @@ class Network(object):
         pre = self.get_object(pre)
         post = self.get_object(post)
         error = self.get_origin(error)
-        return post.add_learned_termination(name=pre_name, pre=pre, error=error, 
+        return post.add_learned_termination(name=pre_name, pre=pre, error=error,
             pstc=pstc, **kwargs)
 
-    def make(self, name, *args, **kwargs): 
+    def make(self, name, *args, **kwargs):
         """Create and return an ensemble of neurons.
 
         Note that all ensembles are actually arrays of length 1.
@@ -404,7 +405,7 @@ class Network(object):
             Random number seed to use.
             If this is None and the Network was constructed
             with a seed parameter, a seed will be randomly generated.
-        :returns: the newly created ensemble      
+        :returns: the newly created ensemble
 
         """
         num_subs = kwargs.pop('num_subs', 1)
@@ -482,7 +483,7 @@ class Network(object):
             name=name, neurons=neurons, dimensions=dimensions,
             array_size=array_size, **kwargs)
 
-    def make_input(self, *args, **kwargs): 
+    def make_input(self, *args, **kwargs):
         """Create an input and add it to the network."""
         kwargs['dt'] = self.dt
         i = input.Input(*args, **kwargs)
@@ -493,9 +494,9 @@ class Network(object):
         """Create a subnetwork.  This has no functional purpose other than
         to help organize the model.  Components within a subnetwork can
         be accessed through a dotted name convention, so an element B inside
-        a subnetwork A can be referred to as A.B.       
+        a subnetwork A can be referred to as A.B.
 
-        :param name: the name of the subnetwork to create        
+        :param name: the name of the subnetwork to create
         """
         return subnetwork.SubNetwork(name, self)
 
@@ -567,7 +568,7 @@ class Network(object):
         """
         raise Exception("ERROR: Global theano tick not supported.")
         # dictionary for all variables
-        # and the theano description of how to compute them 
+        # and the theano description of how to compute them
         updates = OrderedDict()
 
         # for every direct ensemble in the network
@@ -606,7 +607,9 @@ class Network(object):
         for (p, conn) in self.processes:
             if isinstance(p, ensemble.EnsembleProcess): conn.send("ACK")
 
+        print("All procs have finished, got all ACKs")
         for probe in self.probes.keys():
+            print("Waiting on probe " + probe)
             ticker_conn = self.probes[probe]["connection"]
             self.probes[probe]["data"] = ticker_conn.recv_pyobj()
             ticker_conn.send("ACK")
@@ -620,7 +623,7 @@ class Network(object):
         return self.probes[probe_name]["data"];
 
     def write_data_to_hdf5(self, filename='data'):
-        """This is a function to call after simulation that writes the 
+        """This is a function to call after simulation that writes the
         data of all probes to filename using the Neo HDF5 IO module.
 
         :param string filename: the name of the file to write out to
@@ -628,8 +631,8 @@ class Network(object):
         import neo
         from neo import hdf5io
 
-        # get list of probes 
-        probe_list = [self.nodes[node] for node in self.nodes 
+        # get list of probes
+        probe_list = [self.nodes[node] for node in self.nodes
                       if node[:5] == 'Probe']
 
         # if no probes then just return
@@ -639,7 +642,7 @@ class Network(object):
         if not filename.endswith('.hd5'): filename += '.hd5'
         iom = hdf5io.NeoHdf5IO(filename=filename)
 
-        #TODO: set up to write multiple trials/segments to same block 
+        #TODO: set up to write multiple trials/segments to same block
         #      for trials run at different points
         # create the all encompassing block structure
         block = neo.Block()
@@ -656,7 +659,7 @@ class Network(object):
             if probe.target_name.endswith('decoded'):
                 segment.analogsignals.append(
                     neo.AnalogSignal(
-                        probe.get_data() * quantities.dimensionless, 
+                        probe.get_data() * quantities.dimensionless,
                         sampling_period=probe.dt_sample * quantities.s,
                         target_name=probe.target_name) )
             # spikes become spike trains
@@ -666,13 +669,13 @@ class Network(object):
                     segment.spiketrains.append(
                         neo.SpikeTrain(
                             [
-                                t * probe.dt_sample 
-                                for t, val in enumerate(neuron[0]) 
+                                t * probe.dt_sample
+                                for t, val in enumerate(neuron[0])
                                 if val > 0
                             ] * quantities.s,
                             t_stop=len(probe.data),
                             target_name=probe.target_name) )
-            else: 
+            else:
                 print 'Do not know how to write %s to NeoHDF5 file'%probe.target_name
                 assert False
 

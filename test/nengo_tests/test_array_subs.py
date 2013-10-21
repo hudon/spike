@@ -1,4 +1,4 @@
-"""This is a file to test the network array function, both with make_array, 
+"""This is a file to test the network array function, both with make_array,
 and by using the array_size parameter in the network.make command.
 
 """
@@ -16,20 +16,21 @@ def test_array():
 
     net = nef.Network('Array Test', seed=51)
     net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
-    #net.make_input('in', value=1, zero_after=1.0)
 
     net.make('B', neurons=neurons, array_size=3, dimensions=2)
-    #net.make_array('A', neurons=neurons, array_size=1, dimensions=6)
+    net.make_array('A', neurons=neurons, array_size=1, dimensions=6)
+
     if len(sys.argv) > 2 and sys.argv[2] == 'is_spike':
         net.make('A2', neurons=neurons, array_size=2, dimensions=3, num_subs=2)
     else:
         net.make('A2', neurons=neurons, array_size=2, dimensions=3)
-    #net.make('B2', neurons=neurons, array_size=6, dimensions=1)
 
-    #net.connect('in', 'A')
+    net.make('B2', neurons=neurons, array_size=6, dimensions=1)
+
+    net.connect('in', 'A')
     net.connect('in', 'A2')
-    #net.connect('in', 'B')
-    #net.connect('in', 'B2')
+    net.connect('in', 'B')
+    net.connect('in', 'B2')
     net.connect('A2', 'B')
 
     timesteps = 200
@@ -38,36 +39,36 @@ def test_array():
     pstc = 0.01
 
     Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
-    #Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
+    Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
     A2p = net.make_probe('A2', dt_sample=dt_step, pstc=pstc)
     Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
-    #B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
+    B2p = net.make_probe('B2', dt_sample=dt_step, pstc=pstc)
 
     print "starting simulation"
 
     net.run(timesteps * dt_step)
 
     ip_data = Ip.get_data()
-    #ap_data = Ap.get_data()
+    ap_data = Ap.get_data()
     a2p_data = A2p.get_data()
     bp_data = Bp.get_data()
-    #b2p_data = B2p.get_data()
+    b2p_data = B2p.get_data()
 
     print "input 'in' probe data"
     for x in ip_data:
         print x
-    #print "ensemble 'A' probe data"
-    #for x in ap_data:
-        #print x
+    print "ensemble 'A' probe data"
+    for x in ap_data:
+        print x
     print "ensemble 'A2' probe data"
     for x in a2p_data:
         print x
     print "ensemble 'B' probe data"
     for x in bp_data:
         print x
-    #print "ensemble 'B2' probe data"
-    #for x in b2p_data:
-        #print x
+    print "ensemble 'B2' probe data"
+    for x in b2p_data:
+        print x
 
     # plot the results
 

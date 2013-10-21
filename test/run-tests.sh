@@ -12,7 +12,6 @@ SOURCE_DIR="../examples/new-theano"
 NENGO_TESTS_DIR="nengo_tests"
 
 TEST_SCRIPTS=(
-  "${NENGO_TESTS_DIR}/test_array_subs.py"
   "${NENGO_TESTS_DIR}/test_func.py"
   "${NENGO_TESTS_DIR}/test_runtime.py"
   "${NENGO_TESTS_DIR}/test_weight_index_pre_post.py"
@@ -27,6 +26,9 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_enc.py"
   "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
   "${NENGO_TESTS_DIR}/test_direct.py"
+
+  "${NENGO_TESTS_DIR}/test_array_subs.py"
+  # "${NENGO_TESTS_DIR}/test_func_subs.py"
 );
 
 compareOutput(){
@@ -58,7 +60,7 @@ compareOutput(){
 
   diff=$(diff <(echo "${ACTUAL_OUT}") <(echo "${EXPECTED_OUT}"))
 
-  DECIMAL_PLACES=4
+  DECIMAL_PLACES=2
   AWK_ARG="{ printf \"%0.${DECIMAL_PLACES}f\\n\", \$1}"
   EGREP_ARG="[0-9]+.[0-9]+"
   SED_ARG="s/([0-9]+.[0-9]+)/\\n\1\\n/g"

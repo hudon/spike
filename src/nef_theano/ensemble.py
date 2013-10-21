@@ -150,8 +150,8 @@ class Ensemble:
         :param int array_size: number of sub-populations for network arrays
         :param list eval_points:
             specific set of points to optimize decoders over by default
-        :param float decoder_noise: amount of noise to assume when computing 
-            decoder    
+        :param float decoder_noise: amount of noise to assume when computing
+            decoder
         :param string noise_type:
             the type of noise added to the input current.
             Possible options = {'uniform', 'gaussian'}.
@@ -195,7 +195,7 @@ class Ensemble:
 
         # make sure intercept is the right shape
         if isinstance(intercept, (int,float)): intercept = [intercept, 1]
-        elif len(intercept) == 1: intercept.append(1) 
+        elif len(intercept) == 1: intercept.append(1)
 
         ## For sub-ensembles, the passed-in encoders are not the
         ## user-specified encoders, but the ones taken from the split up ensemble
@@ -212,7 +212,7 @@ class Ensemble:
         self.decoded_input = {}
 
         # if we're creating a spiking ensemble
-        if self.mode == 'spiking': 
+        if self.mode == 'spiking':
 
             # TODO: handle different neuron types,
             self.neurons = neuron.types[neuron_type](
@@ -245,7 +245,7 @@ class Ensemble:
                 # combine encoders and gain for simplification
                 self.encoders = (self.encoders.T * self.alpha.T).T
 
-            self.shared_encoders = theano.shared(self.encoders, 
+            self.shared_encoders = theano.shared(self.encoders,
                 name='ensemble.shared_encoders')
 
             # set up a dictionary for encoded_input connections
@@ -263,7 +263,7 @@ class Ensemble:
             # reset neurons_num to 0
             self.neurons_num = 0
 
-    def add_termination(self, name, pstc, decoded_input=None, 
+    def add_termination(self, name, pstc, decoded_input=None,
         encoded_input=None, input_socket=None, transform=None, case=None):
         """Accounts for a new termination that takes the given input
         (a theano object) and filters it with the given pstc.
@@ -288,7 +288,7 @@ class Ensemble:
             the pre population multiplied by a connection weight matrix
 
         :param transform:
-            the transform that needs to be applied (dot product) to the 
+            the transform that needs to be applied (dot product) to the
             decoded output of the pre population
 
         :param case:
@@ -298,7 +298,7 @@ class Ensemble:
         # make sure one and only one of
         # (decoded_input, encoded_input) is specified
         if decoded_input is not None: assert (encoded_input is None)
-        elif encoded_input is not None: assert (decoded_input is None) 
+        elif encoded_input is not None: assert (decoded_input is None)
         else: assert False
 
         if decoded_input is not None and self.mode is 'direct':
@@ -333,7 +333,7 @@ class Ensemble:
                 shape=(self.array_size, self.neurons_num),
                 pre_output=pre_output)
 
-    def add_learned_termination(self, name, pre, error, pstc, 
+    def add_learned_termination(self, name, pre, error, pstc,
                                 learned_termination_class=hPESTermination,
                                 **kwargs):
         """Adds a learned termination to the ensemble.
@@ -364,23 +364,23 @@ class Ensemble:
         else:
             # make sure it's an np.array
             #TODO: error checking to make sure it's the right size
-            kwargs['weight_matrix'] = np.array(kwargs['weight_matrix']) 
+            kwargs['weight_matrix'] = np.array(kwargs['weight_matrix'])
 
         learned_term = learned_termination_class(
             pre=pre, post=self, error=error, **kwargs)
 
         learn_projections = [TT.dot(
-            pre.neurons.output[learned_term.pre_index(i)],  
-            learned_term.weight_matrix[i % self.array_size]) 
+            pre.neurons.output[learned_term.pre_index(i)],
+            learned_term.weight_matrix[i % self.array_size])
             for i in range(self.array_size * pre.array_size)]
 
-        # now want to sum all the output to each of the post ensembles 
+        # now want to sum all the output to each of the post ensembles
         # going to reshape and sum along the 0 axis
-        learn_output = TT.sum( 
-            TT.reshape(learn_projections, 
+        learn_output = TT.sum(
+            TT.reshape(learn_projections,
             (pre.array_size, self.array_size, self.neurons_num)), axis=0)
         # reshape to make it (array_size x neurons_num)
-        learn_output = TT.reshape(learn_output, 
+        learn_output = TT.reshape(learn_output,
             (self.array_size, self.neurons_num))
 
         # the input_current from this connection during simulation
@@ -406,7 +406,7 @@ class Ensemble:
             self.origin[name] = ensemble_origin.EnsembleOrigin(
                 ensemble=self, func=func, **kwargs)
 
-        # if we're in direct mode then this population is just directly 
+        # if we're in direct mode then this population is just directly
         # performing the specified function, use a basic origin
         elif self.mode == 'direct':
             if func is not None:
@@ -417,7 +417,7 @@ class Ensemble:
                     kwargs['initial_value'] = init.flatten()
 
             if kwargs.has_key('dt'): del kwargs['dt']
-            self.origin[name] = origin.Origin(func=func, **kwargs) 
+            self.origin[name] = origin.Origin(func=func, **kwargs)
 
     def get_unique_name(self, name, dic):
         """A helper function that runs through a dictionary
@@ -429,7 +429,7 @@ class Ensemble:
         :returns string: a unique key name for dic
         """
         i = 0
-        while dic.has_key(name + '_' + str(i)): 
+        while dic.has_key(name + '_' + str(i)):
             i += 1
 
         return name + '_' + str(i)
@@ -437,7 +437,7 @@ class Ensemble:
     def make_encoders(self, encoders=None):
         """Generates a set of encoders.
 
-        :param int neurons: number of neurons 
+        :param int neurons: number of neurons
         :param int dimensions: number of dimensions
         :param theano.tensor.shared_randomstreams snrg:
             theano random number generator function
@@ -459,7 +459,7 @@ class Ensemble:
                                ).T[:self.neurons_num, :self.dimensions]
             encoders = np.tile(encoders, (self.array_size, 1, 1))
 
-        # normalize encoders across represented dimensions 
+        # normalize encoders across represented dimensions
         norm = TT.sum(encoders * encoders, axis=[2], keepdims=True)
         encoders = encoders / TT.sqrt(norm)
 
@@ -481,10 +481,10 @@ class Ensemble:
             X = np.zeros((self.array_size, self.dimensions))
             # updates is an ordered dictionary of theano variables to update
 
-            for di in self.decoded_input.values(): 
+            for di in self.decoded_input.values():
                 # add its values to the total decoded input
                 X += di.value.get_value()
-            
+
             # if we're calculating a function on the decoded input
             for o in self.origin.values():
                 if o.func is not None:
@@ -528,7 +528,7 @@ class Ensemble:
         ### find the total input current to this population of neurons
 
         # set up matrix to store accumulated decoded input
-        X = None 
+        X = None
         # updates is an ordered dictionary of theano variables to update
         updates = OrderedDict()
 
@@ -541,11 +541,11 @@ class Ensemble:
 
             updates.update(di.update(self.dt))
 
-        # if we're in spiking mode, then look at the input current and 
+        # if we're in spiking mode, then look at the input current and
         # calculate new neuron activities for output
         if self.mode == 'spiking':
 
-            # apply respective biases to neurons in the population 
+            # apply respective biases to neurons in the population
             J = TT.as_tensor_variable(np.array(self.bias))
 
             for ei in self.encoded_input.values():
@@ -560,8 +560,8 @@ class Ensemble:
                 J = map_gemv(1.0, self.shared_encoders, X, 1.0, J)
 
             # if noise has been specified for this neuron,
-            if self.noise: 
-                # generate random noise values, one for each input_current element, 
+            if self.noise:
+                # generate random noise values, one for each input_current element,
                 # with standard deviation = sqrt(self.noise=std**2)
                 # When simulating white noise, the noise process must be scaled by
                 # sqrt(dt) instead of dt. Hence, we divide the std by sqrt(dt).
@@ -570,8 +570,8 @@ class Ensemble:
                         size=self.bias.shape, std=np.sqrt(self.noise/self.dt))
                 elif self.noise_type.lower() == 'uniform':
                     J += self.srng.uniform(
-                        size=self.bias.shape, 
-                        low=-self.noise/np.sqrt(self.dt), 
+                        size=self.bias.shape,
+                        low=-self.noise/np.sqrt(self.dt),
                         high=self.noise/np.sqrt(self.dt))
 
             # pass that total into the neuron model to produce
@@ -586,16 +586,15 @@ class Ensemble:
             for o in self.origin.values():
                 updates.update(o.update(self.dt, updates[self.neurons.output]))
 
-        if self.mode == 'direct': 
-            # if we're in direct mode then just directly pass the decoded_input 
+        if self.mode == 'direct':
+            # if we're in direct mode then just directly pass the decoded_input
             # to the origins for decoded_output
-            for o in self.origin.values(): 
+            for o in self.origin.values():
                 if o.func is None:
                     if len(self.decoded_input) > 0:
-                        updates.update(OrderedDict({o.decoded_output: 
+                        updates.update(OrderedDict({o.decoded_output:
                             TT.flatten(X).astype('float32')}))
         return updates
-
 
     def get_subensemble_parts(self, num_subs):
         """
@@ -640,7 +639,7 @@ class Ensemble:
 
         # create the origin in order to compute a decoder
         if origin_name not in self.origin:
-            self.add_origin(origin_name, func)
+            self.add_origin(origin_name, func, dt=self.dt)
 
         decoders = self.origin[origin_name].decoders.get_value()
         d_size = len(decoders[0]) / num_subs
