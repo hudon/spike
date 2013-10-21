@@ -24,7 +24,7 @@ class Probe(object):
         """
         :param string name:
         :param target:
-        :type target: 
+        :type target:
         :param string target_name:
         :param float dt_sample:
         :param float pstc:
@@ -164,6 +164,16 @@ class AggregatorProbe(object):
         # forward start time to probes
         for probe in self.probes.keys():
             self.probes[probe]["connection"].send(str(sim_time))
+
+        # wait until all probes are done
+        for probe in self.probes.keys():
+            probe_conn = self.probes[probe]["connection"]
+            probe_conn.recv()
+            probe_conn.send("ACK")
+
+        # tell admin that probes are done receiving data
+        ticker_conn.send("FIN")
+        ticker_conn.recv()
 
         # wait for data from probes
         for probe in self.probes.keys():

@@ -607,9 +607,7 @@ class Network(object):
         for (p, conn) in self.processes:
             conn.send("ACK")
 
-        print("All procs have finished, got all ACKs")
         for probe in self.probes.keys():
-            print("Waiting on probe " + probe)
             ticker_conn = self.probes[probe]["connection"]
             self.probes[probe]["data"] = ticker_conn.recv_pyobj()
             ticker_conn.send("ACK")
