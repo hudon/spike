@@ -39,7 +39,7 @@ class Network(object):
         self.nodes = {}
         self.workers = []
         self.probes = {}
-        self.distributor = distribution.DistributionManager()
+        self.distributor = distribution.DistributionManager(True)
 
         self.setup = False
 
