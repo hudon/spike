@@ -15,7 +15,7 @@ from .helpers import map_gemv
 import zmq
 import zmq_utils
 
-class EnsembleProcess:
+class EnsembleProcess(object):
     """ A NEFProcess is a wrapper for an ensemble or sub-ensemble. It is
     responsible for infrastructure logic such as setting up messaging,
     printing, process clean-up, etc. It also acts as an Adapter for most of

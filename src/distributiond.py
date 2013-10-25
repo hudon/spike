@@ -6,7 +6,7 @@ from nef_theano import ensemble, input, origin, probe
 import functions
 
 # Distributor listens on this port for commands
-LISTENER_ENDPOINT = "tcp://*:10010"
+LISTENER_ENDPOINT = "tcp://*:9000"
 
 class DistributionDaemon:
     def __init__(self):
@@ -14,10 +14,10 @@ class DistributionDaemon:
         self.listener_socket = None
         self.processes = {}
 
-    def spawn_worker(self, node):
+    def spawn_worker(self, node, socket_def):
         # No arguments. just call run()
         print "Starting worker for node %s" % node.name
-        process = Process(target=node.run, name=node.name)
+        process = Process(target=node.run, args=(socket_def,), name=node.name)
         self.processes[node.name] = process
         process.start()
         print "Worker %s: PID %s" % (node.name, process.pid)
@@ -28,7 +28,7 @@ class DistributionDaemon:
 
         while True:
             msg = self.listener_socket.recv_pyobj()
-            print "Received Message: {node}".format(node=node)
+            print "Received Message: {msg}".format(msg=msg)
 
             if isinstance(msg, tuple):
                 action, name = msg
@@ -36,8 +36,9 @@ class DistributionDaemon:
                     process = self.processes[name]
                     process.join()
             else:
-                node = msg
-                self.spawn_worker(node)
+                node = msg["node"]
+                socket_def = msg["socket"]
+                self.spawn_worker(node, socket_def)
                 self.listener_socket.send("ACK")
 
 def main():
