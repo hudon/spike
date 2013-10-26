@@ -49,6 +49,7 @@ class Worker:
             socket = self.zmq_context.socket(zmq.REQ)
             socket.connect(self.daemon_host)
             socket.send_pyobj(('FIN', self.node.name))
+            socket.recv() # wait for an ACK from the daemon
             socket.close()
         else:
             self.process.join()

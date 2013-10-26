@@ -16,11 +16,11 @@ class DistributionDaemon:
 
     def spawn_worker(self, node, socket_def):
         # No arguments. just call run()
-        print "Starting worker for node %s" % node.name
+        print "DEBUG: Starting worker for node %s" % node.name
         process = Process(target=node.run, args=(socket_def,), name=node.name)
         self.processes[node.name] = process
         process.start()
-        print "Worker %s: PID %s" % (node.name, process.pid)
+        print "DEBUG: Worker %s: PID %s" % (node.name, process.pid)
 
     def listen(self, endpoint):
         self.listener_socket = self.zmq_context.socket(zmq.REP)
@@ -28,18 +28,20 @@ class DistributionDaemon:
 
         while True:
             msg = self.listener_socket.recv_pyobj()
-            print "Received Message: {msg}".format(msg=msg)
+            print "DEBUG: Received Message: {msg}".format(msg=msg)
 
             if isinstance(msg, tuple):
                 action, name = msg
-                if action is FIN:
+                if action == 'FIN':
+                    print "DEBUG: Terminating process:", name
                     process = self.processes[name]
                     process.join()
             else:
                 node = msg["node"]
                 socket_def = msg["socket"]
                 self.spawn_worker(node, socket_def)
-                self.listener_socket.send("ACK")
+
+            self.listener_socket.send("ACK")
 
 def main():
     DistributionDaemon().listen(LISTENER_ENDPOINT)
