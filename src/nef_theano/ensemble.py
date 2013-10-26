@@ -33,8 +33,8 @@ class EnsembleProcess(object):
         self.dimensions = self.ensemble.dimensions
         self.array_size = self.ensemble.array_size
         self.neurons_num = self.ensemble.neurons_num
-        self.add_origin = self.ensemble.add_origin
-        self.update = self.ensemble.update
+        #self.add_origin = self.ensemble.add_origin
+        #self.update = self.ensemble.update
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
@@ -42,6 +42,12 @@ class EnsembleProcess(object):
 
         self.unique_socket_names = {}
         self.input_sockets = []
+
+    def add_origin(self, name, func, **kwargs):
+        self.ensemble.add_origin(name, func, **kwargs)
+
+    def update(self):
+        return self.ensemble.update()
 
     def bind_sockets(self, admin_socket_def):
         # create a context for this ensemble process if do not have one already
