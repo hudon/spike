@@ -1,5 +1,6 @@
 import zmq
 import zmq_utils
+import marshal
 
 from multiprocessing import Process
 
@@ -33,6 +34,12 @@ class Worker:
         self.admin_socket = self.admin_socket_def.create_socket(self.zmq_context)
 
         if self.is_distributed:
+            # marshal all origin functions
+            if hasattr(self.node, 'origin'):
+                for o in self.node.origin.values():
+                    if o.func is not None:
+                        o.func = marshal.dumps(o.func.func_code)
+
             socket = self.zmq_context.socket(zmq.REQ)
             socket.connect(self.daemon_host)
             socket.send_pyobj({
