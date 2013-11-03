@@ -16,7 +16,7 @@ from . import simplenode
 from . import subnetwork
 
 class Network(object):
-    def __init__(self, name, seed=None, fixed_seed=None, dt=.001):
+    def __init__(self, name, seed=None, fixed_seed=None, dt=.001, is_distributed=False, hosts_file=None):
         """Wraps an NEF network with a set of helper functions
         for simplifying the creation of NEF models.
 
@@ -39,7 +39,10 @@ class Network(object):
         self.nodes = {}
         self.workers = []
         self.probes = {}
-        self.distributor = distribution.DistributionManager(True)
+        self.distributor = distribution.DistributionManager(
+            is_distributed=is_distributed, 
+            hosts_file=hosts_file
+        )
 
         self.setup = False
 
