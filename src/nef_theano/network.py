@@ -506,15 +506,13 @@ class Network(object):
 
         # waiting for a FIN from each ensemble and sending an ACK for it to finish
         for (p, conn) in self.processes:
-            if isinstance(p, ensemble.EnsembleProcess):
-                print "Network run function.  Before recv.",os.getpid()," ",self.name
-                conn.recv()
-                print "Network run function.  After recv.",os.getpid()," ",self.name
+            print "Network run function.  Before recv.",os.getpid()," ",self.name
+            conn.recv()
+            print "Network run function.  After recv.",os.getpid()," ",self.name
         for (p, conn) in self.processes:
-            if isinstance(p, ensemble.EnsembleProcess):
-                print "Network run function sending ACK.  Before send.",os.getpid()," ",self.name
-                conn.send("ACK")
-                print "Network run function sending ACK.  After send.",os.getpid()," ",self.name
+            print "Network run function sending ACK.  Before send.",os.getpid()," ",self.name
+            conn.send("ACK")
+            print "Network run function sending ACK.  After send.",os.getpid()," ",self.name
 
         for probe in self.probes.keys():
             ticker_conn = self.probes[probe]["connection"]
