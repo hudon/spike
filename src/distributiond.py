@@ -3,7 +3,8 @@ from multiprocessing import Process
 # from threading import Thread
 
 from nef_theano import ensemble, input, origin, probe
-import marshal, types
+import tempfile
+import importlib
 
 # Distributor listens on this port for commands
 LISTENER_ENDPOINT = "tcp://*:9000"
@@ -40,13 +41,13 @@ class DistributionDaemon:
                 node = msg["node"]
                 socket_def = msg["socket"]
 
-                # demarshal origin functions
-                if hasattr(node, 'origin'):
-                    for o in node.origin.values():
-                        if o.func is not None:
-                            code = marshal.loads(o.func)
-                            o.func = types.FunctionType(code, globals(), 'func')
-
+                #HACK(hudon): now we write the functions file and import it so that
+                # arbitrary functions may be received
+                func_content = msg["functions"]
+                with tempfile.NamedTemporaryFile() as tmp:
+                    tmp.write(func_content)
+                    tmp.flush()
+                    importlib.import_module(tmp.name)
                 self.spawn_worker(node, socket_def)
 
             self.listener_socket.send("ACK")

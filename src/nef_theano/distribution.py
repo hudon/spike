@@ -1,6 +1,6 @@
 import zmq
 import zmq_utils
-import marshal
+import os
 
 from multiprocessing import Process
 
@@ -34,18 +34,19 @@ class Worker:
         self.admin_socket = self.admin_socket_def.create_socket(self.zmq_context)
 
         if self.is_distributed:
-            # marshal all origin functions
-            if hasattr(self.node, 'origin'):
-                for o in self.node.origin.values():
-                    if o.func is not None:
-                        o.func = marshal.dumps(o.func.func_code)
-
             socket = self.zmq_context.socket(zmq.REQ)
             socket.connect(self.daemon_host)
-            socket.send_pyobj({
-                "node": self.node,
-                "socket": self.node_socket_def
-            })
+
+            #HACK(hudon): send functions bound at runtime by putting them in a
+            # functions.py file and sending that
+            nef_dir = os.path.dirname(__file__)
+            funcs_file = os.path.join(nef_dir, "../functions.py")
+            with open(funcs_file, "rb") as funcs:
+                socket.send_pyobj({
+                    "node": self.node,
+                    "socket": self.node_socket_def,
+                    "functions": funcs.read()
+                })
             socket.recv() # wait for an ACK from the daemon
             socket.close()
         else:

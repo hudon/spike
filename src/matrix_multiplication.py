@@ -59,10 +59,8 @@ net.connect('B','C',transform=transformB)
 net.make_array('D',50,D1*D3,radius=radius)
 
 abc = 5
-def product(x):
-    return x[0]*x[1] * abc
 # the mapping for this transformation is much easier, since we want to
 # combine D2 pairs of elements (we sum D2 products together)
-net.connect('C','D',index_post=[i/D2 for i in range(D1*D2*D3)],func=product)
+net.connect('C','D',index_post=[i/D2 for i in range(D1*D2*D3)],func=functions.product)
 
 net.run(1) # run for 1 second
