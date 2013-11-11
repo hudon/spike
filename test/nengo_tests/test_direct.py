@@ -24,8 +24,7 @@ net.connect('in', 'A')
 net.connect('A', 'B')
 net.connect('B', 'C')
 net.connect('B', 'E')
-def prod(x): return x[0] * x[1]
-net.connect('E', 'D', func=prod)
+net.connect('E', 'D', func=functions.product)
 
 timesteps = 1000
 dt_step = 0.0001
