@@ -70,6 +70,9 @@ class EnsembleProcess(Process):
         """ This process tick is responsible for IPC, keeping the Ensemble
         unaware of the details of messaging/sockets.
         """
+        if self.name == 'B':
+            for x in range(1, 999999):
+                pass
 
         # poll for all inputs, do not continue unless all inputs are available
         is_waiting_for_input = True
@@ -81,7 +84,10 @@ class EnsembleProcess(Process):
             print "Num responses: ",len(responses)," ",os.getpid()," ",self.name
             for i, socket in enumerate(self.input_sockets):
                 socket_inst = socket.get_instance()
-                if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
+                if socket_inst not in responses:
+                    is_waiting_for_input = True
+                if socket_inst in responses and responses[socket_inst] != zmq.POLLIN:
+                    print "it was not pollin"
                     is_waiting_for_input = True
             if (ggg > 3000):
                 print "Over 3000 times, hang forever.",os.getpid()," ",self.name
@@ -99,7 +105,7 @@ class EnsembleProcess(Process):
         for i, socket in enumerate(self.input_sockets):
             print "EnsembleProcess tick function getting input.  -----",self.n,"----- Before recv_pyobj.",self.name
             val = socket.get_instance().recv_pyobj()
-            print "EnsembleProcess tick function getting input.  -----",self.n,"----- After recv_pyobj.",self.name
+            print "EnsembleProcess tick function getting input (",val,").  -----",self.n,"----- After recv_pyobj.",self.name
             inputs[socket.name] = val
 
         self.n = self.n + 1

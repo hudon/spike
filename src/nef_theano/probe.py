@@ -61,7 +61,7 @@ class Probe(object):
         # Wait to receive the origin output from the ensemble
         print "Probe tick function get sim_time Before recv_pyobj.",os.getpid()," ",self.name
         val = self.input_socket.get_instance().recv_pyobj()
-        print "Probe tick function get sim_time After recv_pyobj.",os.getpid()," ",self.name
+        print "Probe tick function get sim_time After recv_pyobj. Got (",val,")",os.getpid()," ",self.name
         self.target.set_value(val)
 
         # Filter and store the received output value
