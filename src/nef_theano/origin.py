@@ -65,6 +65,6 @@ class Origin(object):
         for socket in self.output_sockets:
             print "Origin tick function.  Before send_pyobj.",os.getpid()
             aaa = self.decoded_output.get_value()
-            print "send_pyobj sending :",aaa
+            print "send_pyobj sending :",aaa,os.getpid()
             socket.get_instance().send_pyobj(aaa)
             print "Origin tick function.  After send_pyobj.",os.getpid()

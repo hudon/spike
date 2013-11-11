@@ -21,7 +21,7 @@ def square(x):
 net.connect('in', 'A')
 net.connect('A', 'B', func=square, pstc=0.1)
 
-timesteps = 500
+timesteps = 1
 dt_step = 0.01
 t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.03

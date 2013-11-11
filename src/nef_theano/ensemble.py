@@ -78,6 +78,7 @@ class EnsembleProcess(Process):
             ggg = ggg + 1
             is_waiting_for_input = False
             responses = dict(self.poller.poll(1))
+            print "Num responses: ",len(responses)," ",os.getpid()," ",self.name
             for i, socket in enumerate(self.input_sockets):
                 socket_inst = socket.get_instance()
                 if socket_inst not in responses or responses[socket_inst] != zmq.POLLIN:
@@ -96,9 +97,9 @@ class EnsembleProcess(Process):
 
         inputs = {}
         for i, socket in enumerate(self.input_sockets):
-            print "EnsembleProcess tick function.  -----",self.n,"----- Before recv_pyobj.",self.name
+            print "EnsembleProcess tick function getting input.  -----",self.n,"----- Before recv_pyobj.",self.name
             val = socket.get_instance().recv_pyobj()
-            print "EnsembleProcess tick function.  -----",self.n,"----- After recv_pyobj.",self.name
+            print "EnsembleProcess tick function getting input.  -----",self.n,"----- After recv_pyobj.",self.name
             inputs[socket.name] = val
 
         self.n = self.n + 1
