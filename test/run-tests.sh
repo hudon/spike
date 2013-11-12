@@ -74,7 +74,38 @@ compareOutput(){
   fi
 }
 
+killtree() {
+    local _pid=$1
+    local _sig=${2:-TERM}
+    kill -stop ${_pid} 
+    for _child in $(ps -o pid --no-headers --ppid ${_pid}); do
+        killtree ${_child} ${_sig}
+    done
+    kill -${_sig} ${_pid}
+}
+
+function handle_sigint()
+{
+    #  Kill sub processes (the daemon) on ctrl-c
+    for proc in `jobs -p`
+    do
+        killtree $proc
+    done
+    exit 0
+}
+trap handle_sigint SIGINT
+
+
+PROGRAM="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}/distributiond.py"
+$PROGRAM > /dev/null &
+PID=$!
+
+echo "Started daemon with pid "${PID}"."
+
 for test_script in "${TEST_SCRIPTS[@]}" ;
 do
   compareOutput $test_script ;
 done
+
+kill ${PID}
+echo "Killed daemon with pid "${PID}"."
