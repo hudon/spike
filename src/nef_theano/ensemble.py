@@ -330,7 +330,7 @@ class Ensemble:
         :param float pstc:
         :param learned_termination_class:
         """
-        raise Exception("ERRPR", "Learned connections are not usable yet.")
+        raise Exception("ERROR", "Learned connections are not usable yet.")
 
         #TODO: is there ever a case we wouldn't want this?
         assert error.dimensions == self.dimensions * self.array_size

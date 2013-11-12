@@ -21,13 +21,13 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_noise.py"
   "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
   "${NENGO_TESTS_DIR}/test_eval_points.py"
-  "${NENGO_TESTS_DIR}/test_simplenode.py"
   "${NENGO_TESTS_DIR}/test_array.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
   "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
   "${NENGO_TESTS_DIR}/test_direct.py"
 );
+# "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
 
 compareOutput(){
   ACTUAL_OUT_CMD="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${1}\

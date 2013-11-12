@@ -10,6 +10,8 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
+import functions
+
 build_time_start = time.time()
 
 net = nef.Network('Direct Mode Test', seed=47)

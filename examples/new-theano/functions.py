@@ -7,6 +7,11 @@ def square(x):
     return [-x[0]*x[0], -x[0], x[0]]
 
 ## basal_ganglia
+# connection weights from (Gurney, Prescott, & Redgrave, 2001)
+mm=1; mp=1; me=1; mg=1
+ws=1; wt=1; wm=1; wg=1; wp=0.9; we=0.3
+e=0.2; ep=-0.25; ee=-0.2; eg=-0.2
+le=0.2; lg=0.2
 # connect the striatum to the GPi and GPe (inhibitory)
 def func_str(x):
     if x[0] < e: return 0
