@@ -1,4 +1,4 @@
-"""This is a file to test the network array function, both with make_array, 
+"""This is a file to test the network array function, both with make_array,
 and by using the array_size parameter in the network.make command.
 
 """

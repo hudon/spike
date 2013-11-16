@@ -24,6 +24,8 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
+import functions
+
 # create the list of evaluation points
 eval_points1 = np.arange(-1, 0, .5)
 eval_points2 = np.array([[1,1],[-1,1],[-1,-1],[1,-1]]).T
@@ -46,24 +48,20 @@ net.make('C', neurons=100, dimensions=1)
 net.make('D', neurons=100, dimensions=1)
 net.make('E', neurons=100, dimensions=1)
 
-# function for testing evaluation points
-def pow(x):
-    return [xval**2 for xval in x]
-
 # create origins with eval_points
 # for test 1
-net.nodes['A1'].add_origin(name='pow', dt=0.01, func=pow, eval_points=eval_points1)
+net.nodes['A1'].add_origin(name='pow', dt=0.01, func=functions.pow, eval_points=eval_points1)
 # for test 3
-net.nodes['A3'].add_origin(name='pow', dt=0.01, func=pow, eval_points=eval_points1)
+net.nodes['A3'].add_origin(name='pow', dt=0.01, func=functions.pow, eval_points=eval_points1)
 
 net.connect('in', 'A1')
 net.connect('in', 'A2')
 net.connect('in', 'A3')
 net.connect('in', 'A4')
 net.connect('A1:pow', 'B')  # for test 1
-net.connect('A2', 'C', func=pow)  # for test 2
+net.connect('A2', 'C', func=functions.pow)  # for test 2
 net.connect('A3:pow', 'D')  # for test 3
-net.connect('A4', 'E', func=pow)  # for test 4
+net.connect('A4', 'E', func=functions.pow)  # for test 4
 
 timesteps = 500
 dt_step = 0.01

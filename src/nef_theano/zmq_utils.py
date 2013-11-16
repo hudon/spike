@@ -1,11 +1,5 @@
 import zmq
 
-# Straight-up IPC connection between processes (Does NOT work on Windows)
-TICKER_SOCKET_LOCAL_NAME = "ipc:///tmp/spike.tick_timer_connection"
-
-# TCP Connection (For network communication)
-TICKER_SOCKET_GLOBAL_NAME = "tcp://*:10000"
-
 class SocketDefinition(object):
     def __init__(self, endpoint, socket_type, is_server = False):
         self.endpoint = endpoint
@@ -21,25 +15,37 @@ class SocketDefinition(object):
 
         return socket
 
-def create_socket_defs_reqrep(src, dest):
-    socket_name = "ipc:///tmp/spike.node_connection.{src_str}-to-{dest_str}".format(
-        src_str=src,
-        dest_str=dest)
+def create_ipc_socket_defs_reqrep(src_name, dest_name):
+    return _create_ipc_socket_defs(src_name, dest_name, zmq.REQ, zmq.REP)
 
-    origin_socket_type = zmq.REQ
-    destination_socket_type = zmq.REP
+def create_ipc_socket_defs_pushpull(src_name, dest_name):
+    return _create_ipc_socket_defs(src_name, dest_name, zmq.PUSH, zmq.PULL)
 
-    return SocketDefinition(socket_name, origin_socket_type, is_server=True), SocketDefinition(socket_name, destination_socket_type, is_server=False)
+def _create_ipc_socket_defs(src_name, dest_name, src_socket_type, dst_socket_type):
+    src_socket_name = dest_socket_name = \
+        "ipc:///tmp/spike.node_connection.{src_str}-to-{dest_str}".format(
+            src_str=src_name,
+            dest_str=dest_name)
 
-def create_socket_defs_pushpull(src, dest):
-    socket_name = "ipc:///tmp/spike.node_connection.{src_str}-to-{dest_str}".format(
-        src_str=src,
-        dest_str=dest)
+    return SocketDefinition(src_socket_name, src_socket_type, is_server=False),\
+        SocketDefinition(dest_socket_name, dst_socket_type, is_server=True)
 
-    origin_socket_type = zmq.PUSH
-    destination_socket_type = zmq.PULL
+def create_tcp_socket_defs_reqrep(dst_host, port):
+    return _create_tcp_socket_defs(dst_host, port, zmq.REQ, zmq.REP)
 
-    return SocketDefinition(socket_name, origin_socket_type, is_server=True), SocketDefinition(socket_name, destination_socket_type, is_server=False)
+def create_tcp_socket_defs_pushpull(dst_host, port):
+    return _create_tcp_socket_defs(dst_host, port, zmq.PUSH, zmq.PULL)
+
+def _create_tcp_socket_defs(dst_host, port, src_socket_type, dst_socket_type):
+    """ Defines two sockets given a dst host name and a port
+    """
+    dst_addr = "tcp://%s:%s" % (dst_host, port)
+    dst_addr_at_dst = "tcp://*:%s" % port
+
+    src = SocketDefinition(dst_addr, src_socket_type, is_server=False)
+    dst = SocketDefinition(dst_addr_at_dst, dst_socket_type, is_server=True)
+    return src, dst
+
 
 class Socket(object):
     def __init__(self, definition, name):

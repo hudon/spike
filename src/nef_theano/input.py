@@ -37,7 +37,7 @@ class Input(object):
         self.zmq_context = None
 
         # if value parameter is a python function
-        if callable(value): 
+        if callable(value):
             self.origin['X'] = origin.Origin(func=value)
         # if value is dict of time:value pairs
         elif isinstance(value, dict):
@@ -46,7 +46,7 @@ class Input(object):
             if isinstance(value[self.change_time], list):
                 initial_value = np.zeros(len(value[self.change_time]))
             else: initial_value = np.zeros(1)
-            self.origin['X'] = origin.Origin(func=None, 
+            self.origin['X'] = origin.Origin(func=None,
                 initial_value=initial_value)
             self.values = value
         else:
@@ -54,7 +54,7 @@ class Input(object):
 
     def reset(self):
         """Resets the function output state values.
-        
+
         """
         self.zeroed = False
 
@@ -71,12 +71,12 @@ class Input(object):
             self.origin['X'].decoded_output.set_value(
                 np.float32(np.zeros(self.origin['X'].dimensions)))
             self.zeroed = True
-    
+
         # change value
         if self.change_time is not None and self.t > self.change_time:
             self.origin['X'].decoded_output.set_value(
                 np.float32(np.array([self.values[self.change_time]])))
-            index = sorted(self.values.keys()).index(self.change_time) 
+            index = sorted(self.values.keys()).index(self.change_time)
             if index < len(self.values) - 1:
                 self.change_time = sorted(self.values.keys())[index+1]
             else: self.change_time = None
@@ -86,20 +86,20 @@ class Input(object):
             value = self.origin['X'].func(self.t)
             # if value is a scalar output, make it a list
             if isinstance(value, Number):
-                value = [value] 
+                value = [value]
 
             # cast as float32 for consistency / speed,
             # but _after_ it's been made a list
-            self.origin['X'].decoded_output.set_value(np.float32(value)) 
+            self.origin['X'].decoded_output.set_value(np.float32(value))
 
         for o in self.origin.values():
             o.tick()
 
-    def run(self, ticker_socket_def):
+    def run(self, admin_socket_def):
         self.bind_sockets()
-        ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
+        admin_conn = admin_socket_def.create_socket(self.zmq_context)
 
-        sim_time = float(ticker_conn.recv())
+        sim_time = float(admin_conn.recv())
 
         for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
@@ -107,8 +107,8 @@ class Input(object):
 
         self.run_time += sim_time
 
-        ticker_conn.send("FIN") # inform main proc that input finished
-        ticker_conn.recv() # wait for an ACK from main proc before exiting
+        admin_conn.send("FIN") # inform main proc that input finished
+        admin_conn.recv() # wait for an ACK from main proc before exiting
 
     def bind_sockets(self):
         # create a context for this input process if do not have one already

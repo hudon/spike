@@ -12,12 +12,10 @@ from . import filter
 from .hPES_termination import hPESTermination
 from .helpers import map_gemv
 
-from multiprocessing import Process
-
 import zmq
 import zmq_utils
 
-class EnsembleProcess(Process):
+class EnsembleProcess(object):
     """ A NEFProcess is a wrapper for an ensemble or sub-ensemble. It is
     responsible for infrastructure logic such as setting up messaging,
     printing, process clean-up, etc. It also acts as an Adapter for most of
@@ -25,8 +23,7 @@ class EnsembleProcess(Process):
 
     :param str name: name of the process
     """
-    def __init__(self, name, ticker_socket_def, *args, **kwargs):
-        super(EnsembleProcess, self).__init__(target=self.run, name=name)
+    def __init__(self, name, *args, **kwargs):
         self.name = name
 
         ## Adapter for Ensemble
@@ -36,8 +33,6 @@ class EnsembleProcess(Process):
         self.dimensions = self.ensemble.dimensions
         self.array_size = self.ensemble.array_size
         self.neurons_num = self.ensemble.neurons_num
-        self.add_origin = self.ensemble.add_origin
-        self.update = self.ensemble.update
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
@@ -45,9 +40,14 @@ class EnsembleProcess(Process):
 
         self.unique_socket_names = {}
         self.input_sockets = []
-        self.ticker_socket_def = ticker_socket_def
 
-    def bind_sockets(self):
+    def add_origin(self, name, func, **kwargs):
+        self.ensemble.add_origin(name, func, **kwargs)
+
+    def update(self):
+        return self.ensemble.update()
+
+    def bind_sockets(self, admin_socket_def):
         # create a context for this ensemble process if do not have one already
         if self.zmq_context is None:
             self.zmq_context = zmq.Context()
@@ -60,7 +60,7 @@ class EnsembleProcess(Process):
         for o in self.ensemble.origin.values():
             o.bind_sockets(self.zmq_context)
 
-        self.ticker_conn = self.ticker_socket_def.create_socket(self.zmq_context)
+        self.admin_conn = admin_socket_def.create_socket(self.zmq_context)
 
     def tick(self):
         """ This process tick is responsible for IPC, keeping the Ensemble
@@ -84,17 +84,17 @@ class EnsembleProcess(Process):
 
         self.ensemble.tick(inputs)
 
-    def run(self):
-        self.bind_sockets()
+    def run(self, admin_socket_def):
+        self.bind_sockets(admin_socket_def)
         self.ensemble.make_tick()
 
-        time = float(self.ticker_conn.recv())
+        time = float(self.admin_conn.recv())
 
         for i in range(int(time / self.ensemble.dt)):
             self.tick()
 
-        self.ticker_conn.send("FIN") # inform main proc that ens finished
-        self.ticker_conn.recv() # wait for an ACK from main proc before exiting
+        self.admin_conn.send("FIN") # inform main proc that ens finished
+        self.admin_conn.recv() # wait for an ACK from main proc before exiting
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't
@@ -148,8 +148,8 @@ class Ensemble:
         :param int array_size: number of sub-populations for network arrays
         :param list eval_points:
             specific set of points to optimize decoders over by default
-        :param float decoder_noise: amount of noise to assume when computing 
-            decoder    
+        :param float decoder_noise: amount of noise to assume when computing
+            decoder
         :param string noise_type:
             the type of noise added to the input current.
             Possible options = {'uniform', 'gaussian'}.
@@ -186,12 +186,12 @@ class Ensemble:
 
         # make sure intercept is the right shape
         if isinstance(intercept, (int,float)): intercept = [intercept, 1]
-        elif len(intercept) == 1: intercept.append(1) 
+        elif len(intercept) == 1: intercept.append(1)
 
-        self.cache_key = cache.generate_ensemble_key(neurons=neurons, 
-            dimensions=dimensions, tau_rc=tau_rc, tau_ref=tau_ref, 
-            max_rate=max_rate, intercept=intercept, radius=radius, 
-            encoders=encoders, decoder_noise=decoder_noise, 
+        self.cache_key = cache.generate_ensemble_key(neurons=neurons,
+            dimensions=dimensions, tau_rc=tau_rc, tau_ref=tau_ref,
+            max_rate=max_rate, intercept=intercept, radius=radius,
+            encoders=encoders, decoder_noise=decoder_noise,
             eval_points=eval_points, noise=noise, seed=seed, dt=dt)
 
         # make dictionary for origins
@@ -200,7 +200,7 @@ class Ensemble:
         self.decoded_input = {}
 
         # if we're creating a spiking ensemble
-        if self.mode == 'spiking': 
+        if self.mode == 'spiking':
 
             # TODO: handle different neuron types,
             self.neurons = neuron.types[neuron_type](
@@ -212,7 +212,7 @@ class Ensemble:
             self.max_rate = max_rate
             max_rates = self.srng.uniform(
                 size=(self.array_size, self.neurons_num),
-                low=max_rate[0], high=max_rate[1])  
+                low=max_rate[0], high=max_rate[1])
             threshold = self.srng.uniform(
                 size=(self.array_size, self.neurons_num),
                 low=intercept[0], high=intercept[1])
@@ -226,7 +226,7 @@ class Ensemble:
             self.encoders = self.make_encoders(encoders=encoders)
             # combine encoders and gain for simplification
             self.encoders = (self.encoders.T * self.alpha.T).T
-            self.shared_encoders = theano.shared(self.encoders, 
+            self.shared_encoders = theano.shared(self.encoders,
                 name='ensemble.shared_encoders')
 
             # set up a dictionary for encoded_input connections
@@ -235,15 +235,15 @@ class Ensemble:
             self.learned_terminations = []
 
             # make default origin
-            self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points) 
+            self.add_origin('X', func=None, dt=dt, eval_points=self.eval_points)
 
         elif self.mode == 'direct':
             # make default origin
-            self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size) 
+            self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size)
             # reset neurons_num to 0
             self.neurons_num = 0
 
-    def add_termination(self, name, pstc, decoded_input=None, 
+    def add_termination(self, name, pstc, decoded_input=None,
         encoded_input=None, input_socket=None, transform=None, case=None):
         """Accounts for a new termination that takes the given input
         (a theano object) and filters it with the given pstc.
@@ -268,7 +268,7 @@ class Ensemble:
             the pre population multiplied by a connection weight matrix
 
         :param transform:
-            the transform that needs to be applied (dot product) to the 
+            the transform that needs to be applied (dot product) to the
             decoded output of the pre population
 
         :param case:
@@ -278,7 +278,7 @@ class Ensemble:
         # make sure one and only one of
         # (decoded_input, encoded_input) is specified
         if decoded_input is not None: assert (encoded_input is None)
-        elif encoded_input is not None: assert (decoded_input is None) 
+        elif encoded_input is not None: assert (decoded_input is None)
         else: assert False
 
         if decoded_input is not None and self.mode is 'direct':
@@ -313,7 +313,7 @@ class Ensemble:
                 shape=(self.array_size, self.neurons_num),
                 pre_output=pre_output)
 
-    def add_learned_termination(self, name, pre, error, pstc, 
+    def add_learned_termination(self, name, pre, error, pstc,
                                 learned_termination_class=hPESTermination,
                                 **kwargs):
         """Adds a learned termination to the ensemble.
@@ -328,7 +328,7 @@ class Ensemble:
         :param float pstc:
         :param learned_termination_class:
         """
-        raise Exception("ERRPR", "Learned connections are not usable yet.")
+        raise Exception("ERROR", "Learned connections are not usable yet.")
 
         #TODO: is there ever a case we wouldn't want this?
         assert error.dimensions == self.dimensions * self.array_size
@@ -344,23 +344,23 @@ class Ensemble:
         else:
             # make sure it's an np.array
             #TODO: error checking to make sure it's the right size
-            kwargs['weight_matrix'] = np.array(kwargs['weight_matrix']) 
+            kwargs['weight_matrix'] = np.array(kwargs['weight_matrix'])
 
         learned_term = learned_termination_class(
             pre=pre, post=self, error=error, **kwargs)
 
         learn_projections = [TT.dot(
-            pre.neurons.output[learned_term.pre_index(i)],  
-            learned_term.weight_matrix[i % self.array_size]) 
+            pre.neurons.output[learned_term.pre_index(i)],
+            learned_term.weight_matrix[i % self.array_size])
             for i in range(self.array_size * pre.array_size)]
 
-        # now want to sum all the output to each of the post ensembles 
+        # now want to sum all the output to each of the post ensembles
         # going to reshape and sum along the 0 axis
-        learn_output = TT.sum( 
-            TT.reshape(learn_projections, 
+        learn_output = TT.sum(
+            TT.reshape(learn_projections,
             (pre.array_size, self.array_size, self.neurons_num)), axis=0)
         # reshape to make it (array_size x neurons_num)
-        learn_output = TT.reshape(learn_output, 
+        learn_output = TT.reshape(learn_output,
             (self.array_size, self.neurons_num))
 
         # the input_current from this connection during simulation
@@ -386,7 +386,7 @@ class Ensemble:
             self.origin[name] = ensemble_origin.EnsembleOrigin(
                 ensemble=self, func=func, **kwargs)
 
-        # if we're in direct mode then this population is just directly 
+        # if we're in direct mode then this population is just directly
         # performing the specified function, use a basic origin
         elif self.mode == 'direct':
             if func is not None:
@@ -397,7 +397,7 @@ class Ensemble:
                     kwargs['initial_value'] = init.flatten()
 
             if kwargs.has_key('dt'): del kwargs['dt']
-            self.origin[name] = origin.Origin(func=func, **kwargs) 
+            self.origin[name] = origin.Origin(func=func, **kwargs)
 
     def get_unique_name(self, name, dic):
         """A helper function that runs through a dictionary
@@ -409,7 +409,7 @@ class Ensemble:
         :returns string: a unique key name for dic
         """
         i = 0
-        while dic.has_key(name + '_' + str(i)): 
+        while dic.has_key(name + '_' + str(i)):
             i += 1
 
         return name + '_' + str(i)
@@ -417,7 +417,7 @@ class Ensemble:
     def make_encoders(self, encoders=None):
         """Generates a set of encoders.
 
-        :param int neurons: number of neurons 
+        :param int neurons: number of neurons
         :param int dimensions: number of dimensions
         :param theano.tensor.shared_randomstreams snrg:
             theano random number generator function
@@ -439,7 +439,7 @@ class Ensemble:
                                ).T[:self.neurons_num, :self.dimensions]
             encoders = np.tile(encoders, (self.array_size, 1, 1))
 
-        # normalize encoders across represented dimensions 
+        # normalize encoders across represented dimensions
         norm = TT.sum(encoders * encoders, axis=[2], keepdims=True)
         encoders = encoders / TT.sqrt(norm)
 
@@ -461,10 +461,10 @@ class Ensemble:
             X = np.zeros((self.array_size, self.dimensions))
             # updates is an ordered dictionary of theano variables to update
 
-            for di in self.decoded_input.values(): 
+            for di in self.decoded_input.values():
                 # add its values to the total decoded input
                 X += di.value.get_value()
-            
+
             # if we're calculating a function on the decoded input
             for o in self.origin.values():
                 if o.func is not None:
@@ -508,7 +508,7 @@ class Ensemble:
         ### find the total input current to this population of neurons
 
         # set up matrix to store accumulated decoded input
-        X = None 
+        X = None
         # updates is an ordered dictionary of theano variables to update
         updates = OrderedDict()
 
@@ -521,11 +521,11 @@ class Ensemble:
 
             updates.update(di.update(self.dt))
 
-        # if we're in spiking mode, then look at the input current and 
+        # if we're in spiking mode, then look at the input current and
         # calculate new neuron activities for output
         if self.mode == 'spiking':
 
-            # apply respective biases to neurons in the population 
+            # apply respective biases to neurons in the population
             J = TT.as_tensor_variable(np.array(self.bias))
 
             for ei in self.encoded_input.values():
@@ -540,8 +540,8 @@ class Ensemble:
                 J = map_gemv(1.0, self.shared_encoders, X, 1.0, J)
 
             # if noise has been specified for this neuron,
-            if self.noise: 
-                # generate random noise values, one for each input_current element, 
+            if self.noise:
+                # generate random noise values, one for each input_current element,
                 # with standard deviation = sqrt(self.noise=std**2)
                 # When simulating white noise, the noise process must be scaled by
                 # sqrt(dt) instead of dt. Hence, we divide the std by sqrt(dt).
@@ -550,8 +550,8 @@ class Ensemble:
                         size=self.bias.shape, std=np.sqrt(self.noise/self.dt))
                 elif self.noise_type.lower() == 'uniform':
                     J += self.srng.uniform(
-                        size=self.bias.shape, 
-                        low=-self.noise/np.sqrt(self.dt), 
+                        size=self.bias.shape,
+                        low=-self.noise/np.sqrt(self.dt),
                         high=self.noise/np.sqrt(self.dt))
 
             # pass that total into the neuron model to produce
@@ -566,12 +566,12 @@ class Ensemble:
             for o in self.origin.values():
                 updates.update(o.update(self.dt, updates[self.neurons.output]))
 
-        if self.mode == 'direct': 
-            # if we're in direct mode then just directly pass the decoded_input 
+        if self.mode == 'direct':
+            # if we're in direct mode then just directly pass the decoded_input
             # to the origins for decoded_output
-            for o in self.origin.values(): 
+            for o in self.origin.values():
                 if o.func is None:
                     if len(self.decoded_input) > 0:
-                        updates.update(OrderedDict({o.decoded_output: 
+                        updates.update(OrderedDict({o.decoded_output:
                             TT.flatten(X).astype('float32')}))
         return updates

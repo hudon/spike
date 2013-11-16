@@ -6,20 +6,17 @@ import theano
 from theano import tensor as TT
 import numpy as np
 
-from . import ensemble
-from . import simplenode
-from . import probe
-from . import origin
-from . import input
-from . import subnetwork
 from . import connection
-
-from multiprocessing import Process
-import zmq
-from . import zmq_utils
+from . import distribution
+from . import ensemble
+from . import input
+from . import origin
+from . import probe
+from . import simplenode
+from . import subnetwork
 
 class Network(object):
-    def __init__(self, name, seed=None, fixed_seed=None, dt=.001):
+    def __init__(self, name, seed=None, fixed_seed=None, dt=.001, is_distributed=True):
         """Wraps an NEF network with a set of helper functions
         for simplifying the creation of NEF models.
 
@@ -34,16 +31,16 @@ class Network(object):
         """
         self.name = name
         self.dt = dt
-        self.run_time = 0.0    
+        self.run_time = 0.0
         self.seed = seed
         self.fixed_seed = fixed_seed
 
         # the input and spiking ensemble nodes in the network
         self.nodes = {}
-        self.processes = []
+        self.workers = []
         self.probes = {}
+        self.distributor = distribution.DistributionManager(is_distributed)
 
-        self.zmq_context = zmq.Context()
         self.setup = False
 
         self.random = random.Random()
@@ -62,18 +59,12 @@ class Network(object):
 
         """
         self.nodes[node.name] = node
-
-        ticker_socket, node_socket = \
-            zmq_utils.create_socket_defs_reqrep("ticker", node.name)
-        p = Process(target=node.run, args=(node_socket,), name=node.name)
-
-        procPair = (p, ticker_socket.create_socket(self.zmq_context))
-        self.processes.append(procPair)
-
-        return procPair
+        worker = self.distributor.create_worker(node)
+        self.workers.append(worker)
+        return worker
 
     def connect(self, pre, post, transform=None, weight=1,
-                index_pre=None, index_post=None, pstc=0.01, 
+                index_pre=None, index_post=None, pstc=0.01,
                 func=None):
         """Connect two nodes in the network.
 
@@ -83,7 +74,7 @@ class Network(object):
         *pre* and *post* can be strings giving the names of the nodes,
         or they can be the nodes themselves (Inputs and Ensembles are
         supported). They can also be actual Origins or Terminations,
-        or any combination of the above. 
+        or any combination of the above.
 
         If transform is not None, it is used as the transformation matrix
         for the new termination. You can also use *weight*, *index_pre*,
@@ -98,7 +89,7 @@ class Network(object):
         - post.neurons * pre.dimensions:
           Overwrites post encoders, i.e. inhibitory connections
         - post.neurons * pre.neurons:
-          Fully specify the connection weight matrix 
+          Fully specify the connection weight matrix
 
         If *func* is not None, a new Origin will be created on the
         pre-synaptic ensemble that will compute the provided function.
@@ -133,7 +124,7 @@ class Network(object):
             The indexes of the post-synaptic dimensions to use.
             Ignored if *transform* is not None.
             See :func:`connection.compute_transform()`
-        :type index_post: List of integers or a single integer 
+        :type index_post: List of integers or a single integer
         :param function func:
             Function to be computed by this connection.
             If None, computes ``f(x)=x``.
@@ -163,21 +154,21 @@ class Network(object):
 
         # use the pre_name since pre may be an origin
         origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(pre_name, post.name)
+            self.distributor.connect(pre_name, post.name)
 
-        if transform is not None: 
+        if transform is not None:
 
             # there are 3 cases
             # 1) pre = decoded, post = decoded
-            #     - in this case, transform will be 
+            #     - in this case, transform will be
             #                       (post.dimensions x pre.origin.dimensions)
             #     - decoded_input will be (post.array_size x post.dimensions)
             # 2) pre = decoded, post = encoded
-            #     - in this case, transform will be size 
+            #     - in this case, transform will be size
             #         (post.array_size x post.neurons x pre.origin.dimensions)
             #     - encoded_input will be (post.array_size x post.neurons_num)
             # 3) pre = encoded, post = encoded
-            #     - in this case, transform will be (post.array_size x 
+            #     - in this case, transform will be (post.array_size x
             #             post.neurons_num x pre.array_size x pre.neurons_num)
             #     - encoded_input will be (post.array_size x post.neurons_num)
 
@@ -203,18 +194,18 @@ class Network(object):
                 if len(transform.shape) > 3 or \
                        transform.shape[2] == pre.array_size * pre.neurons_num:
 
-                    if transform.shape[2] == pre.array_size * pre.neurons_num: 
+                    if transform.shape[2] == pre.array_size * pre.neurons_num:
                         transform = transform.reshape(
-                                        [post.array_size, post.neurons_num,  
+                                        [post.array_size, post.neurons_num,
                                               pre.array_size, pre.neurons_num])
                     assert transform.shape == \
-                            (post.array_size, post.neurons_num, 
+                            (post.array_size, post.neurons_num,
                              pre.array_size, pre.neurons_num)
 
                     print 'setting pre_output=spikes'
 
                     # get spiking output from pre population
-                    pre_output = pre.neurons.output 
+                    pre_output = pre.neurons.output
 
                     case1 = connection.Case1(
                         (post.array_size, post.neurons_num,
@@ -236,7 +227,7 @@ class Network(object):
                                (post.array_size, post.neurons_num, dim_pre)
 
                     # can't specify a function with either side encoded connection
-                    assert func == None 
+                    assert func == None
 
                     case2 = connection.Case2(
                         (post.array_size, post.neurons_num,
@@ -261,7 +252,7 @@ class Network(object):
             array_size=post.array_size,
             weight=weight,
             index_pre=index_pre,
-            index_post=index_post, 
+            index_post=index_post,
             transform=transform)
 
         # pre output needs to be replaced during execution using IPC
@@ -296,7 +287,7 @@ class Network(object):
             return node.origin[split[1]]
 
     def get_origin(self, name, func=None):
-        """This method takes in a string and returns the decoded_output function 
+        """This method takes in a string and returns the decoded_output function
         of this object. If no origin is specified in name then 'X' is used.
 
         :param string name: the name of the object(and optionally :origin) from
@@ -312,7 +303,7 @@ class Network(object):
             # take default identity decoded output from obj population
             origin_name = 'X'
 
-            if func is not None: 
+            if func is not None:
                 # if this connection should compute a function
 
                 # set name as the function being calculated
@@ -336,7 +327,7 @@ class Network(object):
 
     def learn(self, pre, post, error, pstc=0.01, **kwargs):
         """Add a connection with learning between pre and post,
-        modulated by error. Error can be a Node, or an origin. If no 
+        modulated by error. Error can be a Node, or an origin. If no
         origin is specified in the format node:origin, then 'X' is used.
 
         :param Ensemble pre: the pre-synaptic population
@@ -350,10 +341,10 @@ class Network(object):
         pre = self.get_object(pre)
         post = self.get_object(post)
         error = self.get_origin(error)
-        return post.add_learned_termination(name=pre_name, pre=pre, error=error, 
+        return post.add_learned_termination(name=pre_name, pre=pre, error=error,
             pstc=pstc, **kwargs)
 
-    def make(self, name, *args, **kwargs): 
+    def make(self, name, *args, **kwargs):
         """Create and return an ensemble of neurons.
 
         Note that all ensembles are actually arrays of length 1.
@@ -363,7 +354,7 @@ class Network(object):
             Random number seed to use.
             If this is None and the Network was constructed
             with a seed parameter, a seed will be randomly generated.
-        :returns: the newly created ensemble      
+        :returns: the newly created ensemble
 
         """
         if 'seed' not in kwargs.keys():
@@ -372,21 +363,16 @@ class Network(object):
             else:
                 # if no seed provided, get one randomly from the rng
                 kwargs['seed'] = self.random.randrange(0x7fffffff)
-
-        ticker_socket, node_socket = \
-            zmq_utils.create_socket_defs_reqrep("ticker", name)
         kwargs['dt'] = self.dt
 
         # create ensemble and ensemble process
-        # TODO: currently using separate processes for direct nodes
-        # (Terry wanted them on a single proceses, but need more info for that)
-        ep = ensemble.EnsembleProcess(name, node_socket, *args, **kwargs)
+        enode = ensemble.EnsembleProcess(name, *args, **kwargs)
+        self.nodes[name] = enode
 
-        ticker_conn = ticker_socket.create_socket(self.zmq_context)
-        self.processes.append((ep, ticker_conn,))
-        self.nodes[name] = ep
+        worker = self.distributor.create_worker(enode)
+        self.workers.append(worker)
 
-        return ep
+        return enode
 
     def make_array(self, name, neurons, array_size, dimensions=1, **kwargs):
         """Generate a network array specifically.
@@ -398,20 +384,20 @@ class Network(object):
             name=name, neurons=neurons, dimensions=dimensions,
             array_size=array_size, **kwargs)
 
-    def make_input(self, *args, **kwargs): 
+    def make_input(self, *args, **kwargs):
         """Create an input and add it to the network."""
         kwargs['dt'] = self.dt
-        i = input.Input(*args, **kwargs)
-        self.add(i)
-        return i
+        inode = input.Input(*args, **kwargs)
+        self.add(inode)
+        return inode
 
     def make_subnetwork(self, name):
         """Create a subnetwork.  This has no functional purpose other than
         to help organize the model.  Components within a subnetwork can
         be accessed through a dotted name convention, so an element B inside
-        a subnetwork A can be referred to as A.B.       
+        a subnetwork A can be referred to as A.B.
 
-        :param name: the name of the subnetwork to create        
+        :param name: the name of the subnetwork to create
         """
         return subnetwork.SubNetwork(name, self)
 
@@ -444,42 +430,20 @@ class Network(object):
             # set the filter to zero
             kwargs['pstc'] = 0
 
-        p = probe.Probe(name=name, target=target_output, target_name=target_name,
-            dt_sample=dt_sample, dt=self.dt, net=self, **kwargs)
+        pnode = probe.Probe(name=name, target=target_output,
+            target_name=target_name,
+            dt_sample=dt_sample, dt=self.dt, **kwargs)
+
+        worker = self.add(pnode)
+        self.probes[name] = worker
 
         # connect probe to its target: target sends data to probe using msgs
-        origin_socket, destination_socket = \
-            zmq_utils.create_socket_defs_pushpull(target_name, name)
+        origin_socket, destination_socket = self.distributor.connect(target, name)
 
-        traget_origin = self.get_origin(target)
-        traget_origin.add_output(origin_socket)
-        p.add_input(destination_socket) # to receive target output values
+        self.get_origin(target).add_output(origin_socket)
+        pnode.add_input(destination_socket) # to receive target output values
 
-        proc, ticker_conn = self.add(p)
-        self.probes[name] = { "connection": ticker_conn, "data": [] }
-
-        return p
-
-    # TODO: remove this method if direct ensembles do not need to share processes
-    def make_theano_tick(self):
-        """Generate the theano function for running the network simulation.
-
-        :returns: theano function
-        """
-        raise Exception("ERROR: Global theano tick not supported.")
-        # dictionary for all variables
-        # and the theano description of how to compute them 
-        updates = OrderedDict()
-
-        # for every direct ensemble in the network
-        for node in self.direct_nodes.values():
-            # if there is some variable to update
-            if hasattr(node, 'update'):
-                # add it to the list of variables to update every time step
-                updates.update(node.update())
-
-        # create graph and return optimized update function
-        return theano.function([], [], updates=updates.items())
+        return pnode
 
     def run(self, time):
         """Run the simulation.
@@ -492,36 +456,32 @@ class Network(object):
         :param float dt: the timestep of the update
         """
         if not self.setup:
-            for p in self.processes:
-                proc = p[0]
-                if not proc.is_alive():
-                    proc.start()
-            self.setup = True
+            for worker in self.workers:
+                worker.start()
 
-        for (p, conn) in self.processes:
-            conn.send(str(time))
+        # send workers time so they can execute
+        for worker in self.workers:
+            worker.send(str(time))
 
-        # waiting for a FIN from each ensemble and sending an ACK for it to finish
-        for (p, conn) in self.processes:
-            conn.recv()
-        for (p, conn) in self.processes:
-            conn.send("ACK")
+        # waiting for a FIN from each worker and sending an ACK for it to finish
+        for worker in self.workers:
+            worker.recv()
+        for worker in self.workers:
+            worker.send("ACK")
 
-        for probe in self.probes.keys():
-            ticker_conn = self.probes[probe]["connection"]
-            self.probes[probe]["data"] = ticker_conn.recv_pyobj()
-            ticker_conn.send("ACK")
+        # wait to receive the probe data from the probe process
+        # update the probe node with the received data
+        for worker in self.probes.values():
+            worker.node.data = worker.recv_pyobj()
+            worker.send("ACK")
 
-        for p in self.processes:
-            p[0].join()
+        for worker in self.workers:
+            worker.stop()
 
         self.run_time += time
 
-    def get_probe_data(self, probe_name):
-        return self.probes[probe_name]["data"];
-
     def write_data_to_hdf5(self, filename='data'):
-        """This is a function to call after simulation that writes the 
+        """This is a function to call after simulation that writes the
         data of all probes to filename using the Neo HDF5 IO module.
 
         :param string filename: the name of the file to write out to
@@ -529,8 +489,8 @@ class Network(object):
         import neo
         from neo import hdf5io
 
-        # get list of probes 
-        probe_list = [self.nodes[node] for node in self.nodes 
+        # get list of probes
+        probe_list = [self.nodes[node] for node in self.nodes
                       if node[:5] == 'Probe']
 
         # if no probes then just return
@@ -540,7 +500,7 @@ class Network(object):
         if not filename.endswith('.hd5'): filename += '.hd5'
         iom = hdf5io.NeoHdf5IO(filename=filename)
 
-        #TODO: set up to write multiple trials/segments to same block 
+        #TODO: set up to write multiple trials/segments to same block
         #      for trials run at different points
         # create the all encompassing block structure
         block = neo.Block()
@@ -557,7 +517,7 @@ class Network(object):
             if probe.target_name.endswith('decoded'):
                 segment.analogsignals.append(
                     neo.AnalogSignal(
-                        probe.get_data() * quantities.dimensionless, 
+                        probe.get_data() * quantities.dimensionless,
                         sampling_period=probe.dt_sample * quantities.s,
                         target_name=probe.target_name) )
             # spikes become spike trains
@@ -567,13 +527,13 @@ class Network(object):
                     segment.spiketrains.append(
                         neo.SpikeTrain(
                             [
-                                t * probe.dt_sample 
-                                for t, val in enumerate(neuron[0]) 
+                                t * probe.dt_sample
+                                for t, val in enumerate(neuron[0])
                                 if val > 0
                             ] * quantities.s,
                             t_stop=len(probe.data),
                             target_name=probe.target_name) )
-            else: 
+            else:
                 print 'Do not know how to write %s to NeoHDF5 file'%probe.target_name
                 assert False
 

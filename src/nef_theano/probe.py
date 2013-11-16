@@ -19,11 +19,11 @@ class Probe(object):
     """
     buffer_size = 1000
 
-    def __init__(self, name, target, target_name, dt_sample, dt, net, pstc=0.03):
+    def __init__(self, name, target, target_name, dt_sample, dt, pstc=0.03):
         """
         :param string name:
         :param target:
-        :type target: 
+        :type target:
         :param string target_name:
         :param float dt_sample:
         :param float pstc:
@@ -34,7 +34,6 @@ class Probe(object):
         self.dt_sample = dt_sample
         self.dt = dt
         self.run_time = 0.0
-        self.net = net
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
@@ -78,14 +77,13 @@ class Probe(object):
         self.theano_tick()
 
     def get_data(self):
-        # access the data for this node, which is stored in the network
-        return self.net.get_probe_data(self.name)
+        return self.data
 
-    def run(self, ticker_socket_def):
+    def run(self, admin_socket_def):
         self.bind_sockets()
-        ticker_conn = ticker_socket_def.create_socket(self.zmq_context)
+        admin_conn = admin_socket_def.create_socket(self.zmq_context)
 
-        sim_time = float(ticker_conn.recv())
+        sim_time = float(admin_conn.recv())
 
         for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
@@ -93,13 +91,13 @@ class Probe(object):
 
         self.run_time += sim_time
 
-        ticker_conn.send("FIN") # inform main proc that probe finished
-        ticker_conn.recv() # wait for an ACK from main proc before finishing
+        admin_conn.send("FIN") # inform main proc that probe finished
+        admin_conn.recv() # wait for an ACK from main proc before finishing
 
         # send all recorded data to the administrator
         data = self.data[:self.i+1]
-        ticker_conn.send_pyobj(data)
-        ticker_conn.recv() # want an ack of receiving the data
+        admin_conn.send_pyobj(data)
+        admin_conn.recv() # want an ack of receiving the data
 
     def bind_sockets(self):
         # create a context for this probe process if do not have one already

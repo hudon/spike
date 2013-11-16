@@ -9,17 +9,15 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
+import functions
+
 net = nef.Network('Function Test',seed=91)
 net.make_input('in', value=math.sin)
 net.make('A', neurons=250, dimensions=1)
 net.make('B', neurons=250, dimensions=3)
 
-# function example for testing
-def square(x):
-    return [-x[0]*x[0], -x[0], x[0]]
-
 net.connect('in', 'A')
-net.connect('A', 'B', func=square, pstc=0.1)
+net.connect('A', 'B', func=functions.square, pstc=0.1)
 
 timesteps = 500
 dt_step = 0.01
