@@ -7,6 +7,8 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
+import functions
+
 net=nef.Network('Runtime Test', seed=123)
 net.make_input('in', value=math.sin)
 net.make('A', 1000, 1)
@@ -14,18 +16,11 @@ net.make('B', 1000, 1)
 net.make('C', 1000, 1)
 net.make('D', 1000, 1)
 
-# some functions to use in our network
-def pow(x):
-    return [xval**2 for xval in x]
-
-def mult(x):
-    return [xval*2 for xval in x]
-
 net.connect('in', 'A')
 net.connect('A', 'B')
-net.connect('A', 'C', func=pow)
-net.connect('A', 'D', func=mult)
-net.connect('D', 'B', func=pow) # throw in some recurrency whynot
+net.connect('A', 'C', func=functions.pow)
+net.connect('A', 'D', func=functions.mult)
+net.connect('D', 'B', func=functions.pow) # throw in some recurrency whynot
 
 dt_step=0.01
 pstc=0.01

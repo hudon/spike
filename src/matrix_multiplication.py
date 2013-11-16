@@ -42,7 +42,7 @@ net.make_array('C',200,D1*D2*D3,dimensions=2,radius=1.5*radius,
 #  A of (i,j) is j+i*D2 and the index in B of (j,k) is k+j*D3.
 #  The index in C is j+k*D2+i*D2*D3, multiplied by 2 since there are
 #  two values per ensemble.  We add 1 to the B index so it goes into
-#  the second value in the ensemble.  
+#  the second value in the ensemble.
 transformA=[[0]*(D1*D2) for i in range(D1*D2*D3*2)]
 transformB=[[0]*(D2*D3) for i in range(D1*D2*D3*2)]
 for i in range(D1):
@@ -58,10 +58,8 @@ net.connect('B','C',transform=transformB)
 # now compute the products and do the appropriate summing
 net.make_array('D',50,D1*D3,radius=radius)
 
-#def product(x):
-    #return x[0]*x[1]
 # the mapping for this transformation is much easier, since we want to
-# combine D2 pairs of elements (we sum D2 products together)    
+# combine D2 pairs of elements (we sum D2 products together)
 net.connect('C','D',index_post=[i/D2 for i in range(D1*D2*D3)],func=functions.product)
 
 net.run(1) # run for 1 second

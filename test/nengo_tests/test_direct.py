@@ -10,6 +10,8 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
+import functions
+
 build_time_start = time.time()
 
 net = nef.Network('Direct Mode Test', seed=47)
@@ -24,8 +26,7 @@ net.connect('in', 'A')
 net.connect('A', 'B')
 net.connect('B', 'C')
 net.connect('B', 'E')
-def prod(x): return x[0] * x[1]
-net.connect('E', 'D', func=prod)
+net.connect('E', 'D', func=functions.product)
 
 timesteps = 1000
 dt_step = 0.0001

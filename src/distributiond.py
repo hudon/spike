@@ -3,7 +3,7 @@ from multiprocessing import Process
 # from threading import Thread
 
 from nef_theano import ensemble, input, origin, probe
-import functions
+import tempfile
 
 # Distributor listens on this port for commands
 LISTENER_ENDPOINT = "tcp://*:9000"
@@ -59,6 +59,14 @@ class DistributionDaemon:
             else:
                 node = msg["node"]
                 socket_def = msg["socket"]
+
+                #NOTE: now we write the functions file and import it so that
+                # arbitrary functions may be received
+                func_content = msg["functions"]
+                with tempfile.NamedTemporaryFile() as tmp:
+                    tmp.write(func_content)
+                    tmp.flush()
+                    execfile(tmp.name)
                 self.spawn_worker(node, socket_def)
 
             self.listener_socket.send("ACK")

@@ -16,7 +16,8 @@ from . import simplenode
 from . import subnetwork
 
 class Network(object):
-    def __init__(self, name, seed=None, fixed_seed=None, dt=.001, is_distributed=False, hosts_file=None):
+    def __init__(self, name, seed=None, fixed_seed=None, dt=.001, hosts_file=None):
+
         """Wraps an NEF network with a set of helper functions
         for simplifying the creation of NEF models.
 
@@ -39,8 +40,11 @@ class Network(object):
         self.nodes = {}
         self.workers = []
         self.probes = {}
+
+        is_distributed = not (hosts_file is None)
+
         self.distributor = distribution.DistributionManager(
-            is_distributed=is_distributed, 
+            is_distributed=is_distributed,
             hosts_file=hosts_file
         )
 
@@ -435,10 +439,10 @@ class Network(object):
 
         pnode = probe.Probe(name=name, target=target_output,
             target_name=target_name,
-            dt_sample=dt_sample, dt=self.dt, net=self, **kwargs)
+            dt_sample=dt_sample, dt=self.dt, **kwargs)
 
         worker = self.add(pnode)
-        self.probes[name] = { 'worker': worker, 'data': [] }
+        self.probes[name] = worker
 
         # connect probe to its target: target sends data to probe using msgs
         origin_socket, destination_socket = self.distributor.connect(target, name)
@@ -472,18 +476,16 @@ class Network(object):
         for worker in self.workers:
             worker.send("ACK")
 
-        for probe in self.probes.keys():
-            worker = self.probes[probe]["worker"]
-            self.probes[probe]["data"] = worker.recv_pyobj()
+        # wait to receive the probe data from the probe process
+        # update the probe node with the received data
+        for worker in self.probes.values():
+            worker.node.data = worker.recv_pyobj()
             worker.send("ACK")
 
         for worker in self.workers:
             worker.stop()
 
         self.run_time += time
-
-    def get_probe_data(self, probe_name):
-        return self.probes[probe_name]["data"];
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the

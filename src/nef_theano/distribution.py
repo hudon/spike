@@ -1,5 +1,6 @@
 import zmq
 import zmq_utils
+import os
 
 from multiprocessing import Process
 
@@ -38,10 +39,17 @@ class Worker:
         if self.is_distributed:
             socket = self.zmq_context.socket(zmq.REQ)
             socket.connect(self.daemon_host)
-            socket.send_pyobj({
-                "node": self.node,
-                "socket": self.node_socket_def
-            })
+
+            #NOTE: send functions bound at runtime by putting them in a
+            # functions.py file and sending that
+            nef_dir = os.path.dirname(__file__)
+            funcs_file = os.path.join(nef_dir, "../functions.py")
+            with open(funcs_file, "rb") as funcs:
+                socket.send_pyobj({
+                    "node": self.node,
+                    "socket": self.node_socket_def,
+                    "functions": funcs.read()
+                })
             socket.recv() # wait for an ACK from the daemon
             socket.close()
         else:

@@ -65,6 +65,7 @@ class SimpleNode(object):
         # make origins that implement the defined function
         for name, method in inspect.getmembers(self, inspect.ismethod):
             if name.startswith('origin_'):
+                raise Exception("ERROR", "Pickling will not support instance methods...")
                 # add to dictionary of origins
                 self.origin[name[7:]] = origin.Origin(
                     func=method, initial_value=method())

@@ -19,7 +19,7 @@ class Probe(object):
     """
     buffer_size = 1000
 
-    def __init__(self, name, target, target_name, dt_sample, dt, net, pstc=0.03):
+    def __init__(self, name, target, target_name, dt_sample, dt, pstc=0.03):
         """
         :param string name:
         :param target:
@@ -34,7 +34,6 @@ class Probe(object):
         self.dt_sample = dt_sample
         self.dt = dt
         self.run_time = 0.0
-        self.net = net
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
@@ -78,8 +77,7 @@ class Probe(object):
         self.theano_tick()
 
     def get_data(self):
-        # access the data for this node, which is stored in the network
-        return self.net.get_probe_data(self.name)
+        return self.data
 
     def run(self, admin_socket_def):
         self.bind_sockets()

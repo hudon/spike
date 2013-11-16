@@ -10,11 +10,10 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-def func(x): 
-    return [math.sin(x), -math.sin(x)]
+import functions
 
 net = nef.Network('Transform Test', seed=97)
-net.make_input('in', value=func)
+net.make_input('in', value=functions.transform_func)
 net.make('A', neurons=300, dimensions=3)
 net.make('B', neurons=300, array_size=3, dimensions=1)
 

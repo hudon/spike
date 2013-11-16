@@ -12,6 +12,7 @@ SOURCE_DIR="../examples/new-theano"
 NENGO_TESTS_DIR="nengo_tests"
 
 TEST_SCRIPTS=(
+  # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
   "${NENGO_TESTS_DIR}/test_func.py"
   "${NENGO_TESTS_DIR}/test_runtime.py"
   "${NENGO_TESTS_DIR}/test_weight_index_pre_post.py"
@@ -21,13 +22,13 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_noise.py"
   "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
   "${NENGO_TESTS_DIR}/test_eval_points.py"
-  "${NENGO_TESTS_DIR}/test_simplenode.py"
   "${NENGO_TESTS_DIR}/test_array.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
   "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
   "${NENGO_TESTS_DIR}/test_direct.py"
 );
+# "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
 
 compareOutput(){
   ACTUAL_OUT_CMD="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${1}\
@@ -74,7 +75,38 @@ compareOutput(){
   fi
 }
 
+killtree() {
+    local _pid=$1
+    local _sig=${2:-TERM}
+    kill -stop ${_pid} 
+    for _child in $(ps -o pid --no-headers --ppid ${_pid}); do
+        killtree ${_child} ${_sig}
+    done
+    kill -${_sig} ${_pid}
+}
+
+function handle_sigint()
+{
+    #  Kill sub processes (the daemon) on ctrl-c
+    for proc in `jobs -p`
+    do
+        killtree $proc
+    done
+    exit 0
+}
+trap handle_sigint SIGINT
+
+
+PROGRAM="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}/distributiond.py"
+$PROGRAM > /dev/null &
+PID=$!
+
+echo "Started daemon with pid "${PID}"."
+
 for test_script in "${TEST_SCRIPTS[@]}" ;
 do
   compareOutput $test_script ;
 done
+
+kill ${PID}
+echo "Killed daemon with pid "${PID}"."

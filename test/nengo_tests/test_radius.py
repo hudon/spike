@@ -16,20 +16,13 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
+import functions
+
 is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
 
 
-def sin3(x):
-    return math.sin(x) * 3
-
-def pow(x):
-    return [xval**2 for xval in x]
-
-def mult(x):
-    return [xval*2 for xval in x]
-
 net = nef.Network('Encoder Test',seed=97)
-net.make_input('in', value=sin3)
+net.make_input('in', value=functions.sin3)
 net.make('A', 1000, 1, radius=5)
 net.make('B', 300, 1, radius=.5)
 net.make('C', 1000, 1, radius=10)
@@ -37,8 +30,8 @@ net.make('D', 300, 1, radius=6)
 
 net.connect('in', 'A')
 net.connect('A', 'B')
-net.connect('A', 'C', func=pow)
-net.connect('A', 'D', func=mult)
+net.connect('A', 'C', func=functions.pow)
+net.connect('A', 'D', func=functions.mult)
 
 timesteps = 500
 dt_step = 0.01

@@ -10,6 +10,8 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
+import functions
+
 is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
 
 build_time_start = time.time()
@@ -37,9 +39,8 @@ net.connect('in2', 'C', index_post=[1])
 net.connect('in1', 'D', index_post=[0])
 net.connect('in2', 'D', index_post=[1])
 
-def prod(x): return x[0] * x[1]
-net.connect('C', 'outputC', func=prod)
-net.connect('D', 'outputD', func=prod)
+net.connect('C', 'outputC', func=functions.product)
+net.connect('D', 'outputD', func=functions.product)
 
 t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.01
