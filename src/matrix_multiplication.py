@@ -58,7 +58,6 @@ net.connect('B','C',transform=transformB)
 # now compute the products and do the appropriate summing
 net.make_array('D',50,D1*D3,radius=radius)
 
-abc = 5
 # the mapping for this transformation is much easier, since we want to
 # combine D2 pairs of elements (we sum D2 products together)
 net.connect('C','D',index_post=[i/D2 for i in range(D1*D2*D3)],func=functions.product)

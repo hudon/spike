@@ -37,7 +37,7 @@ class Worker:
             socket = self.zmq_context.socket(zmq.REQ)
             socket.connect(self.daemon_host)
 
-            #HACK(hudon): send functions bound at runtime by putting them in a
+            #NOTE: send functions bound at runtime by putting them in a
             # functions.py file and sending that
             nef_dir = os.path.dirname(__file__)
             funcs_file = os.path.join(nef_dir, "../functions.py")

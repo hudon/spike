@@ -40,7 +40,7 @@ class DistributionDaemon:
                 node = msg["node"]
                 socket_def = msg["socket"]
 
-                #HACK(hudon): now we write the functions file and import it so that
+                #NOTE: now we write the functions file and import it so that
                 # arbitrary functions may be received
                 func_content = msg["functions"]
                 with tempfile.NamedTemporaryFile() as tmp:

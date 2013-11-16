@@ -33,8 +33,6 @@ class EnsembleProcess(object):
         self.dimensions = self.ensemble.dimensions
         self.array_size = self.ensemble.array_size
         self.neurons_num = self.ensemble.neurons_num
-        #self.add_origin = self.ensemble.add_origin
-        #self.update = self.ensemble.update
 
         # context should be created when the process is started (bind_sockets)
         self.zmq_context = None
