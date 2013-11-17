@@ -14,7 +14,12 @@ import functions
 
 build_time_start = time.time()
 
-net = nef.Network('Direct Mode Test', seed=47)
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('Direct Mode Test', seed=47, hosts_file=hosts_file)
+else:
+  net = nef.Network('Direct Mode Test', seed=47)
+
 net.make_input('in', math.sin)
 net.make('A', 100, 1)
 net.make('B', 1, 1, mode='direct')

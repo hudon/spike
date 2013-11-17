@@ -9,7 +9,11 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-net = nef.Network('Main', seed=93)
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('Main', seed=93, hosts_file=hosts_file)
+else:
+  net = nef.Network('Main', seed=93)
 
 netA = net.make_subnetwork('A')
 netB = net.make_subnetwork('B')

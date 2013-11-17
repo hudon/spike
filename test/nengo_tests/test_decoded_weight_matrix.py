@@ -22,7 +22,12 @@ dimensions = 1
 array_size = 3
 inhib_scale = 10
 
-net = nef.Network('WeightMatrix Test',seed=100)
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('WeightMatrix Test', seed=100, hosts_file=hosts_file)
+else:
+  net = nef.Network('WeightMatrix Test', seed=100)
+
 net.make_input('in1', 1, zero_after_time=2.5)
 net.make_input('in2', [1, .5, -.5])
 net.make('A', neurons=neurons, dimensions=dimensions, intercept=(.1, 1))

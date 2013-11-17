@@ -83,7 +83,12 @@ def bgmake(net, name='Basal Ganglia', dimensions=1, neurons=100,
     netbg.connect('GPi', 'output', func=functions.func_gpi, pstc=tau_gaba, 
         weight=output_weight)
 
-net = nef.Network('BG Test', seed=97)
+
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('BG Test', seed=97, hosts_file=hosts_file)
+else:
+  net = nef.Network('BG Test', seed=97)
 
 net.make_input('in', value=functions.func)
 bgmake(net=net, name='BG', dimensions=3)

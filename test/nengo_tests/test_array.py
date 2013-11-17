@@ -14,7 +14,12 @@ def test_array():
 
     neurons = 40
 
-    net = nef.Network('Array Test', seed=50)
+    hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+    if hosts_file:
+      net = nef.Network('Array Test', seed=50, hosts_file=hosts_file)
+    else:
+      net = nef.Network('Array Test', seed=50)
+
     net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
     #net.make_input('in', value=1, zero_after=1.0)
 

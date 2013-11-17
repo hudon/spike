@@ -12,7 +12,12 @@ import nef_theano as nef
 
 import functions
 
-net = nef.Network('Transform Test', seed=97)
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('Transform Test', seed=97, hosts_file=hosts_file)
+else:
+  net = nef.Network('Transform Test', seed=97)
+
 net.make_input('in', value=functions.transform_func)
 net.make('A', neurons=300, dimensions=3)
 net.make('B', neurons=300, array_size=3, dimensions=1)

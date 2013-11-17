@@ -9,7 +9,12 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-net = nef.Network('Noise Test',seed=91)
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('Noise Test', seed=91, hosts_file=hosts_file)
+else:
+  net = nef.Network('Noise Test', seed=91)
+
 net.make_input('in', value=math.sin)
 net.make('A', neurons=300, dimensions=1, noise=1)
 net.make('A2', neurons=300, dimensions=1, noise=100)

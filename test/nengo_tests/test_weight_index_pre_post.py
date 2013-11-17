@@ -11,7 +11,12 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-net = nef.Network('Weight, Index_Pre, and Index_Post Test',seed=97)
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('Weight, Index_Pre, and Index_Post Test', seed=97, hosts_file=hosts_file)
+else:
+  net = nef.Network('Weight, Index_Pre, and Index_Post Test', seed=97)
+
 net.make_input('in', value=math.sin)
 net.make('A', 300, 1)
 net.make('B', 300, 1)

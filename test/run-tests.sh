@@ -10,29 +10,32 @@ THIS_SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TARGET_DIR="../src"
 SOURCE_DIR="../examples/new-theano"
 NENGO_TESTS_DIR="nengo_tests"
+HOSTS_FILE=$1
 
 TEST_SCRIPTS=(
-  # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
-  "${NENGO_TESTS_DIR}/test_func.py"
-  "${NENGO_TESTS_DIR}/test_runtime.py"
-  "${NENGO_TESTS_DIR}/test_weight_index_pre_post.py"
+  "${NENGO_TESTS_DIR}/test_array.py"
+  "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
+  "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
+  "${NENGO_TESTS_DIR}/test_direct.py"
+  "${NENGO_TESTS_DIR}/test_enc.py"
+  "${NENGO_TESTS_DIR}/test_eval_points.py"
   "${NENGO_TESTS_DIR}/test_fixed_seed.py"
+  "${NENGO_TESTS_DIR}/test_func.py"
+  "${NENGO_TESTS_DIR}/test_noise.py"
+  "${NENGO_TESTS_DIR}/test_radius.py"
+  "${NENGO_TESTS_DIR}/test_runtime.py"
+  # "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
   "${NENGO_TESTS_DIR}/test_subnetwork.py"
   "${NENGO_TESTS_DIR}/test_transform.py"
-  "${NENGO_TESTS_DIR}/test_noise.py"
-  "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
-  "${NENGO_TESTS_DIR}/test_eval_points.py"
-  "${NENGO_TESTS_DIR}/test_array.py"
-  "${NENGO_TESTS_DIR}/test_radius.py"
-  "${NENGO_TESTS_DIR}/test_enc.py"
-  "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
-  "${NENGO_TESTS_DIR}/test_direct.py"
+  "${NENGO_TESTS_DIR}/test_weight_index_pre_post.py"
+  # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
+  "matrix_multiplication_distributed.py"
 );
-# "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
 
 compareOutput(){
   ACTUAL_OUT_CMD="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${1}\
-    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}"
+    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR} ${HOSTS_FILE}"
+
   EXPECTED_OUT_CMD="${PYTHON}  ${THIS_SCRIPT_DIRECTORY}/${1}\
     ${THIS_SCRIPT_DIRECTORY}/${SOURCE_DIR}"
 

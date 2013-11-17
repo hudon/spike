@@ -18,10 +18,12 @@ import nef_theano as nef
 
 import functions
 
-is_spike = len(sys.argv) > 2 and sys.argv[2] == 'target'
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('Radius Test', seed=97, hosts_file=hosts_file)
+else:
+  net = nef.Network('Radius Test', seed=97)
 
-
-net = nef.Network('Encoder Test',seed=97)
 net.make_input('in', value=functions.sin3)
 net.make('A', 1000, 1, radius=5)
 net.make('B', 300, 1, radius=.5)

@@ -30,7 +30,12 @@ import functions
 eval_points1 = np.arange(-1, 0, .5)
 eval_points2 = np.array([[1,1],[-1,1],[-1,-1],[1,-1]]).T
 
-net = nef.Network('EvalPoints Test',seed=5)
+hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+if hosts_file:
+  net = nef.Network('EvalPoints Test', seed=5, hosts_file=hosts_file)
+else:
+  net = nef.Network('EvalPoints Test', seed=5)
+
 net.make_input('in', value=math.sin)
 
 # for test 1
@@ -40,7 +45,7 @@ net.make('A2', neurons=300, dimensions=1, eval_points=eval_points1)
 # for test 3
 net.make('A3', neurons=300, dimensions=1, eval_points=eval_points1)
 # for test 4
-net.make('A4', neurons=300, array_size=3, dimensions=2, 
+net.make('A4', neurons=300, array_size=3, dimensions=2,
     eval_points=eval_points2)
 
 net.make('B', neurons=100, dimensions=1)
@@ -120,7 +125,7 @@ for x in ep_data:
     print x
 
 # plot the results
-#plt.ioff(); plt.clf(); 
+#plt.ioff(); plt.clf();
 #plt.subplot(511); plt.title('Input')
 #plt.plot(Ip.get_data())
 #plt.subplot(512); plt.title('A1')
