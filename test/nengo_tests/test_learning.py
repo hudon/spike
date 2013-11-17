@@ -5,7 +5,7 @@ import math
 import time
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 from .. import nef_theano as nef
 
@@ -37,14 +37,14 @@ E1p = net.make_probe('error1', dt_sample=dt_step, pstc=pstc)
 print "starting simulation"
 net.run(t_final)
 
-plt.ioff(); plt.close()
+#plt.ioff(); plt.close()
 
-t = np.linspace(0, t_final, len(Ap.get_data()))
+#t = np.linspace(0, t_final, len(Ap.get_data()))
 
-plt.plot(t, Ap.get_data())
-plt.plot(t, Bp.get_data())
-plt.plot(t, E1p.get_data())
-plt.legend(['A', 'B', 'error'])
-plt.title('Normal learning')
-plt.tight_layout()
-plt.show()
+#plt.plot(t, Ap.get_data())
+#plt.plot(t, Bp.get_data())
+#plt.plot(t, E1p.get_data())
+#plt.legend(['A', 'B', 'error'])
+#plt.title('Normal learning')
+#plt.tight_layout()
+#plt.show()

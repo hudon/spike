@@ -21,7 +21,7 @@ import time
 
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 from .. import nef_theano as nef
 
@@ -105,17 +105,17 @@ for i in range(test_cases.shape[0]):
     net.run(t_final)
     print 'Simulated in ', time.time() - start_time, 'seconds'
 
-    plt.ioff(); plt.close()
+    #plt.ioff(); plt.close()
 
     t = np.linspace(0, t_final, len(Ap.get_data()))
 
-    plt.plot(t, Ap.get_data())
-    plt.plot(t, Bp.get_data())
-    plt.plot(t, E1p.get_data())
-    plt.legend( ['A'] * array_sizes[0] * dims[0] + 
-                ['B'] * array_sizes[1] * dims[1] + 
-                ['error'] * array_sizes[2] * dims[2] )
-    plt.title('Normal learning')
-    plt.tight_layout()
-    plt.show()
+    #plt.plot(t, Ap.get_data())
+    #plt.plot(t, Bp.get_data())
+    #plt.plot(t, E1p.get_data())
+    #plt.legend( ['A'] * array_sizes[0] * dims[0] + 
+    #            ['B'] * array_sizes[1] * dims[1] + 
+    #            ['error'] * array_sizes[2] * dims[2] )
+    #plt.title('Normal learning')
+    #plt.tight_layout()
+    #plt.show()
 
