@@ -3,7 +3,7 @@
 import nef_theano as nef
 import functions
 
-net=nef.Network('Matrix Multiplication', 100, 100, is_distributed=True, hosts_file="remote_hosts.txt") #Create the network object
+net=nef.Network('Matrix Multiplication', 100, 100, hosts_file="remote_hosts.txt") #Create the network object
 
 # Adjust these values to change the matrix dimensions
 #  Matrix A is D1xD2

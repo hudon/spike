@@ -6,6 +6,9 @@ from multiprocessing import Process
 
 DAEMON_PORT = 9000
 
+class MixedDistributionModeException(Exception):
+    pass
+
 class Worker:
     def __init__(self, zmq_context, node, is_distributed, 
                  host=None, worker_port=None, daemon_port=DAEMON_PORT):
@@ -102,7 +105,9 @@ class DistributionManager:
 
     def _next_host(self):
         if not self.is_distributed:
-            return None
+            raise MixedDistributionModeException(
+                "Attempting to retrieve next host in local mode."
+                )
         
         running_hosts = len(self.remote_hosts)
 
@@ -121,8 +126,8 @@ class DistributionManager:
 
                 running_hosts -= 1
                 if running_hosts == 0:
-                    print "ERROR: All hosts are down. Make sure that " + \
-                        "Spike daemons are running on the remote hosts."
+                    raise Exception("ERROR: All hosts are down. Make sure that " +
+                                    "Spike daemons are running on the remote hosts.")
                     exit(1)
                 pass
 
@@ -130,12 +135,22 @@ class DistributionManager:
 
     def _send_message_to_daemon(self, message, daemon_host):
         socket = self.zmq_context.socket(zmq.REQ)
+        poller = zmq.Poller()
+
+        poller.register(socket, zmq.POLLIN)
         socket.connect(daemon_host)
         socket.send_pyobj(message, zmq.NOBLOCK)
+        
+        response = None
+        responses = dict(poller.poll(10))
 
-        response = socket.recv(zmq.NOBLOCK) # Get port from daemon
+        if socket in responses and responses[socket] == zmq.POLLIN:
+            response = socket.recv(zmq.NOBLOCK) # Get port from daemon
 
         socket.close()        
+
+        if response == None:
+            raise zmq.ZMQError()
 
         return response
 
