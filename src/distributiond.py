@@ -12,6 +12,8 @@ class DistributionDaemon:
     def __init__(self):
         self.zmq_context = zmq.Context()
         self.listener_socket = None
+        self.worker_port = 8000
+        self.current_port_offset = 0
         self.processes = {}
 
     def spawn_worker(self, node, socket_def):
@@ -21,6 +23,16 @@ class DistributionDaemon:
         self.processes[node.name] = process
         process.start()
         print "DEBUG: Worker %s: PID %s" % (node.name, process.pid)
+
+    def _get_next_port(self):
+        next_port = self.worker_port + self.current_port_offset
+        self.current_port_offset += 1
+
+        # Roll over after 1000 port assignments
+        if self.current_port_offset >= self.worker_port + 1000:
+            self.current_port_offset = self.worker_port
+
+        return next_port
 
     def listen(self, endpoint):
         self.listener_socket = self.zmq_context.socket(zmq.REP)
@@ -36,6 +48,14 @@ class DistributionDaemon:
                     print "DEBUG: Terminating process:", name
                     process = self.processes[name]
                     process.join()
+            elif msg == 'NEXT_AVAIL_PORT':
+                    next_port = self._get_next_port()
+                    print "DEBUG: Next available port: {port}".format(port=next_port)
+                    self.listener_socket.send(str(next_port))
+                    continue
+            elif msg == 'PING':
+                self.listener_socket.send("PONG")
+                continue
             else:
                 node = msg["node"]
                 socket_def = msg["socket"]
