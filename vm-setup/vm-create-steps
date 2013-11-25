@@ -17,6 +17,20 @@ VBoxManage modifyvm spike-vm --natpf1 "tcp-port8010,tcp,,8010,,8010"
 VBoxManage modifyvm spike-vm --natpf1 "tcp-port8011,tcp,,8011,,8011"
 VBoxManage modifyvm spike-vm --natpf1 "tcp-port8012,tcp,,8012,,8012"
 
+VBoxManage modifyvm spike-vm --natpf1 "udp-port9000,udp,,9000,,9000"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8000,udp,,8000,,8000"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8001,udp,,8001,,8001"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8002,udp,,8002,,8002"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8003,udp,,8003,,8003"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8004,udp,,8004,,8004"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8005,udp,,8005,,8005"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8006,udp,,8006,,8006"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8007,udp,,8007,,8007"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8008,udp,,8008,,8008"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8009,udp,,8009,,8009"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8010,udp,,8010,,8010"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8011,udp,,8011,,8011"
+VBoxManage modifyvm spike-vm --natpf1 "udp-port8012,udp,,8012,,8012"
 
 VBoxManage storagectl spike-vm --name "IDE Controller" --add ide
 VBoxManage storageattach spike-vm --storagectl "IDE Controller" --port 1 --device 0 --type dvddrive --medium /home/spike/archlinux-2013.11.01-dual.iso
