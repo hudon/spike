@@ -1,0 +1,91 @@
+sudo apt-get install virtualbox
+
+VBoxManage createvm --name spike-vm --register
+VBoxManage modifyvm spike-vm --memory 2048 --nic1 nat --natpf1 "ssh,tcp,,3123,,22"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port9000,tcp,,9000,,9000"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8000,tcp,,8000,,8000"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8001,tcp,,8001,,8001"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8002,tcp,,8002,,8002"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8003,tcp,,8003,,8003"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8004,tcp,,8004,,8004"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8005,tcp,,8005,,8005"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8006,tcp,,8006,,8006"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8007,tcp,,8007,,8007"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8008,tcp,,8008,,8008"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8009,tcp,,8009,,8009"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8010,tcp,,8010,,8010"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8011,tcp,,8011,,8011"
+VBoxManage modifyvm spike-vm --natpf1 "tcp-port8012,tcp,,8012,,8012"
+
+
+VBoxManage storagectl spike-vm --name "IDE Controller" --add ide
+VBoxManage storageattach spike-vm --storagectl "IDE Controller" --port 1 --device 0 --type dvddrive --medium /home/spike/archlinux-2013.11.01-dual.iso
+
+vboxmanage startvm spike-vm --type headless 
+
+#  Give the vm some time to get to the boot menu
+sleep 5
+#  Press enter on the boot menu
+VBoxManage controlvm spike-vm keyboardputscancode 1c 9c
+
+#  Give the vm some time boot 
+sleep 30
+
+#  Type 'systemctl start sshd'
+VBoxManage controlvm spike-vm keyboardputscancode 1f 9f 15 95 1f 9f 14 94 12 92 32 b2 2e ae 14 94 26 a6 39 b9 1f 9f 14 94 1e 9e 13 93 14 94 39 b9 1f 9f 1f 9f 23 a3 20 a0
+sleep 1
+#  Enter 
+VBoxManage controlvm spike-vm keyboardputscancode 1c 9c
+#  Wait for sshd to startup
+sleep 4
+#  Type 'passwd'
+VBoxManage controlvm spike-vm keyboardputscancode 19 99 1e 9e 1f 9f 1f 9f 11 91 20 a0
+sleep 1
+#  Enter 
+VBoxManage controlvm spike-vm keyboardputscancode 1c 9c
+#  Don't type too fast
+sleep 1
+#  Type 'spike2014'
+VBoxManage controlvm spike-vm keyboardputscancode 1f 9f 19 99 17 97 25 a5 12 92 03 83 0b 8b 02 82 05 85
+sleep 1
+#  Enter 
+VBoxManage controlvm spike-vm keyboardputscancode 1c 9c
+#  Don't type too fast
+sleep 1
+#  Type 'spike2014'
+VBoxManage controlvm spike-vm keyboardputscancode 1f 9f 19 99 17 97 25 a5 12 92 03 83 0b 8b 02 82 05 85
+sleep 1
+#  Enter 
+VBoxManage controlvm spike-vm keyboardputscancode 1c 9c
+
+#  Delete the known host record for if we previously set up the virtual machine
+ssh-keygen -f "/home/spike/.ssh/known_hosts" -R [localhost]:3123
+
+ssh root@localhost -p 3123 -o StrictHostKeyChecking=no
+pacman -Syy --noconfirm
+pacman -S base-devel --noconfirm
+pacman -S python2 --noconfirm
+pacman -S python2-numpy --noconfirm
+pacman -S python2-scipy --noconfirm
+pacman -S git --noconfirm
+
+git clone https://github.com/python-quantities/python-quantities.git
+cd python-quantities
+python2 setup.py install
+cd ..
+
+#  Install theano
+wget https://aur.archlinux.org/packages/py/python2-theano/python2-theano.tar.gz
+tar -xzf python2-theano.tar.gz
+cd python2-theano
+makepkg -s --asroot --noconfirm
+pacman -U --noconfirm python2-theano-0.6.0rc3-1-any.pkg.tar.xz
+cd ..
+
+#  Install zeromq
+wget http://download.zeromq.org/zeromq-2.2.0.tar.gz && tar xf zeromq-2.2.0.tar.gz && cd zeromq-2.2.0 && ./configure && make && sudo make install && cd ..
+pacman -S python2-pyzmq --noconfirm
+
+git clone git://github.com/Hudon/spike.git
+
+
