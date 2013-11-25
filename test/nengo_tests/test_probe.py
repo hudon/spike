@@ -3,7 +3,7 @@ and write to file.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import math
 import time
 
@@ -57,22 +57,22 @@ def test_probe(simcls=None, show=False):
     print 'Ap MSE', ap_mse
     assert ap_mse < 0.15  # getting .127 May 9 2013
 
-    plt.ioff(); plt.close(); 
-    plt.subplot(3,1,1)
-    plt.plot(Ip.get_data(), 'x'); plt.title('Input')
-    plt.plot(np.sin(t))
-    plt.subplot(3,1,2)
-    plt.plot(Ap.get_data()); plt.title('A')
-    plt.plot(np.sin(t))
-    plt.subplot(3,1,3); plt.hold(1)
-    plt.plot(Bp.get_data())
-    for row in BpSpikes.get_data().T: 
-        plt.plot(row[0]); 
-    plt.title('B')
-    if show:
-        plt.show()
-    else:
-        plt.close()
+    #plt.ioff(); plt.close(); 
+    #plt.subplot(3,1,1)
+    #plt.plot(Ip.get_data(), 'x'); plt.title('Input')
+    #plt.plot(np.sin(t))
+    #plt.subplot(3,1,2)
+    #plt.plot(Ap.get_data()); plt.title('A')
+    #plt.plot(np.sin(t))
+    #plt.subplot(3,1,3); plt.hold(1)
+    #plt.plot(Bp.get_data())
+    #for row in BpSpikes.get_data().T: 
+    #    plt.plot(row[0]); 
+    #plt.title('B')
+    #if show:
+    #    plt.show()
+    #else:
+    #    plt.close()
 
 def test_probe_sim():
     from nengo.nef_theano import simulator

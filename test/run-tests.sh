@@ -68,10 +68,12 @@ compareOutput(){
     echo -e ${RED_TEXT}"ERROR: Output from '${ACTUAL_OUT_CMD}' and \
       '${EXPECTED_OUT_CMD}' does not match."${NORMAL_TEXT}
     exit 1
-  elif [ ${ACTUAL_RETURN_CODE} -ne ${EXPECTED_RETURN_CODE} ]; then
+  #  Always test it against 0 because we arn't testing failure cases and we want
+  #  to catch any import errors which will make both tests fail.
+  elif [ ${ACTUAL_RETURN_CODE} -ne 0 ]; then
     echo -e ${RED_TEXT}"ERROR:"${NORMAL_TEXT}
-    echo "Return code of ${ACTUAL_RETURN_CODE} from '${ACTUAL_OUT_CMD}' \
-      and ${EXPECTED_RETURN_CODE} from '${EXPECTED_OUT_CMD}' does not match."
+    echo "Return code of ${ACTUAL_RETURN_CODE} from '${ACTUAL_OUT_CMD} was not 0.' \
+      Expected was ${EXPECTED_RETURN_CODE} from '${EXPECTED_OUT_CMD}'"
     exit 1
   else
     echo -e ${GREEN_TEXT}"INFO: Program outputs are identical."${NORMAL_TEXT}
