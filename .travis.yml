@@ -10,7 +10,7 @@ before_install:
  - sudo pip install pyzmq
  - sudo pip install quantities
 install:
-  - sudo pip install Theano
+  - sudo pip install Theano==0.6.0rc3
   - ls -latr /usr/local/lib/python2.7/dist-packages/
   - PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.7/dist-packages/
   - PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.7/dist-packages/theano/
