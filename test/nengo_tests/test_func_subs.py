@@ -33,6 +33,7 @@ pstc = 0.03
 
 Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
 Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
+Aps = net.make_probe('A:square', dt_sample=dt_step, pstc=pstc)
 Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
@@ -40,17 +41,21 @@ net.run(timesteps * dt_step)
 
 ip_data = Ip.get_data()
 ap_data = Ap.get_data()
+aps_data = Aps.get_data()
 bp_data = Bp.get_data()
 
-# print "input 'in' probe data"
-# for x in ip_data:
-#     print x
-# print "ensemble 'A' probe data"
-# for x in ap_data:
-#     print x
-# print "ensemble 'B' probe data"
-# for x in bp_data:
-#     print x
+print "input 'in' probe data"
+for x in ip_data:
+    print x
+print "ensemble 'A' probe data"
+for x in ap_data:
+    print x
+print "ensemble 'Asquare' probe data"
+for x in aps_data:
+    print x
+print "ensemble 'B' probe data"
+for x in bp_data:
+    print x
 # plot the results
 #plt.ioff(); plt.clf(); plt.hold(1);
 #plt.plot(Ip.get_data())

@@ -162,7 +162,7 @@ class Network(object):
                 else:
                     decoder = pre_sub_parent.get_subensemble_decoder(
                         pre_num_subs, origin_name, func)[pre_sub_index]
-                    pre.add_origin(pre_name, func, dt=self.dt, decoders=decoder)
+                    pre.add_origin(origin_name, None, dt=self.dt, decoders=decoder)
                     pre_origin = self.get_origin(pre_name, func)
 
             pre_output = pre_origin.decoded_output
@@ -537,9 +537,13 @@ class Network(object):
                 target_output = self.get_origin(target).decoded_output.get_value()
                 res_probe = __create_probe(name, target, target_output)
             else:
+                split = target.split(':')
+                target = split[0]
                 targets = self.__get_subensembles(target)
                 res_probe = probe.AggregatorProbe(name, self)
                 for target in targets:
+                    if len(split) == 2:
+                        target = target + ":" + split[1]
                     target_output = self.get_origin(target).decoded_output.get_value()
                     subensemble_probe = __create_probe(name, target, target_output)
                     res_probe.add(subensemble_probe)

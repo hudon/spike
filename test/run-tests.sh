@@ -28,8 +28,8 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
   "${NENGO_TESTS_DIR}/test_direct.py"
 
+  "${NENGO_TESTS_DIR}/test_func_subs.py"
   "${NENGO_TESTS_DIR}/test_array_subs.py"
-  # "${NENGO_TESTS_DIR}/test_func_subs.py"
 );
 
 compareOutput(){
