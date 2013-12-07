@@ -83,7 +83,7 @@ compareOutput(){
 killtree() {
     local _pid=$1
     local _sig=${2:-TERM}
-    kill -stop ${_pid} 
+    kill -stop ${_pid}
     for _child in $(ps -o pid --no-headers --ppid ${_pid}); do
         killtree ${_child} ${_sig}
     done

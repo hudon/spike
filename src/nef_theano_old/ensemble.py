@@ -84,18 +84,17 @@ class EnsembleProcess(object):
 
         self.ensemble.tick(inputs)
 
-    def run(self, admin_socket_def, time):
+    def run(self, admin_socket_def):
         self.bind_sockets(admin_socket_def)
         self.ensemble.make_tick()
+
+        time = float(self.admin_conn.recv())
 
         for i in range(int(time / self.ensemble.dt)):
             self.tick()
 
-        self.admin_conn.recv_pyobj() # FIN
-        self.admin_conn.send_pyobj({'result': 'ack'})
-
-        self.admin_conn.recv_pyobj() # KILL
-        self.admin_conn.send_pyobj({'result': 'ack'})
+        self.admin_conn.send("FIN") # inform main proc that ens finished
+        self.admin_conn.recv() # wait for an ACK from main proc before exiting
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't

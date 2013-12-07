@@ -10,116 +10,60 @@ class MixedDistributionModeException(Exception):
     pass
 
 class Worker:
-    def __init__(self, zmq_context, node, is_distributed, 
-                 host=None, worker_port=None, daemon_port=DAEMON_PORT):
-        self.node = node
+    def __init__(self, name, host, worker_port, daemon_port, zmq_context):
+        self.name = name
+
         self.zmq_context = zmq_context
-        self.is_distributed = is_distributed
+        self.host = host
+        self.worker_port = worker_port # specific for admin communication
+        self.daemon_addr = 'tcp://%s:%s' % (host, daemon_port)
+        self.worker_addr = 'tcp://%s:%s' % (host, worker_port) # admin comms
 
-        if is_distributed:
-            self.host_name = host
-            self.daemon_host = 'tcp://%s:%s' % (host, daemon_port)
-            self.worker_port = worker_port
-            self.admin_socket_def, self.node_socket_def = \
-                  zmq_utils.create_tcp_socket_defs_reqrep(host, worker_port)
-        else:
-            self.admin_socket_def, node_socket_def = \
-                zmq_utils.create_ipc_socket_defs_reqrep("admin", node.name)
-            self.process = Process(target=node.run, args=(node_socket_def,), name=node.name)
+    def _communicate(self, message, addr):
+        socket = self.zmq_context.socket(zmq.REQ)
+        socket.connect(addr)
+        message['name'] = self.name
+        socket.send_pyobj(message)
+        response = socket.recv_pyobj()
+        socket.close()
+        return response['result']
 
-    def send(self, content):
-        return self.admin_socket.send(content)
+    def send_command(self, message):
+        is_direct = message['cmd'] is 'fin' or message['cmd'] is 'get_data'
+        addr = self.worker_addr if is_direct else self.daemon_addr
+        return self._communicate(message, addr)
 
-    def recv(self):
-        return self.admin_socket.recv()
-
-    def recv_pyobj(self):
-        return self.admin_socket.recv_pyobj()
-
-    def start(self):
-        self.admin_socket = self.admin_socket_def.create_socket(self.zmq_context)
-
-        if self.is_distributed:
-            socket = self.zmq_context.socket(zmq.REQ)
-            socket.connect(self.daemon_host)
-
-            #NOTE: send functions bound at runtime by putting them in a
-            # functions.py file and sending that
-            nef_dir = os.path.dirname(__file__)
-            funcs_file = os.path.join(nef_dir, "../functions.py")
-            with open(funcs_file, "rb") as funcs:
-                socket.send_pyobj({
-                    "node": self.node,
-                    "socket": self.node_socket_def,
-                    "functions": funcs.read()
-                })
-            socket.recv() # wait for an ACK from the daemon
-            socket.close()
-        else:
-            self.process.start()
-
-    def stop(self):
-        if self.is_distributed:
-            socket = self.zmq_context.socket(zmq.REQ)
-            socket.connect(self.daemon_host)
-            socket.send_pyobj(('FIN', self.node.name))
-            socket.recv() # wait for an ACK from the daemon
-            socket.close()
-        else:
-            self.process.join()
-
+    def kill(self):
+        self._communicate(
+            {'cmd': 'kill', 'args': (), 'kwargs': {}},
+            self.worker_addr)
+        self._communicate(
+            {'cmd': 'kill', 'args': (), 'kwargs': {}},
+            self.daemon_addr)
 
 class DistributionManager:
-    """ Class responsible for socket creation and work distribution """
-
-    def __init__(self, is_distributed=False, hosts_file=None):
+    def __init__(self, hosts_file):
         self.workers = {}
-
         self.zmq_context = zmq.Context()
-        self.is_distributed = is_distributed
 
-        if is_distributed:
-            self.remote_hosts = None
-            
-            if hosts_file:
-                with open(hosts_file, 'r') as f:
-                    self.remote_hosts = [host.strip() for host in f.readlines()]
-                    self.next_host_id = 0
-            else:
-                print "ERROR: (DistributionManager) Hosts file not specified for distributed simulation"
-                exit(1)
-
-    def create_worker(self, node):
-        if self.is_distributed:
-            host_name = self._next_host()
-            daemon_host = "tcp://%s:%s" % (host_name, DAEMON_PORT)
-
-            worker_port = self._new_daemon_port(daemon_host)
-
-            worker = Worker(self.zmq_context, node, self.is_distributed,
-                            host_name, worker_port, DAEMON_PORT)
-        else:
-            worker = Worker(self.zmq_context, node, self.is_distributed)
-        self.workers[node.name] = worker
-        return worker
+        with open(hosts_file, 'r') as f:
+            self.remote_hosts = [host.strip() for host in f.readlines()]
+            self.next_host_id = 0
 
     def _next_host(self):
-        if not self.is_distributed:
-            raise MixedDistributionModeException(
-                "Attempting to retrieve next host in local mode."
-                )
-        
         running_hosts = len(self.remote_hosts)
 
         while True:
             host = self.remote_hosts[self.next_host_id]
-
             self.next_host_id += 1
+
             if self.next_host_id > len(self.remote_hosts) - 1:
                 self.next_host_id = 0
             try:
                 # See if the host is alive. If not, try the next one
-                self._send_message_to_daemon("PING", "tcp://%s:%s" % (host, DAEMON_PORT))
+                self._send_message_to_daemon(
+                    {'cmd': 'ping', 'name': None, 'args': (), 'kwargs': {}},
+                    "tcp://%s:%s" % (host, DAEMON_PORT))
                 break
             except zmq.ZMQError:
                 print "DEBUG: Host %s:%s is down." % (host, DAEMON_PORT)
@@ -133,38 +77,36 @@ class DistributionManager:
 
         return host
 
-    def _send_message_to_daemon(self, message, daemon_host):
+    def _send_message_to_daemon(self, message, daemon_addr):
         socket = self.zmq_context.socket(zmq.REQ)
         poller = zmq.Poller()
 
         poller.register(socket, zmq.POLLIN)
-        socket.connect(daemon_host)
+        socket.connect(daemon_addr)
         socket.send_pyobj(message, zmq.NOBLOCK)
-        
+
         response = None
-        responses = dict(poller.poll(10))
+        responses = dict(poller.poll(10000))
 
         if socket in responses and responses[socket] == zmq.POLLIN:
-            response = socket.recv(zmq.NOBLOCK) # Get port from daemon
+            response = socket.recv_pyobj(zmq.NOBLOCK)
 
-        socket.close()        
+        socket.close()
 
         if response == None:
             raise zmq.ZMQError()
+        return response['result']
 
-        return response
+    def _new_daemon_port(self, daemon_addr, name):
+        return self._send_message_to_daemon(
+            {'cmd': 'next_avail_port', 'name': name, 'args': (), 'kwargs': {}},
+            daemon_addr)
 
-    def _new_daemon_port(self, daemon_host):
-        return self._send_message_to_daemon('NEXT_AVAIL_PORT', daemon_host)
+    def new_worker(self, name):
+        host_name = self._next_host()
+        daemon_addr = "tcp://%s:%s" % (host_name, DAEMON_PORT)
+        worker_port = self._new_daemon_port(daemon_addr, name)
 
-    def connect(self, src_name, dst_name):
-        """ Doesn't actually connect, but provides two sockets definitions
-        """
-        if self.is_distributed:
-            dst_worker = self.workers[dst_name]
+        worker = Worker(name, host_name, worker_port, DAEMON_PORT, self.zmq_context)
+        return worker
 
-            port = self._new_daemon_port(dst_worker.daemon_host)
-            dest_host = dst_worker.host_name
-
-            return zmq_utils.create_tcp_socket_defs_pushpull(dest_host, port)
-        return zmq_utils.create_ipc_socket_defs_pushpull(src_name, dst_name)

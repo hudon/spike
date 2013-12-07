@@ -95,21 +95,20 @@ class Input(object):
         for o in self.origin.values():
             o.tick()
 
-    def run(self, admin_socket_def, time):
+    def run(self, admin_socket_def):
         self.bind_sockets()
         admin_conn = admin_socket_def.create_socket(self.zmq_context)
 
-        for i in range(int(time / self.dt)):
+        sim_time = float(admin_conn.recv())
+
+        for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
             self.tick()
 
-        self.run_time += time
+        self.run_time += sim_time
 
-        admin_conn.recv_pyobj() # FIN
-        admin_conn.send_pyobj({'result': 'ack'})
-
-        admin_conn.recv_pyobj() # KILL
-        admin_conn.send_pyobj({'result': 'ack'})
+        admin_conn.send("FIN") # inform main proc that input finished
+        admin_conn.recv() # wait for an ACK from main proc before exiting
 
     def bind_sockets(self):
         # create a context for this input process if do not have one already

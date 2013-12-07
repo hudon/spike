@@ -13,15 +13,6 @@ from .filter import Filter
 import zmq
 import zmq_utils
 
-class ProbeClient(object):
-    def __init__(self, name):
-        self.name = name;
-
-    def get_data(self):
-        return self.data
-    def set_data(self, data):
-        self.data = data
-
 class Probe(object):
     """A class to record from things (i.e., origins).
 
@@ -85,25 +76,28 @@ class Probe(object):
 
         self.theano_tick()
 
-    def run(self, admin_socket_def, time):
+    def get_data(self):
+        return self.data
+
+    def run(self, admin_socket_def):
         self.bind_sockets()
         admin_conn = admin_socket_def.create_socket(self.zmq_context)
 
-        for i in range(int(time / self.dt)):
+        sim_time = float(admin_conn.recv())
+
+        for i in range(int(sim_time / self.dt)):
             self.t = self.run_time + i * self.dt
             self.tick()
 
-        self.run_time += time
+        self.run_time += sim_time
 
-        admin_conn.recv_pyobj() # FIN
-        admin_conn.send_pyobj({'result': 'ack'})
+        admin_conn.send("FIN") # inform main proc that probe finished
+        admin_conn.recv() # wait for an ACK from main proc before finishing
 
-        admin_conn.recv_pyobj() # GET_DATA
-        data = self.data[:(self.i + 1)]
-        admin_conn.send_pyobj({'result': data})
-
-        admin_conn.recv_pyobj() # KILL
-        admin_conn.send_pyobj({'result': 'ack'})
+        # send all recorded data to the administrator
+        data = self.data[:self.i+1]
+        admin_conn.send_pyobj(data)
+        admin_conn.recv() # want an ack of receiving the data
 
     def bind_sockets(self):
         # create a context for this probe process if do not have one already
