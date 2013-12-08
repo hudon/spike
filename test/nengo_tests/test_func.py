@@ -5,13 +5,19 @@ import math
 import numpy as np
 #import matplotlib.pyplot as plt
 
-import sys
+import sys, getopt
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
 import functions as funcs
 
-hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+hosts_file = None
+
+optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
+for opt, arg in optlist:
+    if opt == '--hosts':
+        hosts_file = arg if arg else None
+
 if hosts_file:
   net = nef.Network('Function Test', seed=91, hosts_file=hosts_file,
     usr_module='test/nengo_tests/functions.py')
