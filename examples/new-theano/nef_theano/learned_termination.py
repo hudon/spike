@@ -25,16 +25,16 @@ class LearnedTermination(object):
         self.pre = pre
         self.post = post
         self.error = error
-        self.learning_rate = TT.cast(rate, dtype='float32')
+        self.learning_rate = TT.cast(rate, dtype='float64')
 
         # initialize weight matrix
-        self.initial_weight_matrix = weight_matrix.astype('float32')
+        self.initial_weight_matrix = weight_matrix.astype('float64')
         self.weight_matrix = theano.shared(
             self.initial_weight_matrix, name='learned_termination.weight_matrix')
 
     def reset(self):
         self.weight_matrix.set_value(self.initial_weight_matrix)
-    
+
     def learn(self):
         """The learning function, to be implemented by learning subclasses.
 
@@ -45,13 +45,13 @@ class LearnedTermination(object):
 
     def update(self):
         """The updates to the weight matrix calculation.
-        
+
         :returns: an ordered dictionary with the new weight_matrix.
-        
+
         """
         # multiply the output by the attached ensemble's radius
         # to put us back in the right range
-        return collections.OrderedDict( {self.weight_matrix: self.learn()} ) 
+        return collections.OrderedDict( {self.weight_matrix: self.learn()} )
 
 
 #TODO: This should be in the tests that need it, not in the main code?

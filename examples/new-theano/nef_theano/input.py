@@ -20,7 +20,7 @@ class Input(object):
         :type value: float or function
         :param float zero_after_time:
             time after which to set function output = 0 (s)
-        
+
         """
         self.name = name
         self.t = 0
@@ -31,7 +31,7 @@ class Input(object):
         self.origin = {}
 
         # if value parameter is a python function
-        if callable(value): 
+        if callable(value):
             self.origin['X'] = origin.Origin(func=value)
         # if value is dict of time:value pairs
         elif isinstance(value, dict):
@@ -40,7 +40,7 @@ class Input(object):
             if isinstance(value[self.change_time], list):
                 initial_value = np.zeros(len(value[self.change_time]))
             else: initial_value = np.zeros(1)
-            self.origin['X'] = origin.Origin(func=None, 
+            self.origin['X'] = origin.Origin(func=None,
                 initial_value=initial_value)
             self.values = value
         else:
@@ -48,7 +48,7 @@ class Input(object):
 
     def reset(self):
         """Resets the function output state values.
-        
+
         """
         self.zeroed = False
 
@@ -61,14 +61,14 @@ class Input(object):
         # zero output
         if self.zero_after_time is not None and self.t > self.zero_after_time:
             self.origin['X'].decoded_output.set_value(
-                np.float32(np.zeros(self.origin['X'].dimensions)))
+                np.asarray(np.zeros(self.origin['X'].dimensions),dtype=np.float64))
             self.zeroed = True
-    
+
         # change value
         if self.change_time is not None and self.t > self.change_time:
             self.origin['X'].decoded_output.set_value(
-                np.float32(np.array([self.values[self.change_time]])))
-            index = sorted(self.values.keys()).index(self.change_time) 
+                np.asarray(np.array([self.values[self.change_time]])), dtype=np.float64)
+            index = sorted(self.values.keys()).index(self.change_time)
             if index < len(self.values) - 1:
                 self.change_time = sorted(self.values.keys())[index+1]
             else: self.change_time = None
@@ -78,8 +78,8 @@ class Input(object):
             value = self.origin['X'].func(self.t)
             # if value is a scalar output, make it a list
             if isinstance(value, Number):
-                value = [value] 
+                value = [value]
 
-            # cast as float32 for consistency / speed,
+            # cast as float64 for consistency / speed,
             # but _after_ it's been made a list
-            self.origin['X'].decoded_output.set_value(np.float32(value)) 
+            self.origin['X'].decoded_output.set_value(np.asarray(value, np.float64))
