@@ -2,7 +2,7 @@ import os
 import random
 from _collections import OrderedDict
 
-import probe
+import probe, ensemble
 
 from . import distribution
 
@@ -12,6 +12,7 @@ class Network(object):
 
         self.workers = {}
         self.probe_clients = {}
+        self.split_ensembles = {}
         self.distributor = distribution.DistributionManager(hosts_file)
         if usr_module is not None:
             module_name = os.path.basename(usr_module)
@@ -28,7 +29,7 @@ class Network(object):
         if seed is not None:
             self.random.seed(seed)
 
-    def connect(self, pre, post, func=None, **kwargs):
+    def _connect(self, pre, post, func, decoders, **kwargs):
         pre_worker = self.workers[pre]
         post_worker = self.workers[post]
 
@@ -42,7 +43,8 @@ class Network(object):
         pre_params = pre_worker.send_command({
             'cmd': 'connect_pre',
             'args': (),
-            'kwargs': {'post_addr': post_addr, 'func': func, 'dt': self.dt}
+            'kwargs': {'post_addr': post_addr, 'func': func, 'dt': self.dt,
+                'decoders': decoders}
         })
 
         for key, value in pre_params.iteritems():
@@ -55,8 +57,40 @@ class Network(object):
             'kwargs': kwargs
         })
 
-    def make(self, name, *args, **kwargs):
+    def connect(self, pre, post, func=None, **kwargs):
+        if pre in self.split_ensembles:
+            is_pre_split = True
+            pres = self.split_ensembles[pre]['children']
+
+            origin_name = func.__name__ if func is not None else 'X'
+            decoders = self.split_ensembles[pre]['parent'].get_subensemble_decoder(
+                len(pres), origin_name, func)
+        else:
+            is_pre_split = False
+            pres = [pre]
+
+        if post in self.split_ensembles:
+            posts = self.split_ensembles[post]['children']
+        else:
+            posts = [post]
+
+        for i, pre in enumerate(pres):
+            decoder = decoders[i] if is_pre_split else None
+            for post in posts:
+                self._connect(pre, post, func, decoder, **kwargs)
+
+    def _make_ensemble(self, name, **kwargs):
         worker = self.distributor.new_worker(name)
+        worker.send_command({
+            'cmd': 'make_ensemble',
+            'args': (name, ),
+            'kwargs': kwargs
+        })
+        self.workers[name] = worker
+
+    def make(self, name, num_subs=1, **kwargs):
+        if num_subs < 1:
+            raise Exception("ERROR", "num_subs must be greater than 0")
 
         if 'seed' not in kwargs.keys():
             if self.fixed_seed is not None:
@@ -64,13 +98,30 @@ class Network(object):
             else:
                 kwargs['seed'] = self.random.randrange(0x7fffffff)
         kwargs['dt'] = self.dt
-        args = (name, ) + args
-        worker.send_command({
-            'cmd': 'make_ensemble',
-            'args': args,
-            'kwargs': kwargs
-        })
-        self.workers[name] = worker
+
+        if num_subs == 1:
+            self._make_ensemble(name, **kwargs)
+        else:
+            orig_ensemble = ensemble.Ensemble(**kwargs)
+            self.split_ensembles[name] = {
+                'parent': orig_ensemble,
+                'children': []
+            }
+            e_num = 0
+            for encoder, decoder, bias, alpha in \
+                orig_ensemble.get_subensemble_parts(num_subs):
+
+                sub_name = name + "-SUB-" + str(e_num)
+                e_num += 1
+
+                kwargs["dimensions"] = orig_ensemble.dimensions
+                kwargs["neurons"] = orig_ensemble.neurons_num / num_subs
+                kwargs["encoders"] = encoder
+                kwargs["decoders"] = decoder
+                kwargs["bias"] = bias
+                kwargs["alpha"] = alpha
+                self._make_ensemble(sub_name, is_subensemble=True, **kwargs)
+                self.split_ensembles[name]['children'].append(sub_name)
 
     def make_array(self, name, neurons, array_size, dimensions=1, **kwargs):
         self.make(name=name, neurons=neurons, dimensions=dimensions,
@@ -126,6 +177,9 @@ class Network(object):
         return client
 
     def run(self, time):
+        # cleanup data that we do not need anymore
+        self.split_ensembles = dict()
+
         for worker in self.workers.values():
             worker.send_command({
                 'cmd': 'start',

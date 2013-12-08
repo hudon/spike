@@ -86,13 +86,18 @@ class DistributionDaemon:
     def connect_pre(self, worker_name, post_addr, **kwargs):
         wnode = self.workers[worker_name]['node']
         func = kwargs.pop('func', None)
+        decoders = kwargs.pop('decoders', None)
+        is_subensemble = isinstance(wnode, ensemble.EnsembleProcess) and wnode.ensemble.is_subensemble
 
         if func is None:
             worigin = wnode.origin['X']
         else:
             origin_name = func.__name__
             if origin_name not in wnode.origin:
-                wnode.add_origin(origin_name, func, **kwargs)
+                if is_subensemble:
+                    wnode.add_origin(origin_name, None, decoders=decoders, **kwargs)
+                else:
+                    wnode.add_origin(origin_name, func, **kwargs)
             worigin = wnode.origin[origin_name]
 
         worigin_output = worigin.decoded_output.get_value()
