@@ -6,6 +6,8 @@ import numpy as np
 
 from . import origin
 
+import zmq
+import zmq_utils
 
 class Input(object):
     """Inputs are objects that provide real-valued input to ensembles.
@@ -13,22 +15,26 @@ class Input(object):
     Any callable can be used an input function.
 
     """
-    def __init__(self, name, value, zero_after_time=None):
+    def __init__(self, name, value, dt, zero_after_time=None):
         """
         :param string name: name of the function input
         :param value: defines the output decoded_output
         :type value: float or function
         :param float zero_after_time:
             time after which to set function output = 0 (s)
-
         """
         self.name = name
         self.t = 0
+        self.dt = dt
+        self.run_time = 0
         self.function = None
         self.zero_after_time = zero_after_time
         self.zeroed = False
         self.change_time = None
         self.origin = {}
+
+        # context should be created when the process is started (bind_sockets)
+        self.zmq_context = None
 
         # if value parameter is a python function
         if callable(value):
@@ -52,22 +58,24 @@ class Input(object):
         """
         self.zeroed = False
 
-    def theano_tick(self):
-        """Move function input forward in time.
-        """
+    def tick(self):
+        """Move function input forward in time."""
         if self.zeroed:
+            ## Even if the input is zeroed, we must send output
+            for o in self.origin.values():
+                o.tick()
             return
 
         # zero output
         if self.zero_after_time is not None and self.t > self.zero_after_time:
             self.origin['X'].decoded_output.set_value(
-                np.asarray(np.zeros(self.origin['X'].dimensions),dtype=np.float64))
+                np.float32(np.zeros(self.origin['X'].dimensions)))
             self.zeroed = True
 
         # change value
         if self.change_time is not None and self.t > self.change_time:
             self.origin['X'].decoded_output.set_value(
-                np.asarray(np.array([self.values[self.change_time]])), dtype=np.float64)
+                np.float32(np.array([self.values[self.change_time]])))
             index = sorted(self.values.keys()).index(self.change_time)
             if index < len(self.values) - 1:
                 self.change_time = sorted(self.values.keys())[index+1]
@@ -80,6 +88,33 @@ class Input(object):
             if isinstance(value, Number):
                 value = [value]
 
-            # cast as float64 for consistency / speed,
+            # cast as float32 for consistency / speed,
             # but _after_ it's been made a list
-            self.origin['X'].decoded_output.set_value(np.asarray(value, np.float64))
+            self.origin['X'].decoded_output.set_value(np.float32(value))
+
+        for o in self.origin.values():
+            o.tick()
+
+    def run(self, admin_socket_def):
+        self.bind_sockets()
+        admin_conn = admin_socket_def.create_socket(self.zmq_context)
+
+        sim_time = float(admin_conn.recv())
+
+        for i in range(int(sim_time / self.dt)):
+            self.t = self.run_time + i * self.dt
+            self.tick()
+
+        self.run_time += sim_time
+
+        admin_conn.send("FIN") # inform main proc that input finished
+        admin_conn.recv() # wait for an ACK from main proc before exiting
+
+    def bind_sockets(self):
+        # create a context for this input process if do not have one already
+        if self.zmq_context is None:
+            self.zmq_context = zmq.Context()
+
+        for o in self.origin.values():
+            o.bind_sockets(self.zmq_context)
+

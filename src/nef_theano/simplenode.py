@@ -109,9 +109,9 @@ class SimpleNode(object):
             if isinstance(value, Number):
                 value = [value]
 
-            # cast as float32 for consistency / speed,
+            # cast as float64 for consistency / speed,
             # but _after_ it's been made a list
-            origin.decoded_output.set_value(np.float32(value))
+            origin.decoded_output.set_value(np.asarray(value, dtype=np.float64))
             origin.tick()
 
     def run(self, ticker_socket_def):

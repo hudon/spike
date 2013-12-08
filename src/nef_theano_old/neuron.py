@@ -14,7 +14,7 @@ def accumulate(J, neurons, dt, time=1.0, init_time=0.05):
     Take a neuron model, run it for the given amount of time with
     fixed input. Used to generate activity matrix when calculating
     origin decoders.
-
+    
     Returns the accumulated output over that time.
 
     :param J: theano function object for the input current
@@ -25,17 +25,17 @@ def accumulate(J, neurons, dt, time=1.0, init_time=0.05):
 
     """
     # create internal state variable to keep track of number of spikes
-    total = theano.shared(np.zeros(neurons.size).astype('float64'),
+    total = theano.shared(np.zeros(neurons.size).astype('float32'), 
                           name='neuron.total')
-
+    
     ### make the standard neuron update function
 
     # updates is dictionary of variables returned by neuron.update
-    updates = neurons.update(J.astype('float64'), dt)
+    updates = neurons.update(J.astype('float32'), dt)
 
     # update all internal state variables listed in updates
     tick = theano.function([], [], updates=updates)
-
+    
     ### make a variant that also includes computing the total output
     # add another internal variable to change to updates dictionary
     updates[total] = total + neurons.output
@@ -50,7 +50,7 @@ def accumulate(J, neurons, dt, time=1.0, init_time=0.05):
     # call the accumulator version a bunch of times
     accumulate_spikes.fn(n_calls = int(time / dt))
 
-    return total.get_value().astype('float64') / time
+    return total.get_value().astype('float32') / time
 
 
 class Neuron(object):
@@ -69,12 +69,12 @@ class Neuron(object):
         """
         self.size = size
         # set up theano internal state variable
-        self.output = theano.shared(np.zeros(size).astype('float64'),
+        self.output = theano.shared(np.zeros(size).astype('float32'), 
                                     name='neuron.output')
 
     def reset(self):
         """Reset the state of the neuron."""
-        self.output.set_value(np.zeros(self.size).astype('float64'))
+        self.output.set_value(np.zeros(self.size).astype('float32'))
 
     def update(self, input_current):
         """All neuron subclasses must have an update function.

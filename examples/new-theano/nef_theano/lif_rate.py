@@ -22,12 +22,12 @@ class LIFRateNeuron(neuron.Neuron):
     def make_alpha_bias(self, max_rates, intercepts):
         """Compute the alpha and bias needed to get the given max_rate
         and intercept values.
-        
+
         Returns gain (alpha) and offset (j_bias) values of neurons.
 
         :param float array max_rates: maximum firing rates of neurons
         :param float array intercepts: x-intercepts of neurons
-        
+
         """
         x = 1.0 / (1 - TT.exp(
                 (self.tau_ref - (1.0 / max_rates)) / self.tau_rc))
@@ -37,24 +37,24 @@ class LIFRateNeuron(neuron.Neuron):
 
     def update(self, input_current):
         """Theano update rule that implementing LIF rate neuron type.
-        
+
         Returns dictionary with firing rate for current time step.
 
         :param float array input_current:
             the input current for the current time step
-        
+
         """
         # set up denominator of LIF firing rate equation
         rate = self.tau_ref - self.tau_rc * TT.log(
             1 - 1.0 / TT.maximum(input_current, 0))
-        
+
         # if input current is enough to make neuron spike,
         # calculate firing rate, else return 0
         rate = TT.switch(input_current > 1, 1 / rate, 0)
 
         # return dictionary of internal variables to update
         return OrderedDict({
-                self.output: TT.unbroadcast(rate.astype('float32'), 0)
+                self.output: TT.unbroadcast(rate.astype('float64'), 0)
                 })
 
 neuron.types['lif-rate'] = LIFRateNeuron

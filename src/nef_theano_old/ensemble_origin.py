@@ -25,14 +25,14 @@ class EnsembleOrigin(Origin):
         """
         self.ensemble = ensemble
         # sets up self.decoders
-        func_size = self.compute_decoders(func, dt, eval_points)
-        # decoders is array_size * neurons_num * func_dimensions,
+        func_size = self.compute_decoders(func, dt, eval_points) 
+        # decoders is array_size * neurons_num * func_dimensions, 
         # initial value should have array_size values * func_dimensions
-        initial_value = np.zeros(self.ensemble.array_size * func_size)
+        initial_value = np.zeros(self.ensemble.array_size * func_size) 
         Origin.__init__(self, func=func, initial_value=initial_value)
         self.func_size = func_size
 
-    def compute_decoders(self, func, dt, eval_points=None):
+    def compute_decoders(self, func, dt, eval_points=None):     
         """Compute decoding weights.
 
         Calculate the scaling values to apply to the output
@@ -41,18 +41,18 @@ class EnsembleOrigin(Origin):
         generates the desired decoded output.
 
         Decoder values computed as D = (A'A)^-1 A'X_f
-        where A is the matrix of activity values of each
+        where A is the matrix of activity values of each 
         neuron over sampled X values, and X_f is the vector
         of desired f(x) values across sampled points.
 
         :param function func: function to compute with this origin
         :param float dt: timestep for simulating to get A matrix
         :param list eval_points:
-            specific set of points to optimize decoders over
+            specific set of points to optimize decoders over 
         """
 
         key = self.ensemble.cache_key
-        if eval_points == None:
+        if eval_points == None:  
             # generate sample points from state space randomly
             # to minimize decoder error over in decoder calculation
             #TODO: have num_samples be more for higher dimensions?
@@ -72,15 +72,15 @@ class EnsembleOrigin(Origin):
             if eval_points is not self.ensemble.eval_points:
                 key += '_eval%08x' % hash(tuple([tuple(x) for x in eval_points]))
 
-            if eval_points.shape[0] != self.ensemble.dimensions:
-                raise Exception("Evaluation points must be of the form: " +
+            if eval_points.shape[0] != self.ensemble.dimensions: 
+                raise Exception("Evaluation points must be of the form: " + 
                     "[dimensions x num_samples]")
 
 
-        # compute the target_values at the sampled points
+        # compute the target_values at the sampled points 
         if func is None:
             # if no function provided, use identity function as default
-            target_values = eval_points
+            target_values = eval_points 
         else:
             # otherwise calculate target_values using provided function
 
@@ -100,12 +100,12 @@ class EnsembleOrigin(Origin):
         # replicate attached population of neurons into array of ensembles,
         # one ensemble per sample point
         # set up matrix to store decoders,
-        # should be (array_size * neurons_num * dim_func)
+        # should be (array_size * neurons_num * dim_func) 
         decoders = np.zeros((self.ensemble.array_size,
                              self.ensemble.neurons_num,
                              target_values.shape[0]))
 
-        for index in range(self.ensemble.array_size):
+        for index in range(self.ensemble.array_size): 
             index_key = key + '_%d'%index
             data = cache.get_gamma_inv(index_key)
             if data is not None:
@@ -116,9 +116,9 @@ class EnsembleOrigin(Origin):
                 J += self.ensemble.bias[index][:, np.newaxis]
 
                 # so in parallel we can calculate the activity
-                # of all of the neurons at each sample point
+                # of all of the neurons at each sample point 
                 neurons = self.ensemble.neurons.__class__(
-                    size=(self.ensemble.neurons_num, self.num_samples),
+                    size=(self.ensemble.neurons_num, self.num_samples), 
                     tau_rc=self.ensemble.neurons.tau_rc,
                     tau_ref=self.ensemble.neurons.tau_ref)
 
@@ -126,13 +126,13 @@ class EnsembleOrigin(Origin):
                 # accumulating spikes to get a spike rate
                 #TODO: is this long enough? Should it be less?
                 # If we do less, we may get a good noise approximation!
-                A = neuron.accumulate(J=J, neurons=neurons, dt=dt,
+                A = neuron.accumulate(J=J, neurons=neurons, dt=dt, 
                     time=dt*200, init_time=dt*20)
                 # add noise to elements of A
                 # std_dev = max firing rate of population * .1
                 noise = .1 # from Nengo
                 A += noise * np.random.normal(
-                    size=(self.ensemble.neurons_num, self.num_samples),
+                    size=(self.ensemble.neurons_num, self.num_samples), 
                     scale=(self.ensemble.max_rate[1]))
 
                 # compute Gamma and Upsilon
@@ -153,7 +153,7 @@ class EnsembleOrigin(Origin):
                 dnoise = self.ensemble.decoder_noise * self.ensemble.decoder_noise
 
                 # formerly 0.1 * 0.1 * max(w), set threshold
-                limit = dnoise * max(w)
+                limit = dnoise * max(w) 
                 for i in range(len(w)):
                     if w[i] < limit:
                         # if < limit set eval = 0
@@ -163,17 +163,17 @@ class EnsembleOrigin(Origin):
                         w[i] = 1.0 / w[i]
                 # w[:, np.newaxis] gives transpose of vector,
                 # np.multiply is very fast element-wise multiplication
-                Ginv = np.dot(v, np.multiply(w[:, np.newaxis], v.T))
+                Ginv = np.dot(v, np.multiply(w[:, np.newaxis], v.T)) 
 
-                #Ginv=np.linalg.pinv(G, rcond=.01)
+                #Ginv=np.linalg.pinv(G, rcond=.01)  
                 cache.set_gamma_inv(index_key, (Ginv, A))
 
             U = np.dot(A, target_values.T)
 
-            # compute decoders - least squares method
+            # compute decoders - least squares method 
             decoders[index] = np.dot(Ginv, U)
 
-        self.decoders = theano.shared(decoders.astype('float64'),
+        self.decoders = theano.shared(decoders.astype('float32'), 
             name='ensemble_origin.decoders')
         return target_values.shape[0]
 
@@ -187,7 +187,7 @@ class EnsembleOrigin(Origin):
         samples = srng.normal((self.num_samples, self.ensemble.dimensions))
 
         # normalize magnitude of sampled points to be of unit length
-        norm = TT.sum(samples * samples, axis=[1], keepdims=True)
+        norm = TT.sum(samples * samples, axis=[1], keepdims=True) 
         samples = samples / TT.sqrt(norm)
 
         # generate magnitudes for vectors from uniform distribution
@@ -195,9 +195,9 @@ class EnsembleOrigin(Origin):
                  ** (1.0 / self.ensemble.dimensions))
 
         # scale sample points
-        samples = samples.T * scale
+        samples = samples.T * scale 
 
-        return theano.function([], samples)()
+        return theano.function([], samples)()            
 
     def update(self, dt, spikes):
         """the theano computation for converting neuron output
@@ -215,7 +215,7 @@ class EnsembleOrigin(Origin):
         # to put us back in the right range
         r = self.ensemble.radius
         # weighted summation over neural activity to get decoded_output
-        z = TT.zeros((self.ensemble.array_size, self.func_size), dtype='float64')
+        z = TT.zeros((self.ensemble.array_size, self.func_size), dtype='float32')
         decoded_output = TT.flatten(
             map_gemv(r / dt, self.decoders.dimshuffle(0,2,1), spikes, 1.0, z))
 

@@ -23,13 +23,13 @@ class Filter:
             value = source.get_value()
             if shape is not None:
                 assert value.shape == shape
-            if name is None: 
+            if name is None:
                 name = 'filtered_%s' % source.name
         elif shape is not None:
-            value = np.zeros(shape, dtype='float32')
+            value = np.zeros(shape, dtype='float64')
         else:
             raise Exception("Either \"source\" or \"shape\" must define filter shape")
-            
+
         ### create shared variable to store the filtered value
         self.value = theano.shared(value, name=name)
         self.name = name
@@ -49,7 +49,7 @@ class Filter:
         if self.pstc >= dt:
             decay = TT.cast(np.exp(-dt / self.pstc), self.value.dtype)
             value_new = decay * self.value + (1 - decay) * self.source
-            return OrderedDict([(self.value, value_new.astype('float32'))])
+            return OrderedDict([(self.value, value_new.astype('float64'))])
         else:
             ### no filtering, so just make the value the source
-            return OrderedDict([(self.value, self.source.astype('float32'))])
+            return OrderedDict([(self.value, self.source.astype('float64'))])

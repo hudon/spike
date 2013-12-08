@@ -69,13 +69,13 @@ class Input(object):
         # zero output
         if self.zero_after_time is not None and self.t > self.zero_after_time:
             self.origin['X'].decoded_output.set_value(
-                np.float32(np.zeros(self.origin['X'].dimensions)))
+                np.asarray(np.zeros(self.origin['X'].dimensions), dtype=np.float64))
             self.zeroed = True
 
         # change value
         if self.change_time is not None and self.t > self.change_time:
             self.origin['X'].decoded_output.set_value(
-                np.float32(np.array([self.values[self.change_time]])))
+                np.asarray(np.array([self.values[self.change_time]]), dtype=np.float64))
             index = sorted(self.values.keys()).index(self.change_time)
             if index < len(self.values) - 1:
                 self.change_time = sorted(self.values.keys())[index+1]
@@ -88,27 +88,28 @@ class Input(object):
             if isinstance(value, Number):
                 value = [value]
 
-            # cast as float32 for consistency / speed,
+            # cast as float64 for consistency / speed,
             # but _after_ it's been made a list
-            self.origin['X'].decoded_output.set_value(np.float32(value))
+            self.origin['X'].decoded_output.set_value(np.asarray(value, dtype=np.float64))
 
         for o in self.origin.values():
             o.tick()
 
-    def run(self, admin_socket_def):
+    def run(self, admin_socket_def, time):
         self.bind_sockets()
         admin_conn = admin_socket_def.create_socket(self.zmq_context)
 
-        sim_time = float(admin_conn.recv())
-
-        for i in range(int(sim_time / self.dt)):
+        for i in range(int(time / self.dt)):
             self.t = self.run_time + i * self.dt
             self.tick()
 
-        self.run_time += sim_time
+        self.run_time += time
 
-        admin_conn.send("FIN") # inform main proc that input finished
-        admin_conn.recv() # wait for an ACK from main proc before exiting
+        admin_conn.recv_pyobj() # FIN
+        admin_conn.send_pyobj({'result': 'ack'})
+
+        admin_conn.recv_pyobj() # KILL
+        admin_conn.send_pyobj({'result': 'ack'})
 
     def bind_sockets(self):
         # create a context for this input process if do not have one already
