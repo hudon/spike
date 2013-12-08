@@ -7,6 +7,7 @@ tempdir = tempfile.gettempdir()
 sys.path.append(tempdir)
 
 from multiprocessing import Process
+import numpy as np
 
 # Distributor listens on this port for commands
 LISTENER_ENDPOINT = "tcp://*:9000"
@@ -67,9 +68,80 @@ class DistributionDaemon:
     def _connect(self, post_node, post_socket, pre_name, pre_output, pre_dimensions,
         transform=None, weight=1, index_pre=None, index_post=None, pstc=0.01,
         func=None):
+        post = post_node
 
         if transform is not None:
-            raise Exception("ERROR: not expecting a transform")
+            assert ((weight == 1) and (index_pre is None) and (index_post is None))
+
+            transform = np.array(transform)
+
+            if transform.shape[0] != post.dimensions * post.array_size or len(transform.shape) > 2:
+
+                if transform.shape[0] == post.array_size * post.neurons_num:
+                    transform = transform.reshape(
+                                      [post.array_size, post.neurons_num] +\
+                                                list(transform.shape[1:]))
+
+                if len(transform.shape) == 2: # repeat array_size times
+                    transform = np.tile(transform, (post.array_size, 1, 1))
+
+                # check for pre side encoded connection (case 3)
+                if len(transform.shape) > 3 or \
+                       transform.shape[2] == pre.array_size * pre.neurons_num:
+
+                    raise Exception("ERROR", "connection 3 not handled yet")
+
+                    if transform.shape[2] == pre.array_size * pre.neurons_num:
+                        transform = transform.reshape(
+                                        [post.array_size, post.neurons_num,
+                                              pre.array_size, pre.neurons_num])
+                    assert transform.shape == \
+                            (post.array_size, post.neurons_num,
+                             pre.array_size, pre.neurons_num)
+
+                    print 'setting pre_output=spikes'
+
+                    # get spiking output from pre population
+                    pre_output = pre.neurons.output
+
+                    case1 = connection.Case1(
+                        (post.array_size, post.neurons_num,
+                         pre.array_size, pre.neurons_num))
+
+                    # pass in the pre population decoded output value
+                    # to the post population
+                    post.add_termination(input_socket=destination_socket,
+                        name=pre_name, pstc=pstc,
+                        encoded_input= pre_output.get_value(),
+                        transform=transform, case=case1)
+
+                    pre_origin.add_output(origin_socket)
+
+                    return
+
+                else: # otherwise we're in case 2 (pre is decoded)
+                    raise Exception("ERROR", "connection 2 not handled yet")
+
+                    assert transform.shape ==  \
+                               (post.array_size, post.neurons_num, pre_dimensions)
+
+                    # can't specify a function with either side encoded connection
+                    assert func == None
+
+                    case2 = connection.Case2(
+                        (post.array_size, post.neurons_num,
+                         pre.array_size, pre.neurons_num))
+
+                    # pass in the pre population decoded output value
+                    # to the post population
+                    post.add_termination(input_socket=destination_socket,
+                        name=pre_name, pstc=pstc,
+                        encoded_input= pre_output.get_value(),
+                        transform=transform, case=case2)
+
+                    pre_origin.add_output(origin_socket)
+
+                    return
 
         transform = connection.compute_transform(
             dim_pre=pre_dimensions,

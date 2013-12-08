@@ -118,11 +118,11 @@ class Ensemble:
     """
 
     def __init__(self, neurons, dimensions, dt, tau_ref=0.002, tau_rc=0.02,
-                 max_rate=(200, 300), intercept=(-1.0, 1.0), radius=1.0,
-                 encoders=None, seed=None, neuron_type='lif',
-                 array_size=1, eval_points=None, decoder_noise=0.1,
-                 noise_type='uniform', noise=None, mode='spiking',
-                 is_subensemble=False, decoders=None, bias=None, alpha=None):
+        max_rate=(200, 300), intercept=(-1.0, 1.0), radius=1.0,
+        encoders=None, seed=None, neuron_type='lif',
+        array_size=1, eval_points=None, decoder_noise=0.1,
+        noise_type='uniform', noise=None, mode='spiking',
+        is_subensemble=False, decoders=None, bias=None, alpha=None):
         self.dt = dt
 
         if seed is None:
@@ -164,7 +164,6 @@ class Ensemble:
 
         # if we're creating a spiking ensemble
         if self.mode == 'spiking':
-
             # TODO: handle different neuron types,
             self.neurons = neuron.types[neuron_type](
                 size=(array_size, self.neurons_num),
@@ -209,7 +208,6 @@ class Ensemble:
                 eval_points=self.eval_points, decoders=decoders)
 
         elif self.mode == 'direct':
-            raise Exception("ERROR: Spike does not support direct connections")
             # make default origin
             self.add_origin('X', func=None, dimensions=self.dimensions*self.array_size)
             # reset neurons_num to 0
@@ -253,18 +251,17 @@ class Ensemble:
         elif encoded_input is not None: assert (decoded_input is None)
         else: assert False
 
-        if decoded_input is not None and self.mode is 'direct':
+        if decoded_input is not None and self.mode == 'direct':
             # decoded_input is NOT the shared variable at the origin
             pre_output = theano.shared(decoded_input)
             source = TT.dot(transform, pre_output)
-
             self.decoded_input[name] = filter.Filter(
                 name=name, pstc=pstc, source=source,
                 shape=(self.array_size, self.dimensions),
                 pre_output=pre_output)
 
         # decoded_input in this case will be the output of pre node
-        elif decoded_input is not None and self.mode is 'spiking':
+        elif decoded_input is not None and self.mode == 'spiking':
             # decoded_input is NOT the shared variable at the origin
             pre_output = theano.shared(decoded_input)
             source = TT.dot(transform, pre_output)
@@ -547,7 +544,6 @@ class Ensemble:
                         updates.update(OrderedDict({o.decoded_output:
                             TT.flatten(X).astype('float64')}))
         return updates
-
 
     def get_subensemble_parts(self, num_subs):
         """

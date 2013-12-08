@@ -29,7 +29,7 @@ class Worker:
         return response['result']
 
     def send_command(self, message):
-        is_direct = message['cmd'] is 'fin' or message['cmd'] is 'get_data'
+        is_direct = message['cmd'] == 'fin' or message['cmd'] == 'get_data'
         addr = self.worker_addr if is_direct else self.daemon_addr
         return self._communicate(message, addr)
 

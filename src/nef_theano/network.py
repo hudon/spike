@@ -2,7 +2,7 @@ import os
 import random
 from _collections import OrderedDict
 
-import probe, ensemble
+import probe, ensemble, subnetwork
 
 from . import distribution
 
@@ -102,6 +102,9 @@ class Network(object):
         if num_subs == 1:
             self._make_ensemble(name, **kwargs)
         else:
+            if 'mode' in kwargs and kwargs['mode'] == 'direct':
+                raise Exception("ERROR", "do not support direct subensembles")
+
             orig_ensemble = ensemble.Ensemble(**kwargs)
             self.split_ensembles[name] = {
                 'parent': orig_ensemble,
@@ -186,6 +189,9 @@ class Network(object):
             self.probe_clients[name] = client
 
         return client
+
+    def make_subnetwork(self, name):
+        return subnetwork.SubNetwork(name, self)
 
     def run(self, time):
         # cleanup data that we do not need anymore
