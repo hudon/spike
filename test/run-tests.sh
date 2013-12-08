@@ -44,7 +44,7 @@ compareOutput(){
   #  This will compare the output that goes to standard out.  At the moment, we don't
   #  check the output on standard error.
   start=$(date +"%s")
-  echo -ne "Computing output from command '${ACTUAL_OUT_CMD}'..."
+  echo -ne "Computing output from command \n${ACTUAL_OUT_CMD}\n"
   ACTUAL_OUT=$(${ACTUAL_OUT_CMD})
   ACTUAL_RETURN_CODE=$?
   end=$(date +"%s")
@@ -52,7 +52,7 @@ compareOutput(){
   echo "Took ${diff} seconds."
 
   start=$(date +"%s")
-  echo -ne "Computing output from command '${EXPECTED_OUT_CMD}'..."
+  echo -ne "Computing output from command \n${EXPECTED_OUT_CMD}\n"
   EXPECTED_OUT=$(${EXPECTED_OUT_CMD})
   EXPECTED_RETURN_CODE=$?
   end=$(date +"%s")
@@ -64,12 +64,25 @@ compareOutput(){
 
   diff=$(diff <(echo "${ACTUAL_OUT}") <(echo "${EXPECTED_OUT}"))
 
+  DECIMAL_PLACES=2
+  AWK_ARG="{ printf \"%0.${DECIMAL_PLACES}f\\n\", \$1}"
+  EGREP_ARG="[0-9]+.[0-9]+"
+  SED_ARG="s/([0-9]+.[0-9]+)/\\n\1\\n/g"
+
   if [ ${#diff} -ne 0 ]; then
-    echo -e "ERROR: Diff was:"
-    echo "$diff"
-    echo -e ${RED_TEXT}"ERROR: Output from '${ACTUAL_OUT_CMD}' and \
-      '${EXPECTED_OUT_CMD}' does not match."${NORMAL_TEXT}
-    exit 1
+    #  Get all the numbers our, round em, diff em
+    ACTUAL_OUT=`echo "${ACTUAL_OUT}" | sed -r "${SED_ARG}" | egrep "${EGREP_ARG}" | awk "${AWK_ARG}"`
+    EXPECTED_OUT=`echo "${EXPECTED_OUT}" | sed -r "${SED_ARG}" | egrep "${EGREP_ARG}" | awk "${AWK_ARG}"`
+    diff=$(diff <(echo "${ACTUAL_OUT}") <(echo "${EXPECTED_OUT}"))
+    if [ ${#diff} -ne 0 ]; then
+      echo -e "ERROR: Diff was:"
+      echo "$diff"
+      echo -e ${RED_TEXT}"ERROR: Output from '${ACTUAL_OUT_CMD}' and \
+        '${EXPECTED_OUT_CMD}' does not match even when rounding all numbers to ${DECIMAL_PLACES} decimal places."${NORMAL_TEXT}
+      exit 1
+    else
+      echo -e ${GREEN_TEXT}"INFO: Program outputs are different, but identical when rounded to ${DECIMAL_PLACES} decimal places."${NORMAL_TEXT}
+    fi
   #  Always test it against 0 because we arn't testing failure cases and we want
   #  to catch any import errors which will make both tests fail.
   elif [ ${ACTUAL_RETURN_CODE} -ne 0 ]; then
