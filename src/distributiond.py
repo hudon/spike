@@ -2,6 +2,10 @@ import zmq
 from nef_theano import input, ensemble, probe
 from nef_theano import connection, zmq_utils
 
+import sys, tempfile, os
+tempdir = tempfile.gettempdir()
+sys.path.append(tempdir)
+
 from multiprocessing import Process
 
 # Distributor listens on this port for commands
@@ -28,6 +32,12 @@ class DistributionDaemon:
 
     def ping(self, worker_name):
         self.listener_socket.send_pyobj({'result': 'pong'})
+
+    def write_usr_module(self, worker_name, module_name, module_contents):
+        file_path = os.path.join(tempdir, module_name)
+        with open(file_path, 'w') as module_file:
+            module_file.write(module_contents)
+        self.listener_socket.send_pyobj({'result': 'ack'})
 
     def next_avail_port(self, worker_name):
         next_port = self._get_next_port()
@@ -73,9 +83,18 @@ class DistributionDaemon:
         post_node.add_termination(input_socket=post_socket, name=pre_name,
             pstc=pstc, decoded_input=pre_output, transform=transform)
 
-    def connect_pre(self, worker_name, post_addr):
+    def connect_pre(self, worker_name, post_addr, **kwargs):
         wnode = self.workers[worker_name]['node']
-        worigin = wnode.origin['X']
+        func = kwargs.pop('func', None)
+
+        if func is None:
+            worigin = wnode.origin['X']
+        else:
+            origin_name = func.__name__
+            if origin_name not in wnode.origin:
+                wnode.add_origin(origin_name, func, **kwargs)
+            worigin = wnode.origin[origin_name]
+
         worigin_output = worigin.decoded_output.get_value()
         worigin_dimensions = worigin.dimensions
 

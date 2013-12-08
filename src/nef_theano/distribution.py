@@ -50,6 +50,18 @@ class DistributionManager:
             self.remote_hosts = [host.strip() for host in f.readlines()]
             self.next_host_id = 0
 
+    def send_usr_module(self, module_name, module_contents):
+        for host in self.remote_hosts:
+            try:
+                self._send_message_to_daemon({
+                    'cmd': 'write_usr_module',
+                    'name': None,
+                    'args': (module_name, module_contents),
+                    'kwargs': {}},
+                    "tcp://%s:%s" % (host, DAEMON_PORT))
+            except zmq.ZMQError:
+                continue
+
     def _next_host(self):
         running_hosts = len(self.remote_hosts)
 

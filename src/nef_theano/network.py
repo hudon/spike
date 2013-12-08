@@ -1,3 +1,4 @@
+import os
 import random
 from _collections import OrderedDict
 
@@ -6,10 +7,16 @@ import probe
 from . import distribution
 
 class Network(object):
-    def __init__(self, name, hosts_file, seed=None, fixed_seed=None, dt=.001):
+    def __init__(self, name, hosts_file, seed=None, fixed_seed=None, dt=.001,
+        usr_module=None):
+
         self.workers = {}
         self.probe_clients = {}
         self.distributor = distribution.DistributionManager(hosts_file)
+        if usr_module is not None:
+            module_name = os.path.basename(usr_module)
+            with open(usr_module, "rb") as module:
+                self.distributor.send_usr_module(module_name, module.read())
 
         self.name = name
         self.dt = dt
@@ -21,7 +28,7 @@ class Network(object):
         if seed is not None:
             self.random.seed(seed)
 
-    def connect(self, pre, post, *args, **kwargs):
+    def connect(self, pre, post, func=None, **kwargs):
         pre_worker = self.workers[pre]
         post_worker = self.workers[post]
 
@@ -35,7 +42,7 @@ class Network(object):
         pre_params = pre_worker.send_command({
             'cmd': 'connect_pre',
             'args': (),
-            'kwargs': {'post_addr': post_addr}
+            'kwargs': {'post_addr': post_addr, 'func': func, 'dt': self.dt}
         })
 
         for key, value in pre_params.iteritems():
@@ -44,7 +51,7 @@ class Network(object):
         kwargs['post_port'] = post_port
         post_worker.send_command({
             'cmd': 'connect_post',
-            'args': args,
+            'args': (),
             'kwargs': kwargs
         })
 

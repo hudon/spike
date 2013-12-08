@@ -9,11 +9,12 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-import functions
+import functions as funcs
 
 hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
 if hosts_file:
-  net = nef.Network('Function Test', seed=91, hosts_file=hosts_file)
+  net = nef.Network('Function Test', seed=91, hosts_file=hosts_file,
+    usr_module='test/nengo_tests/functions.py')
 else:
   net = nef.Network('Function Test',seed=91)
 
@@ -22,7 +23,7 @@ net.make('A', neurons=250, dimensions=1)
 net.make('B', neurons=250, dimensions=3)
 
 net.connect('in', 'A')
-net.connect('A', 'B', func=functions.square, pstc=0.1)
+net.connect('A', 'B', func=funcs.square, pstc=0.1)
 
 timesteps = 500
 dt_step = 0.01
