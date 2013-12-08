@@ -16,11 +16,16 @@ import zmq_utils
 class ProbeClient(object):
     def __init__(self, name):
         self.name = name;
+        self.data = None;
 
     def get_data(self):
         return self.data
-    def set_data(self, data):
-        self.data = data
+
+    def add_data(self, probe_data):
+        if self.data is None:
+            self.data = probe_data
+        else:
+            self.data += probe_data
 
 class Probe(object):
     """A class to record from things (i.e., origins).

@@ -138,12 +138,7 @@ class Network(object):
         })
         self.workers[args[0]] = worker
 
-    def make_probe(self, target, name=None, dt_sample=0.01, data_type='decoded', **kwargs):
-        i = 0
-        while name is None or self.workers.has_key(name):
-            i += 1
-            name = ("Probe%d" % i)
-
+    def _make_probe(self, target, name, dt_sample=0.01, data_type='decoded', **kwargs):
         probe_worker = self.distributor.new_worker(name)
         probe_port = probe_worker.send_command({
             'cmd': 'next_avail_port',
@@ -162,7 +157,7 @@ class Network(object):
         kwargs['dt'] = self.dt
         kwargs['dt_sample'] = dt_sample
         kwargs['target_name'] = target + '-' + data_type
-        kwargs['target'] = target_params['pre_output']
+        kwargs['target'] = target_params['pre_output'] # target origin output
 
         probe_worker.send_command({
             'cmd': 'make_probe',
@@ -171,9 +166,25 @@ class Network(object):
         })
         self.workers[name] = probe_worker
 
+    def make_probe(self, target, name=None, dt_sample=0.01, data_type='decoded', **kwargs):
+        i = 0
+        while name is None or self.workers.has_key(name):
+            i += 1
+            name = ("Probe%d" % i)
+
         # a wrapper for probe used by users to retrieve probe data
         client = probe.ProbeClient(name)
-        self.probe_clients[name] = client
+
+        if target in self.split_ensembles:
+            target_subs = self.split_ensembles[target]['children']
+            for i, target_sub in enumerate(target_subs):
+                sub_name = name + "-SUB-" + str(i)
+                self._make_probe(target_sub, sub_name, dt_sample, data_type, **kwargs)
+                self.probe_clients[sub_name] = client
+        else:
+            self._make_probe(target, name, dt_sample, data_type, **kwargs)
+            self.probe_clients[name] = client
+
         return client
 
     def run(self, time):
@@ -195,7 +206,7 @@ class Network(object):
             if worker.name in self.probe_clients.keys():
                 client = self.probe_clients[worker.name]
                 data = worker.send_command({'cmd': 'get_data', 'args': (), 'kwargs': {}})
-                client.set_data(data)
+                client.add_data(data)
             worker.kill()
 
         self.run_time += time
