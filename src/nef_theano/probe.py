@@ -182,12 +182,17 @@ class AggregatorProbe(object):
             probe_conn.send("ACK")
 
         # sum up all the data received from the probes
+        np.set_printoptions(precision=15)
         data = None
         for probe in self.probes.keys():
             probe_data = self.probes[probe]["data"]
             if data is None:
                 data = probe_data
             else:
+                #print "type is :",type(data[0][0])
+                #print "Adding A:",data
+                #print "type is :",type(probe_data[0][0])
+                #print "To B:",probe_data
                 data += probe_data
 
         # send final data to the network

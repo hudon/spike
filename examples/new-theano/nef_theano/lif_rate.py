@@ -54,7 +54,7 @@ class LIFRateNeuron(neuron.Neuron):
 
         # return dictionary of internal variables to update
         return OrderedDict({
-                self.output: TT.unbroadcast(rate.astype('float32'), 0)
+                self.output: TT.unbroadcast(rate.astype('float64'), 0)
                 })
 
 neuron.types['lif-rate'] = LIFRateNeuron

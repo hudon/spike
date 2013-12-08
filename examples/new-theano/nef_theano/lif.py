@@ -100,9 +100,9 @@ class LIFNeuron(neuron.Neuron):
         self.tau_rc = tau_rc
         self.tau_ref  = tau_ref
         self.voltage = theano.shared(
-            np.zeros(size).astype('float32'), name='lif.voltage')
+            np.zeros(size).astype('float64'), name='lif.voltage')
         self.refractory_time = theano.shared(
-            np.zeros(size).astype('float32'), name='lif.refractory_time')
+            np.zeros(size).astype('float64'), name='lif.refractory_time')
 
     #TODO: make this generic so it can be applied to any neuron model
     # (by running the neurons and finding their response function),
@@ -130,8 +130,8 @@ class LIFNeuron(neuron.Neuron):
         """Resets the state of the neuron."""
         neuron.Neuron.reset(self)
 
-        self.voltage.set_value(np.zeros(self.size).astype('float32'))
-        self.refractory_time.set_value(np.zeros(self.size).astype('float32'))
+        self.voltage.set_value(np.zeros(self.size).astype('float64'))
+        self.refractory_time.set_value(np.zeros(self.size).astype('float64'))
 
     def update(self, J, dt):
         """Theano update rule that implementing LIF rate neuron type

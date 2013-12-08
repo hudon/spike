@@ -39,7 +39,7 @@ class Origin(object):
         # if scalar, make it a list
         if isinstance(initial_value, Number):
             initial_value = [initial_value]
-        initial_value = np.float32(initial_value)
+        initial_value = np.asarray(initial_value,dtype=np.float64)
 
         # theano internal state defining output value
         self.decoded_output = theano.shared(initial_value,
@@ -62,4 +62,6 @@ class Origin(object):
 
     def tick(self):
         for socket in self.output_sockets:
-            socket.get_instance().send_pyobj(self.decoded_output.get_value())
+            a = self.decoded_output.get_value()
+            socket.get_instance().send_pyobj(a)
+            #print "Sent ",a

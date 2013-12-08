@@ -120,7 +120,7 @@ class Ensemble:
                 [], self.neurons.make_alpha_bias(max_rates, threshold))()
 
             # force to 32 bit for consistency / speed
-            self.bias = self.bias.astype('float32')
+            self.bias = self.bias.astype('float64')
                     
             # compute encoders
             self.encoders = self.make_encoders(encoders=encoders)
@@ -335,7 +335,7 @@ class Ensemble:
             # if we're calculating a function on the decoded input
             for o in self.origin.values(): 
                 if o.func is not None:  
-                    val = np.float32([o.func(X[i]) for i in range(len(X))])
+                    val = np.asarray([o.func(X[i]) for i in range(len(X))],dtype=np.float64)
                     o.decoded_output.set_value(val.flatten())
 
     def update(self, dt):
@@ -416,5 +416,5 @@ class Ensemble:
                 if o.func is None:
                     if len(self.decoded_input) > 0:
                         updates.update(OrderedDict({o.decoded_output: 
-                            TT.flatten(X).astype('float32')}))
+                            TT.flatten(X).astype('float64')}))
         return updates

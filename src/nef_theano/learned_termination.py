@@ -25,10 +25,10 @@ class LearnedTermination(object):
         self.pre = pre
         self.post = post
         self.error = error
-        self.learning_rate = TT.cast(rate, dtype='float32')
+        self.learning_rate = TT.cast(rate, dtype='float64')
 
         # initialize weight matrix
-        self.initial_weight_matrix = weight_matrix.astype('float32')
+        self.initial_weight_matrix = weight_matrix.astype('float64')
         self.weight_matrix = theano.shared(
             self.initial_weight_matrix, name='learned_termination.weight_matrix')
 

@@ -180,7 +180,7 @@ class EnsembleOrigin(Origin):
             # compute decoders - least squares method 
             decoders[index] = np.dot(Ginv, U)
 
-        self.decoders = theano.shared(decoders.astype('float32'), 
+        self.decoders = theano.shared(decoders.astype('float64'), 
             name='ensemble_origin.decoders')
         return target_values.shape[0]
 
@@ -222,7 +222,7 @@ class EnsembleOrigin(Origin):
         # to put us back in the right range
         r = self.ensemble.radius
         # weighted summation over neural activity to get decoded_output
-        z = TT.zeros((self.ensemble.array_size, self.func_size), dtype='float32')
+        z = TT.zeros((self.ensemble.array_size, self.func_size), dtype='float64')
         decoded_output = TT.flatten(
             map_gemv(r / dt, self.decoders.dimshuffle(0,2,1), spikes, 1.0, z))
 

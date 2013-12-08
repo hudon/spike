@@ -12,7 +12,7 @@ import nef_theano as nef
 
 def test_array():
 
-    neurons = 40
+    neurons = 4
 
     net = nef.Network('Array Test', seed=51)
     net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
@@ -33,7 +33,7 @@ def test_array():
     net.connect('in', 'B2')
     net.connect('A2', 'B')
 
-    timesteps = 200
+    timesteps = 2000
     dt_step = 0.01
     t = np.linspace(dt_step, timesteps*dt_step, timesteps)
     pstc = 0.01

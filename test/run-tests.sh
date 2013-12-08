@@ -12,16 +12,17 @@ SOURCE_DIR="../examples/new-theano"
 NENGO_TESTS_DIR="nengo_tests"
 
 TEST_SCRIPTS=(
+  "${NENGO_TESTS_DIR}/test_fixed_seed.py"
   "${NENGO_TESTS_DIR}/test_func.py"
+  "${NENGO_TESTS_DIR}/test_array_subs.py"
   "${NENGO_TESTS_DIR}/test_runtime.py"
   "${NENGO_TESTS_DIR}/test_weight_index_pre_post.py"
-  "${NENGO_TESTS_DIR}/test_fixed_seed.py"
   "${NENGO_TESTS_DIR}/test_subnetwork.py"
   "${NENGO_TESTS_DIR}/test_transform.py"
   "${NENGO_TESTS_DIR}/test_noise.py"
   "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
   "${NENGO_TESTS_DIR}/test_eval_points.py"
-  "${NENGO_TESTS_DIR}/test_simplenode.py"
+  #"${NENGO_TESTS_DIR}/test_simplenode.py"
   "${NENGO_TESTS_DIR}/test_array.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
@@ -29,7 +30,6 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_direct.py"
 
   "${NENGO_TESTS_DIR}/test_func_subs.py"
-  "${NENGO_TESTS_DIR}/test_array_subs.py"
 );
 
 compareOutput(){
@@ -61,7 +61,7 @@ compareOutput(){
 
   diff=$(diff <(echo "${ACTUAL_OUT}") <(echo "${EXPECTED_OUT}"))
 
-  DECIMAL_PLACES=2
+  DECIMAL_PLACES=8
   AWK_ARG="{ printf \"%0.${DECIMAL_PLACES}f\\n\", \$1}"
   EGREP_ARG="[0-9]+.[0-9]+"
   SED_ARG="s/([0-9]+.[0-9]+)/\\n\1\\n/g"

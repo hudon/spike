@@ -61,13 +61,13 @@ class Input(object):
         # zero output
         if self.zero_after_time is not None and self.t > self.zero_after_time:
             self.origin['X'].decoded_output.set_value(
-                np.float32(np.zeros(self.origin['X'].dimensions)))
+                np.asarray(np.zeros(self.origin['X'].dimensions),dtype=np.float64))
             self.zeroed = True
     
         # change value
         if self.change_time is not None and self.t > self.change_time:
             self.origin['X'].decoded_output.set_value(
-                np.float32(np.array([self.values[self.change_time]])))
+                np.asarray(np.array([self.values[self.change_time]])),dtype=np.float64)
             index = sorted(self.values.keys()).index(self.change_time) 
             if index < len(self.values) - 1:
                 self.change_time = sorted(self.values.keys())[index+1]
@@ -80,6 +80,6 @@ class Input(object):
             if isinstance(value, Number):
                 value = [value] 
 
-            # cast as float32 for consistency / speed,
+            # cast as float64 for consistency / speed,
             # but _after_ it's been made a list
-            self.origin['X'].decoded_output.set_value(np.float32(value)) 
+            self.origin['X'].decoded_output.set_value(np.asarray(value,np.float64)) 

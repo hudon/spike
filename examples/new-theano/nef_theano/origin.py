@@ -36,7 +36,7 @@ class Origin(object):
         # if scalar, make it a list
         if isinstance(initial_value, Number):
             initial_value = [initial_value]
-        initial_value = np.float32(initial_value)
+        initial_value = np.asarray(initial_value,dtype=np.float64)
 
         # theano internal state defining output value
         self.decoded_output = theano.shared(initial_value,
