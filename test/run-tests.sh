@@ -13,6 +13,7 @@ NENGO_TESTS_DIR="nengo_tests"
 HOSTS_FILE=$1
 
 TEST_SCRIPTS=(
+   "${NENGO_TESTS_DIR}/test_noise.py"
   "${NENGO_TESTS_DIR}/test_array.py"
   # "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
   # "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
@@ -21,7 +22,6 @@ TEST_SCRIPTS=(
   # "${NENGO_TESTS_DIR}/test_eval_points.py"
   # "${NENGO_TESTS_DIR}/test_fixed_seed.py"
   "${NENGO_TESTS_DIR}/test_func.py"
-  # "${NENGO_TESTS_DIR}/test_noise.py"
   # "${NENGO_TESTS_DIR}/test_radius.py"
   # "${NENGO_TESTS_DIR}/test_runtime.py"
   # # "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
