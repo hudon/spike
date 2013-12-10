@@ -3,6 +3,7 @@ import random
 from _collections import OrderedDict
 
 import probe, ensemble, subnetwork
+import numpy as np
 
 from . import distribution
 
@@ -23,6 +24,7 @@ class Network(object):
         self.dt = dt
         self.run_time = 0.0
         self.seed = seed
+        np.random.seed(seed)
         self.fixed_seed = fixed_seed
 
         self.random = random.Random()

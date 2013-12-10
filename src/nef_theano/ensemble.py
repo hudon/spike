@@ -125,6 +125,7 @@ class Ensemble:
         is_subensemble=False, decoders=None, bias=None, alpha=None):
         self.dt = dt
 
+        np.random.seed(97)
         if seed is None:
             seed = np.random.randint(1000)
         self.seed = seed

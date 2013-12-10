@@ -41,6 +41,7 @@ def get_gamma_inv(key):
 def set_gamma_inv(key, value):
     cache[key] = value
 
-cache = shelve.open(os.path.join(tempfile.gettempdir(),
-                                 'nefpy_cache_gamma_inv'))
-atexit.register(cache.close)
+cache = {}
+#cache = shelve.open(os.path.join(tempfile.gettempdir(),
+#                                 'nefpy_cache_gamma_inv'))
+#atexit.register(cache.close)

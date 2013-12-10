@@ -32,6 +32,7 @@ class Network(object):
         self.dt = dt
         self.run_time = 0.0    
         self.seed = seed
+        np.random.seed(seed)
         self.fixed_seed = fixed_seed
         # all the nodes in the network, indexed by name
         self.nodes = {}

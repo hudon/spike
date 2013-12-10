@@ -65,6 +65,7 @@ class Ensemble:
         """
         self.name = name
 
+        np.random.seed(97)
         if seed is None:
             seed = np.random.randint(1000)
         self.seed = seed

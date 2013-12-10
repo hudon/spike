@@ -14,7 +14,7 @@ HOSTS_FILE=$1
 
 TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_array.py"
-  "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
+  # "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
   # "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
   # "${NENGO_TESTS_DIR}/test_direct.py"
   # "${NENGO_TESTS_DIR}/test_enc.py"
@@ -36,7 +36,7 @@ TEST_SCRIPTS=(
 
 compareOutput(){
   ACTUAL_OUT_CMD="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${1}\
-    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR} --hosts=${HOSTS_FILE} -s"
+    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR} --hosts=${THIS_SCRIPT_DIRECTORY}/remote_hosts.txt -s"
 
   EXPECTED_OUT_CMD="${PYTHON}  ${THIS_SCRIPT_DIRECTORY}/${1}\
     ${THIS_SCRIPT_DIRECTORY}/${SOURCE_DIR}"

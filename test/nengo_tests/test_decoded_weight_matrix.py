@@ -13,7 +13,7 @@ Tests:
 import numpy as np
 #import matplotlib.pyplot as plt
 
-import sys
+import sys, getopt
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
@@ -22,11 +22,15 @@ dimensions = 1
 array_size = 3
 inhib_scale = 10
 
-hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
+for opt, arg in optlist:
+    if opt == '--hosts':
+        hosts_file = arg if arg else None
+
 if hosts_file:
-  net = nef.Network('WeightMatrix Test', seed=100, hosts_file=hosts_file)
+    net = nef.Network('WeightMatrix Test', seed=100, hosts_file=hosts_file)
 else:
-  net = nef.Network('WeightMatrix Test', seed=100)
+    net = nef.Network('WeightMatrix Test', seed=100)
 
 net.make_input('in1', 1, zero_after_time=2.5)
 net.make_input('in2', [1, .5, -.5])
