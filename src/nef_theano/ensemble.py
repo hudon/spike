@@ -96,6 +96,7 @@ class EnsembleProcess(object):
 
         self.admin_conn.recv_pyobj() # KILL
         self.admin_conn.send_pyobj({'result': 'ack'})
+        self.admin_conn.recv_pyobj() # finish
 
     def add_termination(self, input_socket, *args, **kwargs):
         ## We get a unique name for the inputs so that the ensemble doesn't

@@ -25,6 +25,8 @@ class Worker:
         message['name'] = self.name
         socket.send_pyobj(message)
         response = socket.recv_pyobj()
+        if message['cmd'] == 'kill' and addr == self.worker_addr:
+            socket.send_pyobj('finish')
         socket.close()
         return response['result']
 
