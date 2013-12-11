@@ -25,7 +25,8 @@ for opt, arg in optlist:
         hosts_file = arg if arg else None
 
 if hosts_file:
-  net = nef.Network('Encoder Test', dt=dt_step, seed=103, hosts_file=hosts_file)
+  net = nef.Network('Encoder Test', dt=dt_step, seed=103, hosts_file=hosts_file,
+    usr_module='test/nengo_tests/functions.py')
 else:
   net = nef.Network('Encoder Test', dt=dt_step, seed=103)
 
