@@ -22,7 +22,8 @@ for opt, arg in optlist:
         hosts_file = arg if arg else None
 
 if hosts_file:
-  net = nef.Network('Direct Mode Test', seed=47, hosts_file=hosts_file)
+  net = nef.Network('Direct Mode Test', seed=47, hosts_file=hosts_file,
+    usr_module='test/nengo_tests/functions.py')
 else:
   net = nef.Network('Direct Mode Test', seed=47)
 
