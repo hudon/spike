@@ -6,7 +6,7 @@ import time
 import numpy as np
 #import matplotlib.pyplot as plt
 
-import sys
+import sys, getopt
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
@@ -17,7 +17,13 @@ build_time_start = time.time()
 timesteps = 1000
 dt_step = 0.001
 
-hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+hosts_file = None
+
+optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
+for opt, arg in optlist:
+    if opt == '--hosts':
+        hosts_file = arg if arg else None
+
 if hosts_file:
   net = nef.Network('Encoder Test', dt=dt_step, seed=103, hosts_file=hosts_file)
 else:
@@ -25,12 +31,12 @@ else:
 
 net.make_input('in1', math.sin)
 net.make_input('in2', math.cos)
-net.make('A', 100, 1)
-net.make('B', 100, 1, encoders=[[1]], intercept=(0, 1.0))
-net.make('C', 100, 2, radius=1.5)
-net.make('D', 100, 2, encoders=[[1,1],[1,-1],[-1,-1],[-1,1]], radius=1.5)
-net.make('outputC', 1, 1, mode='direct')
-net.make('outputD', 1, 1, mode='direct')
+net.make('A', neurons=100, dimensions=1)
+net.make('B', neurons=100, dimensions=1, encoders=[[1]], intercept=(0, 1.0))
+net.make('C', neurons=100, dimensions=2, radius=1.5)
+net.make('D', neurons=100, dimensions=2, encoders=[[1,1],[1,-1],[-1,-1],[-1,1]], radius=1.5)
+net.make('outputC', neurons=1, dimensions=1, mode='direct')
+net.make('outputD', neurons=1, dimensions=1, mode='direct')
 
 net.connect('in1', 'A')
 net.connect('A', 'B')
