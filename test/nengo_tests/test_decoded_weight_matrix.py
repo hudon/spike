@@ -1,4 +1,4 @@
-"""This is a test file to test the decoded -> encoded connections through the 
+"""This is a test file to test the decoded -> encoded connections through the
 transform parameter in net.connect. Here we test by creating inhibitory connections.
 
 Tests:
@@ -22,6 +22,8 @@ dimensions = 1
 array_size = 3
 inhib_scale = 10
 
+hosts_file = None
+
 optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
 for opt, arg in optlist:
     if opt == '--hosts':
@@ -36,18 +38,18 @@ net.make_input('in1', 1, zero_after_time=2.5)
 net.make_input('in2', [1, .5, -.5])
 net.make('A', neurons=neurons, dimensions=dimensions, intercept=(.1, 1))
 net.make('B', neurons=neurons, dimensions=dimensions) # for test 1
-net.make('B2', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 2 
-net.make('B3', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 3 
+net.make('B2', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 2
+net.make('B3', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 3
 net.make('B4', neurons=neurons, dimensions=dimensions, array_size=array_size) # for test 4
 
 # setup inhibitory scaling matrix
 inhib_matrix_1 = [[-10] * dimensions] * neurons # for test 1 and 2
-inhib_matrix_2 = [[[0] * dimensions] * neurons]  # for test 3 
-inhib_matrix_2.extend([[[0] * dimensions] * neurons])  # for test 3 
-inhib_matrix_2.extend([[[-10] * dimensions] * neurons])  # for test 3 
+inhib_matrix_2 = [[[0] * dimensions] * neurons]  # for test 3
+inhib_matrix_2.extend([[[0] * dimensions] * neurons])  # for test 3
+inhib_matrix_2.extend([[[-10] * dimensions] * neurons])  # for test 3
 inhib_matrix_3 = np.array(inhib_matrix_2).reshape(array_size * neurons, dimensions)# for test 4
 
-# define our transform and connect up! 
+# define our transform and connect up!
 net.connect('in1', 'A')
 net.connect('in2', 'B', index_pre=0)
 net.connect('in2', 'B2')
@@ -111,11 +113,11 @@ print "input 'b4p' probe data"
 for x in b4p_data:
     print x
 
-#plt.ioff(); plt.close(); 
+#plt.ioff(); plt.close();
 #plt.subplot(711); plt.title('Input1')
-#plt.plot(Ip.get_data()); 
+#plt.plot(Ip.get_data());
 #plt.subplot(712); plt.title('Input2')
-#plt.plot(I2p.get_data()); 
+#plt.plot(I2p.get_data());
 #plt.subplot(713); plt.title('A = In1')
 #plt.plot(Ap.get_data())
 #plt.subplot(714); plt.title('B = In2(0) inhib by A')
