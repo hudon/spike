@@ -6,7 +6,7 @@ import time
 import numpy as np
 #import matplotlib.pyplot as plt
 
-import sys
+import sys, getopt
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
@@ -14,18 +14,24 @@ import functions
 
 build_time_start = time.time()
 
-hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
+hosts_file = None
+
+optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
+for opt, arg in optlist:
+    if opt == '--hosts':
+        hosts_file = arg if arg else None
+
 if hosts_file:
   net = nef.Network('Direct Mode Test', seed=47, hosts_file=hosts_file)
 else:
   net = nef.Network('Direct Mode Test', seed=47)
 
 net.make_input('in', math.sin)
-net.make('A', 100, 1)
-net.make('B', 1, 1, mode='direct')
-net.make('C', 100, 1)
-net.make('D', 1, 2, mode='direct')
-net.make('E', 1, array_size=2, dimensions=2, mode='direct')
+net.make('A', neurons=100, dimensions=1)
+net.make('B', neurons=1, dimensions=1, mode='direct')
+net.make('C', neurons=100, dimensions=1)
+net.make('D', neurons=1, dimensions=2, mode='direct')
+net.make('E', neurons=1, array_size=2, dimensions=2, mode='direct')
 
 net.connect('in', 'A')
 net.connect('A', 'B')
