@@ -65,11 +65,8 @@ class DistributionDaemon:
 
         self.listener_socket.send_pyobj({'result': 'ack'})
 
-    def _connect(self, post_node, post_socket, pre_name, pre_output, pre_dimensions,
-        transform=None, weight=1, index_pre=None, index_post=None, pstc=0.01,
-        func=None):
-        post = post_node
-
+    def _connect(self, post, post_socket, pre, transform=None, weight=1,
+        index_pre=None, index_post=None, pstc=0.01, func=None):
         if transform is not None:
             assert ((weight == 1) and (index_pre is None) and (index_post is None))
 
@@ -87,73 +84,63 @@ class DistributionDaemon:
 
                 # check for pre side encoded connection (case 3)
                 if len(transform.shape) > 3 or \
-                       transform.shape[2] == pre.array_size * pre.neurons_num:
+                       transform.shape[2] == pre['array_size'] * pre['neurons_num']:
 
-                    raise Exception("ERROR", "connection 3 not handled yet")
-
-                    if transform.shape[2] == pre.array_size * pre.neurons_num:
+                    if transform.shape[2] == pre['array_size'] * pre['neurons_num']:
                         transform = transform.reshape(
                                         [post.array_size, post.neurons_num,
-                                              pre.array_size, pre.neurons_num])
+                                              pre['array_size'], pre['neurons_num']])
                     assert transform.shape == \
                             (post.array_size, post.neurons_num,
-                             pre.array_size, pre.neurons_num)
+                             pre['array_size'], pre['neurons_num'])
 
                     print 'setting pre_output=spikes'
 
                     # get spiking output from pre population
-                    pre_output = pre.neurons.output
+                    pre_output = pre['neurons_out']
 
                     case1 = connection.Case1(
                         (post.array_size, post.neurons_num,
-                         pre.array_size, pre.neurons_num))
+                         pre['array_size'], pre['neurons_num']))
 
                     # pass in the pre population decoded output value
                     # to the post population
-                    post.add_termination(input_socket=destination_socket,
-                        name=pre_name, pstc=pstc,
-                        encoded_input= pre_output.get_value(),
+                    post.add_termination(input_socket=post_socket,
+                        name=pre['name'], pstc=pstc,
+                        encoded_input=pre['output'],
                         transform=transform, case=case1)
-
-                    pre_origin.add_output(origin_socket)
-
                     return
 
                 else: # otherwise we're in case 2 (pre is decoded)
-                    raise Exception("ERROR", "connection 2 not handled yet")
-
                     assert transform.shape ==  \
-                               (post.array_size, post.neurons_num, pre_dimensions)
+                               (post.array_size, post.neurons_num, pre['dimensions'])
 
                     # can't specify a function with either side encoded connection
                     assert func == None
 
                     case2 = connection.Case2(
                         (post.array_size, post.neurons_num,
-                         pre.array_size, pre.neurons_num))
+                         pre['array_size'], pre['neurons_num']))
 
                     # pass in the pre population decoded output value
                     # to the post population
-                    post.add_termination(input_socket=destination_socket,
-                        name=pre_name, pstc=pstc,
-                        encoded_input= pre_output.get_value(),
+                    post.add_termination(input_socket=post_socket,
+                        name=pre['name'], pstc=pstc,
+                        encoded_input=pre['output'],
                         transform=transform, case=case2)
-
-                    pre_origin.add_output(origin_socket)
-
                     return
 
         transform = connection.compute_transform(
-            dim_pre=pre_dimensions,
-            dim_post=post_node.dimensions,
-            array_size=post_node.array_size,
+            dim_pre=pre['dimensions'],
+            dim_post=post.dimensions,
+            array_size=post.array_size,
             weight=weight,
             index_pre=index_pre,
             index_post=index_post,
             transform=transform)
 
-        post_node.add_termination(input_socket=post_socket, name=pre_name,
-            pstc=pstc, decoded_input=pre_output, transform=transform)
+        post.add_termination(input_socket=post_socket, name=pre['name'],
+            pstc=pstc, decoded_input=pre['output'], transform=transform)
 
     def connect_pre(self, worker_name, post_addr, **kwargs):
         wnode = self.workers[worker_name]['node']
@@ -172,17 +159,17 @@ class DistributionDaemon:
                     wnode.add_origin(origin_name, func, **kwargs)
             worigin = wnode.origin[origin_name]
 
-        worigin_output = worigin.decoded_output.get_value()
-        worigin_dimensions = worigin.dimensions
-
         # connect worigin to post
         socket = zmq_utils.SocketDefinition(post_addr, zmq.PUSH, is_server=False)
         worigin.add_output(socket)
 
         self.listener_socket.send_pyobj({
             'result' : {
-                'pre_output': worigin_output,
-                'pre_dimensions': worigin_dimensions
+                'pre_output': worigin.decoded_output.get_value(),
+                'pre_dimensions': worigin.dimensions,
+                'pre_array_size': wnode.array_size if hasattr(wnode, 'array_size') else None,
+                'pre_neurons_num': wnode.neurons_num if hasattr(wnode, 'neurons_num') else None,
+                'pre_neurons_out': wnode.neurons.output if hasattr(wnode, 'neurons') else None
             }
         })
 
@@ -191,15 +178,19 @@ class DistributionDaemon:
         wnode = worker['node']
         wport = kwargs.pop('post_port')
 
-        pre_name = kwargs.pop('pre_name')
-        pre_output = kwargs.pop('pre_output')
-        pre_dimensions = kwargs.pop('pre_dimensions')
+        pre = {
+            'name': kwargs.pop('pre_name'),
+            'output': kwargs.pop('pre_output'),
+            'dimensions': kwargs.pop('pre_dimensions'),
+            'array_size': kwargs.pop('pre_array_size'),
+            'neurons_num': kwargs.pop('pre_neurons_num'),
+            'neurons_out': kwargs.pop('pre_neurons_out')
+        }
+
         socket = zmq_utils.SocketDefinition(
             "tcp://*:%s" % (wport), zmq.PULL, is_server=True)
 
-        self._connect(wnode, socket, pre_name, pre_output, pre_dimensions,
-            *args, **kwargs)
-
+        self._connect(wnode, socket, pre, *args, **kwargs)
         self.listener_socket.send_pyobj({'result': 'ack'})
 
     def start(self, worker_name, admin_port, time):
