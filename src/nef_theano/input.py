@@ -109,8 +109,6 @@ class Input(object):
         admin_conn.send_pyobj({'result': 'ack'})
 
         admin_conn.recv_pyobj() # KILL
-        admin_conn.send_pyobj({'result': 'ack'})
-        admin_conn.recv_pyobj() # finish
 
     def bind_sockets(self):
         # create a context for this input process if do not have one already

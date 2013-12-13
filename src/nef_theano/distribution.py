@@ -24,9 +24,13 @@ class Worker:
         socket.connect(addr)
         message['name'] = self.name
         socket.send_pyobj(message)
-        response = socket.recv_pyobj()
-        if message['cmd'] == 'kill' and addr == self.worker_addr:
-            socket.send_pyobj('finish')
+        response = {'result': None}
+        #  We don't want to be waiting on a response from a process that 
+        #  we just told to exit because a race condition can occur where
+        #  the process exits too fast and the message gets lost and
+        #  causes a deadlock.
+        if not (message['cmd'] == 'kill' and addr == self.worker_addr):
+            response = socket.recv_pyobj()
         socket.close()
         return response['result']
 
