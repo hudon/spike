@@ -14,18 +14,7 @@ import functions
 
 build_time_start = time.time()
 
-hosts_file = None
-
-optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
-for opt, arg in optlist:
-    if opt == '--hosts':
-        hosts_file = arg if arg else None
-
-if hosts_file:
-  net = nef.Network('Direct Mode Test', seed=47, hosts_file=hosts_file,
-    usr_module='test/nengo_tests/functions.py')
-else:
-  net = nef.Network('Direct Mode Test', seed=47)
+net = nef.Network('Direct Mode Test', seed=47, command_arguments=sys.argv[2:], usr_module='test/nengo_tests/functions.py')
 
 net.make_input('in', math.sin)
 net.make('A', neurons=100, dimensions=1)

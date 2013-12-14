@@ -30,13 +30,12 @@ TEST_SCRIPTS=(
   # "${NENGO_TESTS_DIR}/test_weight_index_pre_post.py"
   # # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
   # "matrix_multiplication_distributed.py"
-
   "${NENGO_TESTS_DIR}/test_array_subs.py"
 );
 
 compareOutput(){
   ACTUAL_OUT_CMD="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${1}\
-    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR} --hosts=${THIS_SCRIPT_DIRECTORY}/remote_hosts.txt -s"
+    ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR} --hosts=${THIS_SCRIPT_DIRECTORY}/remote_hosts.txt"
 
   EXPECTED_OUT_CMD="${PYTHON}  ${THIS_SCRIPT_DIRECTORY}/${1}\
     ${THIS_SCRIPT_DIRECTORY}/${SOURCE_DIR}"

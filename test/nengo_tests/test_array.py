@@ -13,17 +13,7 @@ import nef_theano as nef
 def test_array():
 
     neurons = 40
-    hosts_file = None
-
-    optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
-    for opt, arg in optlist:
-        if opt == '--hosts':
-            hosts_file = arg if arg else None
-
-    if hosts_file:
-      net = nef.Network('Array Test', seed=50, hosts_file=hosts_file)
-    else:
-      net = nef.Network('Array Test', seed=50)
+    net = nef.Network('Array Test', seed=50, command_arguments=sys.argv[2:])
 
     net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
     #net.make_input('in', value=1, zero_after=1.0)

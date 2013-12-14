@@ -15,7 +15,7 @@ from . import subnetwork
 from . import connection
 
 class Network(object):
-    def __init__(self, name, seed=None, fixed_seed=None, dt=.001):
+    def __init__(self, name, command_arguments, seed=None, fixed_seed=None, dt=.001, usr_module=None):
         """Wraps an NEF network with a set of helper functions
         for simplifying the creation of NEF models.
 
@@ -337,7 +337,7 @@ class Network(object):
         return post.add_learned_termination(name=pre_name, pre=pre, error=error, 
             pstc=pstc, **kwargs)
 
-    def make(self, name, *args, **kwargs): 
+    def make(self, name, num_subs=None ,*args, **kwargs): 
         """Create and return an ensemble of neurons.
 
         Note that all ensembles are actually arrays of length 1.

@@ -82,18 +82,7 @@ def bgmake(net, name='Basal Ganglia', dimensions=1, neurons=100,
     netbg.connect('GPi', 'output', func=functions.func_gpi, pstc=tau_gaba,
         weight=output_weight)
 
-hosts_file = None
-
-optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
-for opt, arg in optlist:
-    if opt == '--hosts':
-        hosts_file = arg if arg else None
-
-if hosts_file:
-  net = nef.Network('BG Test', seed=97, hosts_file=hosts_file,
-    usr_module='test/nengo_tests/functions.py')
-else:
-  net = nef.Network('BG Test', seed=97)
+net = nef.Network('BG Test', seed=97, command_arguments=sys.argv[2:], usr_module='test/nengo_tests/functions.py')
 
 net.make_input('in', value=functions.func)
 bgmake(net=net, name='BG', dimensions=3)

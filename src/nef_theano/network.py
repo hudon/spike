@@ -1,4 +1,4 @@
-import os
+import os, getopt
 import random
 from _collections import OrderedDict
 
@@ -8,8 +8,14 @@ import numpy as np
 from . import distribution
 
 class Network(object):
-    def __init__(self, name, hosts_file, seed=None, fixed_seed=None, dt=.001,
+    def __init__(self, name, command_arguments, seed=None, fixed_seed=None, dt=.001,
         usr_module=None):
+        hosts_file = None
+
+        optlist, args = getopt.getopt(command_arguments, 's', ['hosts='])
+        for opt, arg in optlist:
+            if opt == '--hosts':
+                hosts_file = arg if arg else None
 
         self.workers = {}
         self.probe_clients = {}

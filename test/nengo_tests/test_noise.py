@@ -9,18 +9,7 @@ import sys, getopt
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-hosts_file = None
-
-optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
-for opt, arg in optlist:
-    if opt == '--hosts':
-        hosts_file = arg if arg else None
-
-if hosts_file:
-  net = nef.Network('Noise Test', seed=91, hosts_file=hosts_file)
-else:
-  net = nef.Network('Noise Test', seed=91)
-
+net = nef.Network('Noise Test', seed=91, command_arguments=sys.argv[2:])
 net.make_input('in', value=math.sin)
 net.make('A', neurons=300, dimensions=1, noise=1)
 net.make('A2', neurons=300, dimensions=1, noise=100)

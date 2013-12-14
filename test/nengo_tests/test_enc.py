@@ -17,18 +17,7 @@ build_time_start = time.time()
 timesteps = 1000
 dt_step = 0.001
 
-hosts_file = None
-
-optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
-for opt, arg in optlist:
-    if opt == '--hosts':
-        hosts_file = arg if arg else None
-
-if hosts_file:
-  net = nef.Network('Encoder Test', dt=dt_step, seed=103, hosts_file=hosts_file,
-    usr_module='test/nengo_tests/functions.py')
-else:
-  net = nef.Network('Encoder Test', dt=dt_step, seed=103)
+net = nef.Network('Encoder Test', dt=dt_step, seed=103, command_arguments=sys.argv[2:], usr_module='test/nengo_tests/functions.py')
 
 net.make_input('in1', math.sin)
 net.make_input('in2', math.cos)
