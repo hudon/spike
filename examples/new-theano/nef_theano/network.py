@@ -15,7 +15,7 @@ from . import subnetwork
 from . import connection
 
 class Network(object):
-    def __init__(self, name, command_arguments, seed=None, fixed_seed=None, dt=.001, usr_module=None):
+    def __init__(self, name, command_arguments=None, seed=None, fixed_seed=None, dt=.001, usr_module=None):
         """Wraps an NEF network with a set of helper functions
         for simplifying the creation of NEF models.
 

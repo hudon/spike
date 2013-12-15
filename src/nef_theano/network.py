@@ -8,7 +8,7 @@ import numpy as np
 from . import distribution
 
 class Network(object):
-    def __init__(self, name, command_arguments, seed=None, fixed_seed=None, dt=.001,
+    def __init__(self, name, command_arguments=None, seed=None, fixed_seed=None, dt=.001,
         usr_module=None):
         hosts_file = None
 
