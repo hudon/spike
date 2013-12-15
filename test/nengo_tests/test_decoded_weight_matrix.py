@@ -22,17 +22,7 @@ dimensions = 1
 array_size = 3
 inhib_scale = 10
 
-hosts_file = None
-
-optlist, args = getopt.getopt(sys.argv[2:], 's', ['hosts='])
-for opt, arg in optlist:
-    if opt == '--hosts':
-        hosts_file = arg if arg else None
-
-if hosts_file:
-    net = nef.Network('WeightMatrix Test', seed=100, hosts_file=hosts_file)
-else:
-    net = nef.Network('WeightMatrix Test', seed=100)
+net = nef.Network('WeightMatrix Test', seed=100, command_arguments=sys.argv[2:])
 
 net.make_input('in1', 1, zero_after_time=2.5)
 net.make_input('in2', [1, .5, -.5])
