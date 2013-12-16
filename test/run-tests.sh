@@ -23,7 +23,7 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_func.py"
   "${NENGO_TESTS_DIR}/test_noise.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
-  # "${NENGO_TESTS_DIR}/test_runtime.py"
+  "${NENGO_TESTS_DIR}/test_runtime.py"
   # # "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
   # "${NENGO_TESTS_DIR}/test_subnetwork.py"
   # "${NENGO_TESTS_DIR}/test_transform.py"
