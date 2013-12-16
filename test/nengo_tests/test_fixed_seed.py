@@ -10,16 +10,12 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
-if hosts_file:
-  net = nef.Network('Array Test', fixed_seed=5, hosts_file=hosts_file)
-else:
-  net = nef.Network('Array Test', fixed_seed=5)
+net = nef.Network('Array Test', fixed_seed=5, command_arguments=sys.argv[2:])
 
 net.make_input('in', [1], zero_after_time=1.0)
-net.make('A', 50, 1)
-net.make('B', 50, 1)
-net.make_array('AB', 50, 2)
+net.make('A', num_subs=1, neurons=50, dimensions=1)
+net.make('B', num_subs=1, neurons=50, dimensions=1)
+net.make_array('AB', neurons=50, array_size=2)
 
 
 net.connect('in', 'A')
