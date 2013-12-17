@@ -18,17 +18,13 @@ import nef_theano as nef
 
 import functions
 
-hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
-if hosts_file:
-  net = nef.Network('Radius Test', seed=97, hosts_file=hosts_file)
-else:
-  net = nef.Network('Radius Test', seed=97)
+net = nef.Network('Radius Test', seed=97, command_arguments=sys.argv[2:])
 
 net.make_input('in', value=functions.sin3)
-net.make('A', 1000, 1, radius=5)
-net.make('B', 300, 1, radius=.5)
-net.make('C', 1000, 1, radius=10)
-net.make('D', 300, 1, radius=6)
+net.make('A', neurons=1000, dimensions=1, radius=5)
+net.make('B', neurons=300, dimensions=1, radius=.5)
+net.make('C', neurons=1000, dimensions=1, radius=10)
+net.make('D', neurons=300, dimensions=1, radius=6)
 
 net.connect('in', 'A')
 net.connect('A', 'B')

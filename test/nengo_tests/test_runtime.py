@@ -9,17 +9,13 @@ import nef_theano as nef
 
 import functions
 
-hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
-if hosts_file:
-  net = nef.Network('Runtime Test', seed=123, hosts_file=hosts_file)
-else:
-  net = nef.Network('Runtime Test', seed=123)
+net = nef.Network('Runtime Test', seed=123, command_arguments=sys.argv[2:], usr_module='test/nengo_tests/functions.py')
 
 net.make_input('in', value=math.sin)
-net.make('A', 1000, 1)
-net.make('B', 1000, 1)
-net.make('C', 1000, 1)
-net.make('D', 1000, 1)
+net.make('A', neurons=1000, dimensions=1)
+net.make('B', neurons=1000, dimensions=1)
+net.make('C', neurons=1000, dimensions=1)
+net.make('D', neurons=1000, dimensions=1)
 
 net.connect('in', 'A')
 net.connect('A', 'B')
