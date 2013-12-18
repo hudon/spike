@@ -9,19 +9,15 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-hosts_file = sys.argv[2] if len(sys.argv) > 2 else None
-if hosts_file:
-  net = nef.Network('Main', seed=93, hosts_file=hosts_file)
-else:
-  net = nef.Network('Main', seed=93)
+net = nef.Network('Main', seed=93, command_arguments=sys.argv[2:])
 
 netA = net.make_subnetwork('A')
 netB = net.make_subnetwork('B')
 
-net.make('X',50,1)
-netA.make('Y',50,1)
-netB.make('Z',50,1)
-netB.make('W',50,1)
+net.make('X',neurons=50,dimensions=1)
+netA.make('Y',neurons=50,dimensions=1)
+netB.make('Z',neurons=50,dimensions=1)
+netB.make('W',neurons=50,dimensions=1)
 
 netB.connect('Z','W')     # connection within a subnetwork
 net.connect('X','A.Y')    # connection into a subnetwork
@@ -29,8 +25,8 @@ net.connect('A.Y','X')    # connection out of a subnetwork
 net.connect('A.Y','B.Z')  # connection across subnetworks
 
 netC = netA.make_subnetwork('C')
-netC.make('I',50,1)
-netC.make('J',50,1)
+netC.make('I',neurons=50,dimensions=1)
+netC.make('J',neurons=50,dimensions=1)
 netC.connect('I','J')       # connection within a subsubnetwork
 net.connect('X','A.C.I')    # connection into a subsubnetwork
 net.connect('A.C.J','X')    # connection out of a subsubnetwork
