@@ -6,7 +6,7 @@ and by using the array_size parameter in the network.make command.
 import numpy as np
 # import matplotlib.pyplot as plt
 
-import sys, getopt
+import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 

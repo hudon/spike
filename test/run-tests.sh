@@ -31,6 +31,7 @@ TEST_SCRIPTS=(
   # # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
   # "matrix_multiplication_distributed.py"
   "${NENGO_TESTS_DIR}/test_array_subs.py"
+  "${NENGO_TESTS_DIR}/test_func_subs.py"
 );
 
 compareOutput(){
