@@ -12,6 +12,11 @@ sys.path.append(sys.argv[1])
 import nef_theano as nef
 
 #  TODO:  If the seed value is 97, the tests don't pass.
+#  All output is the same except for ensemble B's output.
+#  If you switch the order of the lines for net.make of A and B,
+#  then A will exhibit the problem instead of B
+#  1)  Determine why the tests don't pass when the seed value is 97
+#  2)  If the root cause is a bug in the new version of the code, fix that bug.
 net = nef.Network('Weight, Index_Pre, and Index_Post Test', seed=96, command_arguments=sys.argv[2:])
 
 net.make_input('in', value=math.sin)
