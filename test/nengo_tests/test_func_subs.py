@@ -9,18 +9,20 @@ import sys
 sys.path.append(sys.argv[1])
 import nef_theano as nef
 
-import functions as funcs
-
+import functions
 
 
 net = nef.Network('Function Test', seed=91, command_arguments=sys.argv[2:],
   usr_module='test/nengo_tests/functions.py')
+
 net.make_input('in', value=math.sin)
-net.make('A', neurons=250, dimensions=1)
+
+net.make('A', neurons=250, dimensions=1, num_subs=2)
+
 net.make('B', neurons=250, dimensions=3)
 
 net.connect('in', 'A')
-net.connect('A', 'B', func=funcs.square, pstc=0.1)
+net.connect('A', 'B', func=functions.square, pstc=0.1)
 
 timesteps = 500
 dt_step = 0.01
@@ -29,6 +31,7 @@ pstc = 0.03
 
 Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
 Ap = net.make_probe('A', dt_sample=dt_step, pstc=pstc)
+# Aps = net.make_probe('A:square', dt_sample=dt_step, pstc=pstc)
 Bp = net.make_probe('B', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
@@ -36,6 +39,7 @@ net.run(timesteps * dt_step)
 
 ip_data = Ip.get_data()
 ap_data = Ap.get_data()
+# aps_data = Aps.get_data()
 bp_data = Bp.get_data()
 
 print "input 'in' probe data"
@@ -44,6 +48,9 @@ for x in ip_data:
 print "ensemble 'A' probe data"
 for x in ap_data:
     print x
+# print "ensemble 'Asquare' probe data"
+# for x in aps_data:
+#     print x
 print "ensemble 'B' probe data"
 for x in bp_data:
     print x
