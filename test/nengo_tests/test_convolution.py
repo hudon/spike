@@ -81,7 +81,8 @@ subD = 8 #16
 N = 50
 N_C = 200
 
-net = nef.Network('Main', fixed_seed=1, command_arguments=sys.argv[2:])
+net = nef.Network('Main', fixed_seed=1, command_arguments=sys.argv[2:],
+  usr_module='test/nengo_tests/functions.py')
 
 # A = np.random.randn(D)
 # A /= np.linalg.norm(A)
