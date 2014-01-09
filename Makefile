@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-.PHONY : test
+.PHONY : test clean
 
 default :
 	@echo -e "INFO targets:\n\
@@ -13,6 +13,9 @@ test : test/run-tests.sh
 	else \
 		$(SHELL) $< ; \
 	fi
+
+clean :
+	find . -name "*.pyc" | xargs rm
 
 todo :
 	grep -nir todo * --color
