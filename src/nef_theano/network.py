@@ -17,6 +17,9 @@ class Network(object):
             if opt == '--hosts':
                 hosts_file = arg if arg else None
 
+        if hosts_file is None:
+            raise Exception("ERROR: A hosts_file is required (try the --hosts arg)")
+
         self.workers = {}
         self.probe_clients = {}
         self.split_ensembles = {}

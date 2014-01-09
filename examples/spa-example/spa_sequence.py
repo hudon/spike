@@ -1,5 +1,7 @@
 import spa
-import nengo.nef_theano as nef
+import sys
+sys.path.append(sys.argv[1])
+import nef_theano as nef
 
 class Rules:
     def A(state='A'):
@@ -23,7 +25,7 @@ class Sequence(spa.SPA):
     
     input = spa.Input(0.1,state='D')
 
-net = nef.Network('Sequence', seed=1)
+net = nef.Network('Sequence', seed=1, command_arguments=sys.argv[2:])
 seq = Sequence(net)
 
 pThal = net.make_probe('thal.rule', dt_sample=0.001)
