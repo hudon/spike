@@ -15,6 +15,7 @@ HOSTS_FILE=$1
 TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_array.py"
   "${NENGO_TESTS_DIR}/test_basal_ganglia.py"
+  "${NENGO_TESTS_DIR}/test_convolution.py"
   "${NENGO_TESTS_DIR}/test_decoded_weight_matrix.py"
   "${NENGO_TESTS_DIR}/test_direct.py"
   "${NENGO_TESTS_DIR}/test_enc.py"
