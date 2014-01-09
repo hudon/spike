@@ -104,7 +104,7 @@ class DistributionManager:
         socket.send_pyobj(message, zmq.NOBLOCK)
 
         response = None
-        responses = dict(poller.poll(10000))
+        responses = dict(poller.poll())
 
         if socket in responses and responses[socket] == zmq.POLLIN:
             response = socket.recv_pyobj(zmq.NOBLOCK)
