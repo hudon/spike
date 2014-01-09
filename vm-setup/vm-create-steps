@@ -1148,6 +1148,8 @@ sleep 1
 VBoxManage controlvm spike-vm keyboardputscancode 1c 9c
 
 #  Delete the known host record for if we previously set up the virtual machine
+mkdir -p /home/spike/.ssh
+touch /home/spike/.ssh/known_hosts
 ssh-keygen -f "/home/spike/.ssh/known_hosts" -R [localhost]:3123
 
 ssh root@localhost -p 3123 -o StrictHostKeyChecking=no
