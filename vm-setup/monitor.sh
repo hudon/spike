@@ -17,7 +17,7 @@ do
 
     for host in "${HOSTS[@]}";
     do
-        a=`ssh spike@$host.uwaterloo.ca -p 3656 "ssh root@localhost -p 3123 \"cat /proc/meminfo && cat /proc/stat\""`
+        a=`ssh -i /home/spike/.ssh/serverkey spike@$host.uwaterloo.ca -p 3656 "ssh root@localhost -p 3123 \"cat /proc/meminfo && cat /proc/stat\""`
         cached=`echo "$a" | grep ^Cached: | grep -o "[0-9]\+"`
         memfree=`echo "$a" | grep ^MemFree: | grep -o "[0-9]\+"`
         memtotal=`echo "$a" | grep ^MemTotal: | grep -o "[0-9]\+"`
