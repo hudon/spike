@@ -243,6 +243,12 @@ class Network(object):
     def make_subnetwork(self, name):
         return subnetwork.SubNetwork(name, self)
 
+    def set_alias(self, alias, name):
+        if name in self.local_workers:
+            self.workers[alias] = self.local_workers[name]
+        else:
+            self.workers[alias] = self.workers[name]
+
     def run(self, time):
         # cleanup data that we do not need anymore
         self.split_ensembles = dict()

@@ -55,18 +55,18 @@ class BasalGanglia(module.Module):
     
         tr=[[wp]*D for i in range(D)]    
         if verbose: print '  connecting STN to GPi'
-        self.net.connect('STN', 'GPi', func=func_stn, transform=tr, pstc=pstc_ampa)
+        self.net.connect('STN', 'GPi', func=funcs.func_stn, transform=tr, pstc=pstc_ampa)
         if verbose: print '  connecting STN to GPe'
-        self.net.connect('STN', 'GPe', func=func_stn, transform=tr, pstc=pstc_ampa)        
+        self.net.connect('STN', 'GPe', func=funcs.func_stn, transform=tr, pstc=pstc_ampa)        
 
         # connect the GPe to GPi and STN (inhibitory)
         def func_gpe(x):
             if x[0]<ee: return 0
             return me*(x[0]-ee)
         if verbose: print '  connecting GPe to GPi'
-        self.net.connect('GPe', 'GPi', func=func_gpe, weight=-we, pstc=pstc_gaba)
+        self.net.connect('GPe', 'GPi', func=funcs.func_gpe, weight=-we, pstc=pstc_gaba)
         if verbose: print '  connecting GPe to STN'
-        self.net.connect('GPe', 'STN', func=func_gpe, weight=-wg, pstc=pstc_gaba)
+        self.net.connect('GPe', 'STN', func=funcs.func_gpe, weight=-wg, pstc=pstc_gaba)
         
     def get_output_function(self):    
         def func_gpi(x):

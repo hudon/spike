@@ -1,6 +1,7 @@
 import module
 
 import numpy as np
+import functions as funcs
 
 class Thalamus(module.Module):
     def __init__(self,bg,**params):
@@ -9,21 +10,25 @@ class Thalamus(module.Module):
     
     def init(self, rule_neurons=40, rule_threshold=0.2, mutual_inhibit=1, pstc_mutual=0.008):
         D=self.bg.rules.count()
-        
+
         self.net.make_input('bias', [1])
         self.net.make_array('rule', rule_neurons, D, intercept=(rule_threshold, 1), encoders=[[1]])
         self.net.connect('bias', 'rule')
-        
-        if mutual_inhibit>0:
-            self.net.connect('rule', 'rule', (np.eye(D)-1)*mutual_inhibit, pstc=pstc_mutual)       
 
-    def connect(self, weight_GPi=-3, pstc_GPi=0.008, pstc_output=0.01, neurons_gate=40, gate_threshold=0.3, pstc_to_gate=0.002, pstc_gate=0.008, channel_N_per_D=50, pstc_channel=0.01):
+        if mutual_inhibit>0:
+            self.net.connect('rule', 'rule', transform=(np.eye(D) - 1) * mutual_inhibit,
+                    pstc=pstc_mutual)
+
+    def connect(self, weight_GPi=-3, pstc_GPi=0.008, pstc_output=0.01, neurons_gate=40,
+            gate_threshold=0.3, pstc_to_gate=0.002, pstc_gate=0.008, channel_N_per_D=50,
+            pstc_channel=0.01):
         self.bg.rules.initialize(self.spa)
 
         # Store rules in the documentation comment for this network for use in the interactive mode view    
         self.net.network.documentation = 'THAL: ' + ','.join(self.bg.rules.names)
                 
-        self.spa.net.connect(self.bg.name+'.GPi', self.name+'.rule', weight=weight_GPi, pstc=pstc_GPi, func=self.bg.get_output_function())
+        self.spa.net.connect(self.bg.name+'.GPi', self.name+'.rule', weight=weight_GPi,
+                pstc=pstc_GPi, func=funcs.get_output_function())
 
 
         # make direct outputs

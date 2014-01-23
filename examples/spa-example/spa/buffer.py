@@ -6,14 +6,17 @@ class Buffer(module.Module):
         if intercept is None: intercept=(-1,1)
         else: intercept=(intercept,1)
         if array_dimensions is None:
-            self.net.make('buffer', N_per_D*dimensions, dimensions, intercept=intercept)
+            self.net.make('buffer', neurons=N_per_D*dimensions, dimensions=dimensions,
+                    intercept=intercept)
         else:
-            self.net.make_array('buffer', N_per_D*array_dimensions, length=dimensions/array_dimensions, dimensions=array_dimensions, intercept=intercept)    
+            self.net.make_array('buffer', neurons=N_per_D*array_dimensions,
+                    length=dimensions/array_dimensions, dimensions=array_dimensions,
+                    intercept=intercept)
 
         if feedback!=0:
-            self.net.connect('buffer','buffer',weight=feedback, pstc=pstc_feedback)                    
+            self.net.connect('buffer','buffer',weight=feedback, pstc=pstc_feedback)
 
-        self.spa.add_source(self, 'buffer')        
+        self.spa.add_source(self, 'buffer')
         self.spa.add_sink(self, 'buffer')
         
     """        
