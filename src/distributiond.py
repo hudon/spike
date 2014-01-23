@@ -20,6 +20,7 @@ class DistributionDaemon:
 
         self.workers = {} # format => {name: {node: obj, proc: obj}}
         self.current_port_offset = 0
+        self.current_job_id = None
 
     def _get_next_port(self):
         next_port = WORKER_PORT + self.current_port_offset
@@ -33,6 +34,24 @@ class DistributionDaemon:
 
     def ping(self, worker_name):
         self.listener_socket.send_pyobj({'result': 'pong'})
+
+    # Lock this daemon for a specific job
+    def lock(self, worker_name, job_id):
+        if not self.current_job_id or self.current_job_id == job_id:
+            self.current_job_id = job_id
+            self.listener_socket.send_pyobj({'result': 'ack'})
+        else:
+            print "DEBUG: Ignoring lock request for job %s" % job_id
+            self.listener_socket.send_pyobj({'result': 'busy'})
+
+    # Unlock the daemon (only possible if the lock's job ID is used)
+    def unlock(self, worker_name, job_id):
+        if self.current_job_id and self.current_job_id == job_id:
+            self.current_job_id = None
+            self.listener_socket.send_pyobj({'result': 'ack'})
+        else:
+            print "DEBUG: Ignoring unlock request for job %s" % job_id
+            self.listener_socket.send_pyobj({'result': 'busy'})
 
     def write_usr_module(self, worker_name, module_name, module_contents):
         file_path = os.path.join(tempdir, module_name)

@@ -1,5 +1,6 @@
 import os, getopt
 import random
+import uuid
 from _collections import OrderedDict
 
 import probe, ensemble, subnetwork
@@ -20,11 +21,10 @@ class Network(object):
         self.workers = {}
         self.probe_clients = {}
         self.split_ensembles = {}
-        self.distributor = distribution.DistributionManager(hosts_file)
-        if usr_module is not None:
-            module_name = os.path.basename(usr_module)
-            with open(usr_module, "rb") as module:
-                self.distributor.send_usr_module(module_name, module.read())
+
+        self.job_id = str(uuid.uuid4())
+        self.usr_module = usr_module
+        self.distributor = distribution.DistributionManager(hosts_file, self.job_id)
 
         self.name = name
         self.dt = dt
@@ -204,6 +204,37 @@ class Network(object):
     def run(self, time):
         # cleanup data that we do not need anymore
         self.split_ensembles = dict()
+
+        hosts = set([worker.host for worker in self.workers.values()])
+        full_addrs = set([worker.daemon_addr for worker in self.workers.values()])
+
+        print(
+            "Starting job {0} on {1} hosts: {2}".format(
+                self.job_id,
+                len(full_addrs),
+                "\n".join(full_addrs)
+            )
+        )
+
+        # Unlock unused hosts (if any)
+        for host in set(self.distributor.remote_hosts).difference(hosts):
+            self.distributor.unlock(host)
+
+        if self.usr_module:
+            print("Sending user-defined functions file '{0}' to remote hosts...".format(usr_module))
+
+            module_name = os.path.basename(usr_module)
+            with open(usr_module, "rb") as module:
+                module_contents = module.read()
+                for worker in self.workers.values():
+                    worker.send_commend(
+                        {
+                            'cmd': 'write_usr_module',
+                            'name': None,
+                            'args': (module_name, module_contents),
+                            'kwargs': {}
+                        }
+                    )
 
         for worker in self.workers.values():
             worker.send_command({
