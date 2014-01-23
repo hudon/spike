@@ -11,8 +11,9 @@ class MixedDistributionModeException(Exception):
     pass
 
 class LocalWorker:
-    def __init__(self, zmq_context, node):
+    def __init__(self, zmq_context, node, name):
         self.node = node
+        self.name = name
         self.zmq_context = zmq_context
 
         self.admin_socket_def, self.node_socket_def = \
@@ -155,7 +156,7 @@ class DistributionManager:
 
     def new_worker(self, name, local=False, node=None):
         if local:
-            return LocalWorker(self.zmq_context, node)
+            return LocalWorker(self.zmq_context, node, name)
 
         host_name = self._next_host()
         daemon_addr = "tcp://%s:%s" % (host_name, DAEMON_PORT)

@@ -3,21 +3,22 @@ import numpy as np
 
 class Buffer(module.Module):
     def init(self, dimensions=16, N_per_D=30, feedback=1, pstc_feedback=0.01, array_dimensions=None, intercept=None):
+        self.name = 'buffer'
         if intercept is None: intercept=(-1,1)
         else: intercept=(intercept,1)
         if array_dimensions is None:
-            self.net.make('buffer', neurons=N_per_D*dimensions, dimensions=dimensions,
+            self.net.make(self.name, neurons=N_per_D*dimensions, dimensions=dimensions,
                     intercept=intercept)
         else:
-            self.net.make_array('buffer', neurons=N_per_D*array_dimensions,
+            self.net.make_array(self.name, neurons=N_per_D*array_dimensions,
                     length=dimensions/array_dimensions, dimensions=array_dimensions,
                     intercept=intercept)
 
         if feedback!=0:
-            self.net.connect('buffer','buffer',weight=feedback, pstc=pstc_feedback)
+            self.net.connect(self.name,self.name,weight=feedback, pstc=pstc_feedback)
 
-        self.spa.add_source(self, 'buffer')
-        self.spa.add_sink(self, 'buffer')
+        self.spa.add_source(self,self.name)
+        self.spa.add_sink(self,self.name)
         
     """        
     def complete(self, recurrent_cleanup=0):

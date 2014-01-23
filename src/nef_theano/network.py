@@ -249,13 +249,23 @@ class Network(object):
         else:
             self.workers[alias] = self.workers[name]
 
+    def without_aliases(self, the_dict):
+        result = dict()
+        for value in the_dict.values():
+            if not value.name in result:
+                result[value.name] = value
+        return result
+
     def run(self, time):
         # cleanup data that we do not need anymore
         self.split_ensembles = dict()
 
-        for worker in self.local_workers.values():
+        local_workers = self.without_aliases(self.local_workers)
+        workers = self.without_aliases(self.workers)
+
+        for worker in local_workers.values():
             worker.start(time)
-        for worker in self.workers.values():
+        for worker in workers.values():
             worker.send_command({
                 'cmd': 'start',
                 'args': (worker.worker_port, time),
@@ -263,22 +273,22 @@ class Network(object):
             })
 
         # waiting for a FIN from each worker and sending an ACK for it to finish
-        for worker in self.workers.values():
+        for worker in workers.values():
             worker.send_command({'cmd': 'fin', 'args': (), 'kwargs': {}})
 
-        for worker in self.local_workers.values():
+        for worker in local_workers.values():
             worker.send_pyobj("FIN")
-        for worker in self.local_workers.values():
+        for worker in local_workers.values():
             worker.recv_pyobj() #ack
 
-        for worker in self.workers.values():
+        for worker in workers.values():
             if worker.name in self.probe_clients.keys():
                 client = self.probe_clients[worker.name]
                 data = worker.send_command({'cmd': 'get_data', 'args': (), 'kwargs': {}})
                 client.add_data(data)
             worker.kill()
 
-        for worker in self.local_workers.values():
+        for worker in local_workers.values():
             worker.send_pyobj("KILL")
 
         self.run_time += time
