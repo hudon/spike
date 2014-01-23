@@ -2,8 +2,9 @@ import os, getopt
 import random
 from _collections import OrderedDict
 
-import probe, ensemble, subnetwork
+import probe, ensemble, subnetwork, input
 import numpy as np
+import zmq_utils, zmq
 
 from . import distribution
 
@@ -21,6 +22,7 @@ class Network(object):
             raise Exception("ERROR: A hosts_file is required (try the --hosts arg)")
 
         self.workers = {}
+        self.local_workers = {}
         self.probe_clients = {}
         self.split_ensembles = {}
         self.distributor = distribution.DistributionManager(hosts_file)
@@ -40,8 +42,32 @@ class Network(object):
         if seed is not None:
             self.random.seed(seed)
 
+
+    def _connect_pre_local(self, pre_name, post_addr, func=None):
+        node = self.local_workers[pre_name].node
+        if not isinstance(node, input.Input):
+            raise Exception("ERROR: connect_pre_local only supports Inputs at the moment")
+        if func is None:
+            origin = node.origin['X']
+        else:
+            origin_name = func.__name__
+            if origin_name not in node.origin:
+                node.add_origin(origin_name, func, dt=self.dt, **kwargs)
+            origin = node.origin[origin_name]
+
+        # connect origin to post
+        socket = zmq_utils.SocketDefinition(post_addr, zmq.PUSH, is_server=False)
+        origin.add_output(socket)
+
+        return {
+            'pre_output': origin.decoded_output.get_value(),
+            'pre_dimensions': origin.dimensions,
+            # The connect_pre functions must return these keys even if we know
+            # we are not connecting an ensemble
+            'pre_array_size': None, 'pre_neurons_out': None, 'pre_neurons_num': None
+        }
+
     def _connect(self, pre, post, func, decoders, **kwargs):
-        pre_worker = self.workers[pre]
         post_worker = self.workers[post]
 
         post_port = post_worker.send_command({
@@ -51,13 +77,17 @@ class Network(object):
         })
         post_addr = 'tcp://%s:%s' % (post_worker.host, post_port)
 
-        pre_params = pre_worker.send_command({
-            'cmd': 'connect_pre',
-            'args': (),
-            'kwargs': {'post_addr': post_addr, 'func': func, 'dt': self.dt,
-                'decoders': decoders}
-        })
+        if pre in self.local_workers:
+            pre_params = self._connect_pre_local(pre, post_addr=post_addr, func=func)
+        else:
+            pre_params = self.workers[pre].send_command({
+                'cmd': 'connect_pre',
+                'args': (),
+                'kwargs': {'post_addr': post_addr, 'func': func, 'dt': self.dt,
+                    'decoders': decoders}
+            })
 
+        # Adding pre_params to kwargs
         for key, value in pre_params.iteritems():
             kwargs[key] = value
         kwargs['pre_name'] = pre
@@ -142,15 +172,20 @@ class Network(object):
             array_size=array_size, **kwargs)
 
     def make_input(self, *args, **kwargs):
-        worker = self.distributor.new_worker(args[0])
-
+        #worker = self.distributor.new_worker(args[0])
         kwargs['dt'] = self.dt
-        worker.send_command({
-            'cmd': 'make_input',
-            'args': args,
-            'kwargs': kwargs
-        })
-        self.workers[args[0]] = worker
+
+        inode = input.Input(*args, **kwargs)
+        self.local_workers[inode.name] = \
+            self.distributor.new_worker(inode.name, True, inode)
+        #self.listener_socket.send_pyobj({'result': 'ack'})
+        #kwargs['dt'] = self.dt
+        #worker.send_command({
+            #'cmd': 'make_input',
+            #'args': args,
+            #'kwargs': kwargs
+        #})
+        #self.workers[args[0]] = worker
 
     def _make_probe(self, target, name, dt_sample=0.01, data_type='decoded', **kwargs):
         probe_worker = self.distributor.new_worker(name)
@@ -161,12 +196,16 @@ class Network(object):
         })
         probe_addr = 'tcp://%s:%s' % (probe_worker.host, probe_port)
 
-        target_worker = self.workers[target] # TODO: handle origin targets case
-        target_params = target_worker.send_command({
-            'cmd': 'connect_pre',
-            'args': (),
-            'kwargs': {'post_addr': probe_addr}
-        })
+        if target in self.local_workers:
+            target_params = self._connect_pre_local(target,
+                    post_addr=probe_addr)
+        else:
+            target_worker = self.workers[target] # TODO: handle origin targets case
+            target_params = target_worker.send_command({
+                'cmd': 'connect_pre',
+                'args': (),
+                'kwargs': {'post_addr': probe_addr}
+            })
 
         kwargs['dt'] = self.dt
         kwargs['dt_sample'] = dt_sample
@@ -208,6 +247,8 @@ class Network(object):
         # cleanup data that we do not need anymore
         self.split_ensembles = dict()
 
+        for worker in self.local_workers.values():
+            worker.start(time)
         for worker in self.workers.values():
             worker.send_command({
                 'cmd': 'start',
@@ -219,11 +260,19 @@ class Network(object):
         for worker in self.workers.values():
             worker.send_command({'cmd': 'fin', 'args': (), 'kwargs': {}})
 
+        for worker in self.local_workers.values():
+            worker.send_pyobj("FIN")
+        for worker in self.local_workers.values():
+            worker.recv_pyobj() #ack
+
         for worker in self.workers.values():
             if worker.name in self.probe_clients.keys():
                 client = self.probe_clients[worker.name]
                 data = worker.send_command({'cmd': 'get_data', 'args': (), 'kwargs': {}})
                 client.add_data(data)
             worker.kill()
+
+        for worker in self.local_workers.values():
+            worker.send_pyobj("KILL")
 
         self.run_time += time

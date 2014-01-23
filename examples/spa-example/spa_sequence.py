@@ -16,16 +16,17 @@ class Rules:
         effect(state='A')
     
 class Sequence(spa.SPA):
-    dimensions = 8
+    dimensions = 8 # 512
     verbose = True
     
-    state = spa.Buffer()
+    state = spa.Buffer() # pass in N
     BG = spa.BasalGanglia(Rules)
     thal = spa.Thalamus(BG)
     
     input = spa.Input(0.1,state='D')
 
-net = nef.Network('Sequence', seed=1, command_arguments=sys.argv[2:])
+net = nef.Network('Sequence', seed=1, command_arguments=sys.argv[2:],
+        usr_module='../examples/spa-example/functions.py')
 seq = Sequence(net)
 
 pThal = net.make_probe('thal.rule', dt_sample=0.001)

@@ -1,6 +1,7 @@
 import zmq
 import zmq_utils
 import os
+import input
 
 from multiprocessing import Process
 
@@ -8,6 +9,38 @@ DAEMON_PORT = 9000
 
 class MixedDistributionModeException(Exception):
     pass
+
+class LocalWorker:
+    def __init__(self, zmq_context, node):
+        self.node = node
+        self.zmq_context = zmq_context
+
+        self.admin_socket_def, self.node_socket_def = \
+            zmq_utils.create_ipc_socket_defs_reqrep("admin", node.name)
+
+    def send(self, content):
+        return self.admin_socket.send(content)
+
+    def send_pyobj(self, content):
+        return self.admin_socket.send_pyobj(content)
+
+    def recv(self):
+        return self.admin_socket.recv()
+
+    def recv_pyobj(self):
+        return self.admin_socket.recv_pyobj()
+
+    def start(self, time):
+        self.admin_socket = self.admin_socket_def.create_socket(self.zmq_context)
+        self.process = Process(target=self.node.run,
+                               args=(self.node_socket_def, time),
+                               name=self.node.name)
+        self.process.start()
+
+    def stop(self):
+        self.process.join()
+
+
 
 class Worker:
     def __init__(self, name, host, worker_port, daemon_port, zmq_context):
@@ -120,7 +153,10 @@ class DistributionManager:
             {'cmd': 'next_avail_port', 'name': name, 'args': (), 'kwargs': {}},
             daemon_addr)
 
-    def new_worker(self, name):
+    def new_worker(self, name, local=False, node=None):
+        if local:
+            return LocalWorker(self.zmq_context, node)
+
         host_name = self._next_host()
         daemon_addr = "tcp://%s:%s" % (host_name, DAEMON_PORT)
         worker_port = self._new_daemon_port(daemon_addr, name)

@@ -1,5 +1,6 @@
 import module
 import bgrules
+import functions as funcs
 
 # connection weights from (Gurney, Prescott, & Redgrave, 2001)
 mm=1
@@ -43,9 +44,9 @@ class BasalGanglia(module.Module):
             if x[0]<e: return 0
             return mm*(x[0]-e)
         if verbose: print '  connecting StrD1 to GPi'
-        self.net.connect('StrD1', 'GPi', func=func_str, weight=-wm, pstc=pstc_gaba)
+        self.net.connect('StrD1', 'GPi', func=funcs.func_str, weight=-wm, pstc=pstc_gaba)
         if verbose: print '  connecting StrD2 to GPe'
-        self.net.connect('StrD2', 'GPe', func=func_str, weight=-wm, pstc=pstc_gaba)
+        self.net.connect('StrD2', 'GPe', func=funcs.func_str, weight=-wm, pstc=pstc_gaba)
 
         # connect the STN to GPi and GPe (broad and excitatory)
         def func_stn(x):
