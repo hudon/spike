@@ -28,7 +28,7 @@ class Thalamus(module.Module):
         self.net.network.documentation = 'THAL: ' + ','.join(self.bg.rules.names)
                 
         self.spa.net.connect(self.bg.name+'.GPi', self.name+'.rule', weight=weight_GPi,
-                pstc=pstc_GPi, func=funcs.get_output_function())
+                pstc=pstc_GPi, func=funcs.func_gpi)
 
 
         # make direct outputs

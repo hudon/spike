@@ -1,11 +1,9 @@
 
 eg = -0.2
 mg = 1
-def get_output_function():
-    def func_gpi(x):
-        if x[0] < eg: return 0
-        return mg * (x[0] - eg)
-    return func_gpi
+def func_gpi(x):
+    if x[0] < eg: return 0
+    return mg * (x[0] - eg)
 
 e = 0.2
 mm = 1
@@ -28,3 +26,9 @@ me=1
 def func_gpe(x):
     if x[0] < ee: return 0
     return me * (x[0] - ee)
+
+#def result(x,v=self.spa.sinks[post[0]].parse(post[1]).v):
+def result(x,v=[]):
+    for xx in x:
+        if xx<0.4: return [0]*len(v)  #TODO: This is pretty arbitrary....
+    return v

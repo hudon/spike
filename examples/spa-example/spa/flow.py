@@ -85,7 +85,7 @@ class Flow(module.Module):
             for j,p in enumerate(pre):
                 t=np.zeros((D,self.spa.sources[p[0]].dimensions),typecode='f')
                 t[j,:]=self.spa.sources[p[0]].parse(p[1]).v*math.sqrt(D)
-                self.spa.net.connect('source_'+p[0],self.name+'.'+aname,transform=t)                
+                self.spa.net.connect('source_'+p[0],self.name+'.'+aname,transform=t)
             def result(x,v=self.spa.sinks[post[0]].parse(post[1]).v):
                 for xx in x:
                     if xx<0.4: return [0]*len(v)  #TODO: This is pretty arbitrary....
