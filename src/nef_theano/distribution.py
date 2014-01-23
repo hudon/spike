@@ -1,6 +1,7 @@
 import zmq
 import zmq_utils
 import os
+import warnings
 
 from multiprocessing import Process
 
@@ -104,10 +105,13 @@ class DistributionManager:
         socket.send_pyobj(message, zmq.NOBLOCK)
 
         response = None
-        responses = dict(poller.poll(10000))
+        responses = dict(poller.poll(60000)) # 1 minute
 
-        if socket in responses and responses[socket] == zmq.POLLIN:
-            response = socket.recv_pyobj(zmq.NOBLOCK)
+        if not (socket in responses and responses[socket] == zmq.POLLIN):
+            warnings.warn("WARNING: We have been waiting for over a minute for machine '" + daemon_addr + "' it might be down (or computing a very large node)")
+            responses = dict(poller.poll()) # forever
+
+        response = socket.recv_pyobj(zmq.NOBLOCK)
 
         socket.close()
 

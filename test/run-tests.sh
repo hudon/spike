@@ -117,17 +117,23 @@ function handle_sigint()
 }
 trap handle_sigint SIGINT
 
+USES_LOCALHOST=`grep localhost ${THIS_SCRIPT_DIRECTORY}/remote_hosts.txt | wc -l`
 
-PROGRAM="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}/distributiond.py"
-$PROGRAM > /dev/null &
-PID=$!
+if [ ${USES_LOCALHOST} -ne 0 ]; then
+    PROGRAM="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}/distributiond.py"
+    $PROGRAM > /dev/null &
+    PID=$!
 
-echo "Started daemon with pid "${PID}"."
+    echo "Started daemon with pid "${PID}"."
+fi
+
 
 for test_script in "${TEST_SCRIPTS[@]}" ;
 do
   compareOutput $test_script ;
 done
 
-kill ${PID}
-echo "Killed daemon with pid "${PID}"."
+if [ ${USES_LOCALHOST} -ne 0 ]; then
+    kill ${PID}
+    echo "Killed daemon with pid "${PID}"."
+fi
