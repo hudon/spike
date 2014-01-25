@@ -95,17 +95,47 @@ t = np.linspace(dt_step, timesteps*dt_step, timesteps)
 pstc = 0.01
 
 Ip = net.make_probe('in', dt_sample=dt_step, pstc=pstc)
+StrD1p = net.make_probe('BG.StrD1', dt_sample=dt_step, pstc=pstc)
+StrD2p = net.make_probe('BG.StrD2', dt_sample=dt_step, pstc=pstc)
+Stnp = net.make_probe('BG.STN', dt_sample=dt_step, pstc=pstc)
+GPip = net.make_probe('BG.GPi', dt_sample=dt_step, pstc=pstc)
+GPep = net.make_probe('BG.GPe', dt_sample=dt_step, pstc=pstc)
 BGp = net.make_probe('BG.output', dt_sample=dt_step, pstc=pstc)
 
 print "starting simulation"
 net.run(timesteps*dt_step)
 
 ip_data = Ip.get_data()
+strd1p_data = StrD1p.get_data()
+strd2p_data = StrD2p.get_data()
+stnp_data = Stnp.get_data()
+# gpip_data = GPip.get_data()
+# gpep_data = GPep.get_data()
 bgp_data = BGp.get_data()
 
 print "input 'in' probe data"
 for x in ip_data:
     print x
+
+# print "input 'StrD1' probe data"
+# for x in strd1p_data:
+#     print x
+
+# print "input 'StrD2' probe data"
+# for x in strd2p_data:
+#     print x
+
+# print "input 'STN' probe data"
+# for x in stnp_data:
+#     print x
+
+# print "input 'GPi' probe data"
+# for x in gpip_data:
+#     print x
+
+# print "input 'GPe' probe data"
+# for x in gpep_data:
+#     print x
 
 print "bgp_data 'BG.output' probe data"
 for x in bgp_data:

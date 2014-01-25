@@ -6,7 +6,7 @@ import sys, tempfile, os
 tempdir = tempfile.gettempdir()
 sys.path.append(tempdir)
 
-from multiprocessing import Process
+from multiprocessing import Process,  Pipe
 import numpy as np
 
 # Distributor listens on this port for commands
@@ -50,9 +50,22 @@ class DistributionDaemon:
         self.workers[worker_name] = {'node': inode}
         self.listener_socket.send_pyobj({'result': 'ack'})
 
-    def make_ensemble(self, worker_name, *args, **kwargs):
+    def _ens_creator(self, conn, *args, **kwargs):
+        print >> sys.stderr, "in ens creator"
+        print >> sys.stderr, args
+        print >> sys.stderr, kwargs
         enode = ensemble.EnsembleProcess(*args, **kwargs)
-        self.workers[worker_name] = {'node': enode}
+        conn.send(enode)
+        conn.close()
+
+    def make_ensemble(self, worker_name, *args, **kwargs):
+        print >> sys.stderr, "make ensemble"
+        print >> sys.stderr, args
+        print >> sys.stderr, kwargs
+        parent_conn, child_conn = Pipe()
+        p = Process(target=self._ens_creator, args=(child_conn, args), kwargs=kwargs, name=worker_name)
+        p.start()
+        self.workers[worker_name] = {'process': p, 'conn': parent_conn}
         self.listener_socket.send_pyobj({'result': 'ack'})
 
     def make_probe(self, worker_name, wport, *args, **kwargs):
@@ -223,6 +236,20 @@ class DistributionDaemon:
             worker_name = msg['name']
             args = msg['args']
             kwargs = msg['kwargs']
+            print >> sys.stderr, "worker " + str(worker_name) + " command " + str(cmd)
+
+            # cannot execute a command on a node that has not yet been initiated
+            if worker_name in self.workers and 'process' in self.workers[worker_name]:
+                print >> sys.stderr, "invoke command for " + worker_name
+                p = self.workers[worker_name]['process']
+                conn = self.workers[worker_name]['conn']
+                print >> sys.stderr, "waiting to receive from " + worker_name
+
+                enode = conn.recv()
+                p.join()
+                print >> sys.stderr, worker_name + " done"
+                self.workers[worker_name] = {'node': enode}
+
             # cmd is a command that corresponds to a method in the daemon
             # invoke the cmd methods with given arguments
             getattr(self, cmd)(worker_name, *args, **kwargs)
