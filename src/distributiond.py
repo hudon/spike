@@ -6,7 +6,8 @@ import sys, tempfile, os
 tempdir = tempfile.gettempdir()
 sys.path.append(tempdir)
 
-from multiprocessing import Process,  Pipe
+from multiprocessing import Process, Pipe
+from threading import Thread
 import numpy as np
 
 # Distributor listens on this port for commands
@@ -19,6 +20,7 @@ class DistributionDaemon:
         self.listener_socket = None
 
         self.workers = {} # format => {name: {node: obj, proc: obj}}
+        self.create_thread = None # format => {name: name, process: proc, conn: obj}
         self.current_port_offset = 0
 
     def _get_next_port(self):
@@ -51,21 +53,15 @@ class DistributionDaemon:
         self.listener_socket.send_pyobj({'result': 'ack'})
 
     def _ens_creator(self, conn, *args, **kwargs):
-        print >> sys.stderr, "in ens creator"
-        print >> sys.stderr, args
-        print >> sys.stderr, kwargs
         enode = ensemble.EnsembleProcess(*args, **kwargs)
         conn.send(enode)
-        conn.close()
+        conn.recv() # wait for a ack
 
     def make_ensemble(self, worker_name, *args, **kwargs):
-        print >> sys.stderr, "make ensemble"
-        print >> sys.stderr, args
-        print >> sys.stderr, kwargs
         parent_conn, child_conn = Pipe()
-        p = Process(target=self._ens_creator, args=(child_conn, args), kwargs=kwargs, name=worker_name)
-        p.start()
-        self.workers[worker_name] = {'process': p, 'conn': parent_conn}
+        t = Thread(target=self._ens_creator, args=(child_conn, args), kwargs=kwargs, name=worker_name)
+        t.start()
+        self.create_thread = {'name': worker_name, 'thread': t, 'conn': parent_conn}
         self.listener_socket.send_pyobj({'result': 'ack'})
 
     def make_probe(self, worker_name, wport, *args, **kwargs):
@@ -236,19 +232,17 @@ class DistributionDaemon:
             worker_name = msg['name']
             args = msg['args']
             kwargs = msg['kwargs']
-            print >> sys.stderr, "worker " + str(worker_name) + " command " + str(cmd)
 
-            # cannot execute a command on a node that has not yet been initiated
-            if worker_name in self.workers and 'process' in self.workers[worker_name]:
-                print >> sys.stderr, "invoke command for " + worker_name
-                p = self.workers[worker_name]['process']
-                conn = self.workers[worker_name]['conn']
-                print >> sys.stderr, "waiting to receive from " + worker_name
-
+            # do not execute the next command unless an existing ensemble create thread is done
+            if cmd != 'ping' and cmd != 'next_avail_port' and self.create_thread is not None:
+                wname = self.create_thread['name']
+                t = self.create_thread['thread']
+                conn = self.create_thread['conn']
                 enode = conn.recv()
-                p.join()
-                print >> sys.stderr, worker_name + " done"
-                self.workers[worker_name] = {'node': enode}
+                conn.send('ack')
+                t.join()
+                self.workers[wname] = {'node': enode}
+                self.create_thread = None
 
             # cmd is a command that corresponds to a method in the daemon
             # invoke the cmd methods with given arguments

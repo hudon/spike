@@ -25,11 +25,11 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_noise.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_runtime.py"
-  # # "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
+  # "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
   "${NENGO_TESTS_DIR}/test_subnetwork.py"
   "${NENGO_TESTS_DIR}/test_transform.py"
   "${NENGO_TESTS_DIR}/test_weight_index_pre_post.py"
-  # # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
+  # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
   # "matrix_multiplication_distributed.py"
   "${NENGO_TESTS_DIR}/test_array_subs.py"
   "${NENGO_TESTS_DIR}/test_func_subs.py"
