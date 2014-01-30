@@ -43,6 +43,17 @@ class Network(object):
         self.random = random.Random()
         if seed is not None:
             self.random.seed(seed)
+
+    def set_alias(self, alias, name):
+        self.nodes[alias] = self.nodes[name]
+
+    def without_aliases(self, the_dict):
+        result = dict()
+        for value in the_dict.values():
+            if not value.name in result:
+                result[value.name] = value
+        return result
+
           
     def add(self, node):
         """Add an arbitrary non-theano node to the network.
