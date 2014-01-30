@@ -1,7 +1,16 @@
+declare -A PORTS
+PORTS["ctngpu1"]="3656"
+PORTS["ctngpu2"]="3656"
+PORTS["ctngpu3"]="3656"
+PORTS["ctn08"]="22"
+
+
+
 HOSTS=(
     "ctngpu1"
     "ctngpu2"
     "ctngpu3"
+    "ctn08"
 );
 
 
@@ -17,7 +26,7 @@ do
 
     for host in "${HOSTS[@]}";
     do
-        a=`ssh -i /home/spike/.ssh/serverkey spike@$host.uwaterloo.ca -p 3656 "ssh root@localhost -p 3123 \"cat /proc/meminfo && cat /proc/stat\""`
+        a=`ssh -i /home/spike/.ssh/serverkey spike@${host}.uwaterloo.ca -p ${PORTS[${host}]} "cat /proc/meminfo && cat /proc/stat"`
         cached=`echo "$a" | grep ^Cached: | grep -o "[0-9]\+"`
         memfree=`echo "$a" | grep ^MemFree: | grep -o "[0-9]\+"`
         memtotal=`echo "$a" | grep ^MemTotal: | grep -o "[0-9]\+"`
@@ -62,9 +71,9 @@ do
     for key in $sorted_keys;
     do
         if [ $i -eq 1 ] ; then
-            printf "%20s" "$key"
+            printf "%14s" "$key"
         else
-            printf "%20s" "${row[$key]}"
+            printf "%14s" "${row[$key]}"
         fi
     done
 
