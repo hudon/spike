@@ -126,6 +126,8 @@ class Network(object):
                 e_num += 1
 
                 kwargs["dimensions"] = orig_ensemble.dimensions
+                if orig_ensemble.neurons_num % num_subs != 0:
+                    raise Exception('ERROR: The number of neurons is not divisible by num_subs')
                 kwargs["neurons"] = orig_ensemble.neurons_num / num_subs
                 kwargs["encoders"] = encoder
                 kwargs["decoders"] = decoder
