@@ -181,7 +181,10 @@ class Network(object):
 
     def make_probe(self, target, name=None, dt_sample=0.01, data_type='decoded', **kwargs):
         i = 0
-        while name is None or self.workers.has_key(name):
+        # ensure there are no probes (or probes for subensembles) with the
+        # same name
+        while name is None or self.workers.has_key(name) or \
+                self.workers.has_key(name + '-SUB-0'):
             i += 1
             name = ("Probe%d" % i)
 

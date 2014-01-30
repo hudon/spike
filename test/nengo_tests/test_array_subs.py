@@ -15,10 +15,10 @@ def test_array():
 
     net = nef.Network('Array Test', seed=51, command_arguments=sys.argv[2:])
     net.make_input('in', np.arange(-1, 1, .34), zero_after_time=1.0)
-    net.make('B', neurons=neurons, array_size=3, dimensions=2)
+    net.make('B', neurons=neurons, array_size=3, dimensions=2, num_subs=5)
     net.make_array('A', neurons=neurons, array_size=1, dimensions=6)
-    net.make('A2', neurons=neurons, array_size=2, dimensions=3, num_subs=2)
-    net.make('B2', neurons=neurons, array_size=6, dimensions=1)
+    net.make('A2', neurons=neurons, array_size=2, dimensions=3, num_subs=10)
+    net.make('B2', neurons=neurons, array_size=6, dimensions=1, num_subs=2)
 
     net.connect('in', 'A')
     net.connect('in', 'A2')

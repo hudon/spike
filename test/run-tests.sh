@@ -121,7 +121,7 @@ USES_LOCALHOST=`grep localhost ${THIS_SCRIPT_DIRECTORY}/remote_hosts.txt | wc -l
 
 if [ ${USES_LOCALHOST} -ne 0 ]; then
     PROGRAM="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}/distributiond.py"
-    $PROGRAM > /dev/null &
+    $PROGRAM > /tmp/daemon.log &
     PID=$!
 
     echo "Started daemon with pid "${PID}"."
