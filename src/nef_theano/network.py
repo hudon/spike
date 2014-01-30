@@ -126,6 +126,8 @@ class Network(object):
                 e_num += 1
 
                 kwargs["dimensions"] = orig_ensemble.dimensions
+                if orig_ensemble.neurons_num % num_subs != 0:
+                    raise Exception('ERROR: The number of neurons is not divisible by num_subs')
                 kwargs["neurons"] = orig_ensemble.neurons_num / num_subs
                 kwargs["encoders"] = encoder
                 kwargs["decoders"] = decoder
@@ -179,7 +181,10 @@ class Network(object):
 
     def make_probe(self, target, name=None, dt_sample=0.01, data_type='decoded', **kwargs):
         i = 0
-        while name is None or self.workers.has_key(name):
+        # ensure there are no probes (or probes for subensembles) with the
+        # same name
+        while name is None or self.workers.has_key(name) or \
+                self.workers.has_key(name + '-SUB-0'):
             i += 1
             name = ("Probe%d" % i)
 
