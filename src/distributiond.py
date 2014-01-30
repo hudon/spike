@@ -233,8 +233,9 @@ class DistributionDaemon:
             args = msg['args']
             kwargs = msg['kwargs']
 
-            # do not execute the next command unless an existing ensemble create thread is done
-            if cmd != 'ping' and cmd != 'next_avail_port' and self.create_thread is not None:
+            # if daemon is creating an ensemble, ensemble-related commands will block here
+            meta_commands = ['ping', 'next_avail_port']
+            if cmd not in meta_commands and self.create_thread is not None:
                 wname = self.create_thread['name']
                 t = self.create_thread['thread']
                 conn = self.create_thread['conn']
