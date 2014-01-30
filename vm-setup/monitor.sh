@@ -3,14 +3,21 @@ PORTS["ctngpu1"]="3656"
 PORTS["ctngpu2"]="3656"
 PORTS["ctngpu3"]="3656"
 PORTS["ctn08"]="22"
+PORTS["129.97.45.78"]="22"
 
-
+declare -A POSTFIX
+POSTFIX["ctngpu1"]=".uwaterloo.ca"
+POSTFIX["ctngpu2"]=".uwaterloo.ca"
+POSTRIX["ctngpu3"]=".uwaterloo.ca"
+POSTFIX["ctn08"]=".uwaterloo.ca"
+POSTFIX["129.97.45.78"]=""
 
 HOSTS=(
     "ctngpu1"
     "ctngpu2"
     "ctngpu3"
     "ctn08"
+    "129.97.45.78"
 );
 
 
@@ -26,12 +33,12 @@ do
 
     for host in "${HOSTS[@]}";
     do
-        a=`ssh -i /home/spike/.ssh/serverkey spike@${host}.uwaterloo.ca -p ${PORTS[${host}]} "cat /proc/meminfo && cat /proc/stat"`
+        a=`ssh -i /home/spike/.ssh/serverkey spike@${host}${POSTFIX[${host}]} -p ${PORTS[${host}]} "cat /proc/meminfo && cat /proc/stat"`
         cached=`echo "$a" | grep ^Cached: | grep -o "[0-9]\+"`
         memfree=`echo "$a" | grep ^MemFree: | grep -o "[0-9]\+"`
         memtotal=`echo "$a" | grep ^MemTotal: | grep -o "[0-9]\+"`
-        totalmem[${host}]=$memtotal
-        row[${host}-ava]=$(($cached + $memfree))
+        totalmem["${host}"]=$memtotal
+        row["${host}""-ava"]=$(($cached + $memfree))
 
         cpualluser=`echo "$a" | grep "cpu " | awk '{print $2}'`
         cpuallnice=`echo "$a" | grep "cpu " | awk '{print $3}'`
@@ -43,11 +50,11 @@ do
         totalcpuallused=$(($cpualluser + $cpuallnice + $cpuallsystem + $cpualliowait + $cpuallirq + $cpuallsoftirq))
         totalcpuallidle=$(($cpuallidle))
         #  used / (used + idle)
-        numerator=$(($totalcpuallused - previouscpudata[${host}-cpu]))
-        denominator=$((  ( ($totalcpuallused - previouscpudata[${host}-cpu]) + ($totalcpuallidle - previouscpudata[${host}-idle]) )  ))
-        row[${host}-util]=`echo "scale=2; $numerator/$denominator" | bc`
-        previouscpudata[${host}-cpu]=$totalcpuallused 
-        previouscpudata[${host}-idle]=$totalcpuallidle
+        numerator=$(($totalcpuallused - previouscpudata["${host}""-cpu"]))
+        denominator=$((  ( ($totalcpuallused - previouscpudata["${host}""-cpu"]) + ($totalcpuallidle - previouscpudata["${host}""-idle"]) )  ))
+        row["${host}""-util"]=`echo "scale=2; $numerator/$denominator" | bc`
+        previouscpudata["${host}""-cpu"]=$totalcpuallused 
+        previouscpudata["${host}""-idle"]=$totalcpuallidle
     done
 
 
@@ -71,9 +78,9 @@ do
     for key in $sorted_keys;
     do
         if [ $i -eq 1 ] ; then
-            printf "%14s" "$key"
+            printf "%18s" "$key"
         else
-            printf "%14s" "${row[$key]}"
+            printf "%18s" "${row[$key]}"
         fi
     done
 
