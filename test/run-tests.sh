@@ -25,11 +25,11 @@ TEST_SCRIPTS=(
   "${NENGO_TESTS_DIR}/test_noise.py"
   "${NENGO_TESTS_DIR}/test_radius.py"
   "${NENGO_TESTS_DIR}/test_runtime.py"
-  # # "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
+  # "${NENGO_TESTS_DIR}/test_simplenode.py" ## uses instance methods (cannot pickle)
   "${NENGO_TESTS_DIR}/test_subnetwork.py"
   "${NENGO_TESTS_DIR}/test_transform.py"
   "${NENGO_TESTS_DIR}/test_weight_index_pre_post.py"
-  # # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
+  # "${NENGO_TESTS_DIR}/test_writeout.py" # Note: requires extra libraries to function
   # "matrix_multiplication_distributed.py"
   "${NENGO_TESTS_DIR}/test_array_subs.py"
   "${NENGO_TESTS_DIR}/test_func_subs.py"
@@ -117,17 +117,23 @@ function handle_sigint()
 }
 trap handle_sigint SIGINT
 
+USES_LOCALHOST=`grep localhost ${THIS_SCRIPT_DIRECTORY}/remote_hosts.txt | wc -l`
 
-PROGRAM="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}/distributiond.py"
-$PROGRAM > /dev/null &
-PID=$!
+if [ ${USES_LOCALHOST} -ne 0 ]; then
+    PROGRAM="${PYTHON} ${THIS_SCRIPT_DIRECTORY}/${TARGET_DIR}/distributiond.py"
+    $PROGRAM > /tmp/daemon.log &
+    PID=$!
 
-echo "Started daemon with pid "${PID}"."
+    echo "Started daemon with pid "${PID}"."
+fi
+
 
 for test_script in "${TEST_SCRIPTS[@]}" ;
 do
   compareOutput $test_script ;
 done
 
-kill ${PID}
-echo "Killed daemon with pid "${PID}"."
+if [ ${USES_LOCALHOST} -ne 0 ]; then
+    kill ${PID}
+    echo "Killed daemon with pid "${PID}"."
+fi

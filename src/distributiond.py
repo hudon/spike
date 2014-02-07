@@ -6,7 +6,8 @@ import sys, tempfile, os
 tempdir = tempfile.gettempdir()
 sys.path.append(tempdir)
 
-from multiprocessing import Process
+from multiprocessing import Process, Pipe
+from threading import Thread
 import numpy as np
 
 # Distributor listens on this port for commands
@@ -19,6 +20,7 @@ class DistributionDaemon:
         self.listener_socket = None
 
         self.workers = {} # format => {name: {node: obj, proc: obj}}
+        self.create_thread = None # format => {name: name, process: proc, conn: obj}
         self.current_port_offset = 0
         self.current_job_id = None
 
@@ -69,9 +71,16 @@ class DistributionDaemon:
         self.workers[worker_name] = {'node': inode}
         self.listener_socket.send_pyobj({'result': 'ack'})
 
-    def make_ensemble(self, worker_name, *args, **kwargs):
+    def _ens_creator(self, conn, *args, **kwargs):
         enode = ensemble.EnsembleProcess(*args, **kwargs)
-        self.workers[worker_name] = {'node': enode}
+        conn.send(enode)
+        conn.recv() # wait for a ack
+
+    def make_ensemble(self, worker_name, *args, **kwargs):
+        parent_conn, child_conn = Pipe()
+        t = Thread(target=self._ens_creator, args=(child_conn, args), kwargs=kwargs, name=worker_name)
+        t.start()
+        self.create_thread = {'name': worker_name, 'thread': t, 'conn': parent_conn}
         self.listener_socket.send_pyobj({'result': 'ack'})
 
     def make_probe(self, worker_name, wport, *args, **kwargs):
@@ -242,6 +251,19 @@ class DistributionDaemon:
             worker_name = msg['name']
             args = msg['args']
             kwargs = msg['kwargs']
+
+            # if daemon is creating an ensemble, ensemble-related commands will block here
+            meta_commands = ['ping', 'next_avail_port']
+            if cmd not in meta_commands and self.create_thread is not None:
+                wname = self.create_thread['name']
+                t = self.create_thread['thread']
+                conn = self.create_thread['conn']
+                enode = conn.recv()
+                conn.send('ack')
+                t.join()
+                self.workers[wname] = {'node': enode}
+                self.create_thread = None
+
             # cmd is a command that corresponds to a method in the daemon
             # invoke the cmd methods with given arguments
             getattr(self, cmd)(worker_name, *args, **kwargs)
