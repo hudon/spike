@@ -12,6 +12,9 @@ from . import filter
 from .hPES_termination import hPESTermination
 from .helpers import map_gemv
 
+FLOAT_TYPE = 'float64'
+NP_FLOAT_TYPE = np.float64
+
 class Ensemble:
     """An ensemble is a collection of neurons representing a vector space.
 
@@ -120,7 +123,7 @@ class Ensemble:
             self.alpha, self.bias = theano.function(
                 [], self.neurons.make_alpha_bias(max_rates, threshold))()
 
-            self.bias = self.bias.astype('float64')
+            self.bias = self.bias.astype(FLOAT_TYPE)
 
             # compute encoders
             self.encoders = self.make_encoders(encoders=encoders)
@@ -335,7 +338,7 @@ class Ensemble:
             # if we're calculating a function on the decoded input
             for o in self.origin.values():
                 if o.func is not None:
-                    val = np.asarray([o.func(X[i]) for i in range(len(X))], dtype=np.float64)
+                    val = np.asarray([o.func(X[i]) for i in range(len(X))], dtype=NP_FLOAT_TYPE)
                     o.decoded_output.set_value(val.flatten())
 
     def update(self, dt):
@@ -416,5 +419,5 @@ class Ensemble:
                 if o.func is None:
                     if len(self.decoded_input) > 0:
                         updates.update(OrderedDict({o.decoded_output:
-                            TT.flatten(X).astype('float64')}))
+                            TT.flatten(X).astype(FLOAT_TYPE)}))
         return updates

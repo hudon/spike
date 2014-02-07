@@ -6,6 +6,8 @@ import theano
 
 from . import origin
 
+NP_FLOAT_TYPE=np.float64
+
 class SimpleNode(object):
     """A SimpleNode allows you to put arbitary code as part of an NEF model.
 
@@ -99,6 +101,6 @@ class SimpleNode(object):
             if isinstance(value, Number):
                 value = [value]
 
-            # cast as float64 for consistency / speed,
+            # cast as float for consistency / speed,
             # but _after_ it's been made a list
-            origin.decoded_output.set_value(np.asarray(value, dtype=np.float64))
+            origin.decoded_output.set_value(np.asarray(value, dtype=NP_FLOAT_TYPE))
