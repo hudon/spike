@@ -6,6 +6,8 @@ import theano.tensor as TT
 
 from . import neuron
 
+FLOAT_TYPE='float64'
+
 class LearnedTermination(object):
     """This is the superclass learned_termination that attaches
     to an ensemble."""
@@ -25,10 +27,10 @@ class LearnedTermination(object):
         self.pre = pre
         self.post = post
         self.error = error
-        self.learning_rate = TT.cast(rate, dtype='float64')
+        self.learning_rate = TT.cast(rate, dtype=FLOAT_TYPE)
 
         # initialize weight matrix
-        self.initial_weight_matrix = weight_matrix.astype('float64')
+        self.initial_weight_matrix = weight_matrix.astype(FLOAT_TYPE)
         self.weight_matrix = theano.shared(
             self.initial_weight_matrix, name='learned_termination.weight_matrix')
 

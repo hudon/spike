@@ -15,6 +15,9 @@ from .helpers import map_gemv
 import zmq
 import zmq_utils
 
+FLOAT_TYPE='float64'
+NP_FLOAT_TYPE=np.float64
+
 class EnsembleProcess(object):
     """ A NEFProcess is a wrapper for an ensemble or sub-ensemble. It is
     responsible for infrastructure logic such as setting up messaging,
@@ -188,7 +191,7 @@ class Ensemble:
                     [], self.neurons.make_alpha_bias(max_rates, threshold))()
 
                 # force to 32 bit for consistency / speed
-                self.bias = self.bias.astype('float64')
+                self.bias = self.bias.astype(FLOAT_TYPE)
 
                 # compute encoders
                 self.encoders = self.make_encoders(encoders=encoders)
@@ -437,7 +440,7 @@ class Ensemble:
             # if we're calculating a function on the decoded input
             for o in self.origin.values():
                 if o.func is not None:
-                    val = np.asarray([o.func(X[i]) for i in range(len(X))], dtype=np.float64)
+                    val = np.asarray([o.func(X[i]) for i in range(len(X))], dtype=NP_FLOAT_TYPE)
                     o.decoded_output.set_value(val.flatten())
         else:
             raise Exception("ERROR", "The current ensemble does not have 'direct' mode.")
@@ -542,7 +545,7 @@ class Ensemble:
                 if o.func is None:
                     if len(self.decoded_input) > 0:
                         updates.update(OrderedDict({o.decoded_output:
-                            TT.flatten(X).astype('float64')}))
+                            TT.flatten(X).astype(FLOAT_TYPE)}))
         return updates
 
     def get_subensemble_parts(self, num_subs):
@@ -573,10 +576,10 @@ class Ensemble:
                 alpha_part.append(
                         self.alpha[i][a_size * (e_num - 1):a_size * e_num])
 
-            parts.append((np.array(encoder_part).astype('float64'),
-                np.array(decoder_parts[e_num - 1]).astype('float64'),
-                np.array(bias_part).astype('float64'),
-                np.array(alpha_part).astype('float64'),))
+            parts.append((np.array(encoder_part).astype(FLOAT_TYPE),
+                np.array(decoder_parts[e_num - 1]).astype(FLOAT_TYPE),
+                np.array(bias_part).astype(FLOAT_TYPE),
+                np.array(alpha_part).astype(FLOAT_TYPE),))
 
         return parts
 
@@ -600,7 +603,7 @@ class Ensemble:
                 decoder_part.append(
                         decoders[i][d_size * (e_num - 1):d_size * e_num])
 
-            parts.append(np.array(decoder_part).astype('float64'))
+            parts.append(np.array(decoder_part).astype(FLOAT_TYPE))
 
         return parts
 
