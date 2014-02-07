@@ -63,12 +63,24 @@ class DistributionManager:
                 [host for host in self.remote_hosts if self.lock(host)]
 
             if not len(self.remote_hosts):
-                print("All hosts are busy with other jobs. Try again later...")
+                print("DEBUG: All hosts are busy with other jobs. Try again later...")
                 exit(1)
 
     def __del__(self):
         for host in self.remote_hosts:
             self.unlock(host)
+
+    def send_usr_module(self, module_name, module_contents):
+        for host in self.remote_hosts:
+            try:
+                self._send_message_to_daemon({
+                    'cmd': 'write_usr_module',
+                    'name': None,
+                    'args': (module_name, module_contents),
+                    'kwargs': {}},
+                    "tcp://%s:%s" % (host, DAEMON_PORT))
+            except zmq.ZMQError:
+                continue
 
     def lock(self, host):
         response = self._send_message_to_daemon(
