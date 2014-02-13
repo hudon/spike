@@ -2,6 +2,8 @@ import os, getopt
 import random
 from _collections import OrderedDict
 
+import sys, time
+
 import probe, ensemble, subnetwork, input
 import numpy as np
 import zmq_utils, zmq
@@ -261,7 +263,8 @@ class Network(object):
                 result[value.name] = value
         return result
 
-    def run(self, time):
+    def run(self, sim_time):
+        start_time = time.time()
         # cleanup data that we do not need anymore
         self.split_ensembles = dict()
 
@@ -269,11 +272,11 @@ class Network(object):
         workers = self.without_aliases(self.workers)
 
         for worker in local_workers.values():
-            worker.start(time)
+            worker.start(sim_time)
         for worker in workers.values():
             worker.send_command({
                 'cmd': 'start',
-                'args': (worker.worker_port, time),
+                'args': (worker.worker_port, sim_time),
                 'kwargs': {}
             })
 
@@ -296,4 +299,7 @@ class Network(object):
         for worker in local_workers.values():
             worker.send_pyobj("KILL")
 
-        self.run_time += time
+        self.run_time += sim_time
+        sys.stderr.write("run() seconds simulated:" + str(sim_time))
+        sys.stderr.write("\nrun() seconds on wall clock:")
+        sys.stderr.write(str(time.time() - start_time) + "\n")
