@@ -1,5 +1,7 @@
 import os, getopt
 import random
+import sys
+import uuid
 from _collections import OrderedDict
 
 import probe, ensemble, subnetwork, input
@@ -25,8 +27,14 @@ class Network(object):
         self.local_workers = {}
         self.probe_clients = {}
         self.split_ensembles = {}
-        self.distributor = distribution.DistributionManager(hosts_file)
+
+        self.job_id = str(uuid.uuid4())
+        self.usr_module = usr_module
+        self.distributor = distribution.DistributionManager(hosts_file, self.job_id)
+
         if usr_module is not None:
+            sys.stderr.write("DEBUG: Sending user-defined functions file '{0}' to remote hosts.\n".format(self.usr_module))
+
             module_name = os.path.basename(usr_module)
             with open(usr_module, "rb") as module:
                 self.distributor.send_usr_module(module_name, module.read())
@@ -264,6 +272,21 @@ class Network(object):
     def run(self, time):
         # cleanup data that we do not need anymore
         self.split_ensembles = dict()
+
+        hosts = set([worker.host for worker in self.workers.values()])
+        full_addrs = set([worker.daemon_addr for worker in self.workers.values()])
+
+        sys.stderr.write(
+            "DEBUG: Starting job {0} on {1} hosts: {2}\n".format(
+                self.job_id,
+                len(full_addrs),
+                "\n".join(full_addrs)
+            )
+        )
+
+        # Unlock unused hosts (if any)
+        for host in set(self.distributor.remote_hosts).difference(hosts):
+            self.distributor.unlock(host)
 
         local_workers = self.without_aliases(self.local_workers)
         workers = self.without_aliases(self.workers)

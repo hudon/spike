@@ -83,13 +83,27 @@ class Worker:
             self.daemon_addr)
 
 class DistributionManager:
-    def __init__(self, hosts_file):
+    def __init__(self, hosts_file, job_id):
         self.workers = {}
         self.zmq_context = zmq.Context()
+        self.job_id = job_id
+        self.remote_hosts = None
 
         with open(hosts_file, 'r') as f:
             self.remote_hosts = [host.strip() for host in f.readlines()]
             self.next_host_id = 0
+
+            # Tests all hosts for availability, and locks all those that are available
+            self.remote_hosts = \
+                [host for host in self.remote_hosts if self.lock(host)]
+
+            if not len(self.remote_hosts):
+                print("DEBUG: All hosts are busy with other jobs. Try again later...")
+                exit(1)
+
+    def __del__(self):
+        for host in self.remote_hosts:
+            self.unlock(host)
 
     def send_usr_module(self, module_name, module_contents):
         for host in self.remote_hosts:
@@ -103,6 +117,20 @@ class DistributionManager:
             except zmq.ZMQError:
                 continue
 
+    def lock(self, host):
+        response = self._send_message_to_daemon(
+            {'cmd': 'lock', 'name': None, 'args': (self.job_id, ), 'kwargs': {}},
+            "tcp://%s:%s" % (host, DAEMON_PORT))
+
+        return response == 'ack'
+
+    def unlock(self, host):
+        response = self._send_message_to_daemon(
+            {'cmd': 'unlock', 'name': None, 'args': (self.job_id, ), 'kwargs': {}},
+            "tcp://%s:%s" % (host, DAEMON_PORT))
+
+        return response == 'ack'
+
     def _next_host(self):
         running_hosts = len(self.remote_hosts)
 
@@ -114,19 +142,22 @@ class DistributionManager:
                 self.next_host_id = 0
             try:
                 # See if the host is alive. If not, try the next one
-                self._send_message_to_daemon(
+                response = self._send_message_to_daemon(
                     {'cmd': 'ping', 'name': None, 'args': (), 'kwargs': {}},
                     "tcp://%s:%s" % (host, DAEMON_PORT))
-                break
+
+                if response != 'pong':
+                    print "DEBUG: Host %s:%s is busy."
+                else:
+                    break
             except zmq.ZMQError:
                 print "DEBUG: Host %s:%s is down." % (host, DAEMON_PORT)
 
-                running_hosts -= 1
-                if running_hosts == 0:
-                    raise Exception("ERROR: All hosts are down. Make sure that " +
-                                    "Spike daemons are running on the remote hosts.")
-                    exit(1)
-                pass
+            running_hosts -= 1
+            if running_hosts == 0:
+                raise Exception("ERROR: All hosts are down. Make sure that " +
+                                "Spike daemons on the remote hosts are running and available.")
+                exit(1)
 
         return host
 
