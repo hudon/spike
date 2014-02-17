@@ -4,7 +4,7 @@ set -e
 NUM_INSTANCES=2
 
 declare -a instance_ids
-declare -a public_dns_names
+declare -A public_dns_names
 
 wait_for_state ()
 {
@@ -21,8 +21,21 @@ wait_for_state ()
         sleep 1
         for ins_id in "${instance_ids[@]}"
         do
-            state=`aws ec2 describe-instances --instance-ids "${ins_id}" | python -c "exec(\"import sys \nimport json \ndata = sys.stdin.readlines() \nobj=json.loads(''.join(data)) \nfor res in obj['Reservations']: \n for ins in res['Instances']: \n  if ins['InstanceId']: \n   print ins['State']['Name']\")"`
+            if [ "${1}" == "install-complete" ]
+            then
+                num_scripts_running=`ssh ubuntu@${public_dns_names["${ins_id}"]} -i spike-keypair "ps -ef" | grep ec2-node-install | wc -l`
+                if [ ${num_scripts_running} -eq 0 ]
+                then
+                    state="install-complete"
+                else
+                    state="install-not-complete"
+                fi
+            else
+                state=`aws ec2 describe-instances --instance-ids "${ins_id}" | python -c "exec(\"import sys \nimport json \ndata = sys.stdin.readlines() \nobj=json.loads(''.join(data)) \nfor res in obj['Reservations']: \n for ins in res['Instances']: \n  if ins['InstanceId']: \n   print ins['State']['Name']\")"`
+            fi
+
             echo "Instance ${ins_id} is in state ${state}"
+
             if [ "${state}" == "${1}" ] && [ "${observed_instances["${ins_id}"]}" == "not-in-state" ]
             then
                 observed_instances["${ins_id}"]="in-state"
@@ -44,9 +57,17 @@ install_software_on_nodes ()
     for ins_id in "${instance_ids[@]}"
     do
         public_dns=`aws ec2 describe-instances --instance-ids "${ins_id}" | python -c "exec(\"import sys \nimport json \ndata = sys.stdin.readlines() \nobj=json.loads(''.join(data)) \nfor res in obj['Reservations']: \n for ins in res['Instances']: \n  if ins['InstanceId']: \n   print ins['PublicDnsName']\")"`
-        public_dns_names+=("${public_dns}")
+        public_dns_names["${ins_id}"]="${public_dns}"
         echo "Obtained public DNS name of ${public_dns} from instance id ${ins_id}"
+
+        while true
+        do
+            ssh -oStrictHostKeyChecking=no ubuntu@${public_dns} -i spike-keypair "sudo apt-get install git -y && git clone https://github.com/Hudon/spike.git && cd spike && git branch ec2-distribution && git checkout ec2-distribution && git pull origin ec2-distribution" && if [ $? -eq 0 ]; then echo "ssh to ${public_dns} successful."; break; else echo "ssh to node ${public_dns} retrying"; fi
+        done
+        ssh ubuntu@${public_dns} -f -i spike-keypair "cd spike/ec2-distribution && nohup ./ec2-node-install.sh > /dev/null 2>&1 &" > /dev/null
     done
+    #  Wait for all the software to install before returning to the user
+    wait_for_state "install-complete"
 }
 
 create_cluster ()
@@ -73,6 +94,7 @@ create_cluster ()
     install_software_on_nodes
     #  Save the instance ids for when we want to delete them
     echo "${instance_ids[@]}" > instance_ids
+    echo "${public_dns_names[@]}" > public_dns_names
 }
 
 delete_cluster ()
