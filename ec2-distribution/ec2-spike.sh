@@ -124,6 +124,7 @@ create_cluster ()
     echo "${instance_ids[@]}" > instance_ids
     echo "Public DNS Names output to file 'public_dns_names'"
     echo "${public_dns_names[@]}" > public_dns_names
+    echo "Cluster with ${NUM_INSTANCES} nodes has been created successfully."
 }
 
 delete_cluster ()
