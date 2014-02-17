@@ -110,7 +110,7 @@ create_cluster ()
     echo "Launching ${NUM_INSTANCES} instances..."
     for (( i=1; i<=${NUM_INSTANCES}; i++ ))
     do
-        instance_info=`aws ec2 run-instances --image-id ami-d9a98cb0 --count 1 --instance-type t1.micro --key-name spike-keypair --security-groups spike-security-group`
+        instance_info=`aws ec2 run-instances --image-id ami-83dee0ea --count 1 --instance-type m1.small --key-name spike-keypair --security-groups spike-security-group`
         instance_id=`echo -n "$instance_info" | python -c "import sys; import json; data = sys.stdin.readlines(); obj=json.loads(''.join(data)); print obj['Instances'][0]['InstanceId'];"`
         instance_ids+=("${instance_id}")
         echo "Launched instance ${instance_id}"
