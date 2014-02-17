@@ -4,6 +4,7 @@ set -e
 NUM_INSTANCES=2
 
 declare -a instance_ids
+declare -a public_dns_names
 
 wait_for_state ()
 {
@@ -38,6 +39,16 @@ wait_for_state ()
     done
 }
 
+install_software_on_nodes () 
+{
+    for ins_id in "${instance_ids[@]}"
+    do
+        public_dns=`aws ec2 describe-instances --instance-ids "${ins_id}" | python -c "exec(\"import sys \nimport json \ndata = sys.stdin.readlines() \nobj=json.loads(''.join(data)) \nfor res in obj['Reservations']: \n for ins in res['Instances']: \n  if ins['InstanceId']: \n   print ins['PublicDnsName']\")"`
+        public_dns_names+=("${public_dns}")
+        echo "Obtained public DNS name of ${public_dns} from instance id ${ins_id}"
+    done
+}
+
 create_cluster ()
 {
     aws ec2 create-security-group --group-name spike-security-group --description "This is not a very secure security group."
@@ -51,12 +62,15 @@ create_cluster ()
 
     for (( i=1; i<=${NUM_INSTANCES}; i++ ))
     do
-        instance_id=`aws ec2 run-instances --image-id ami-d9a98cb0 --count 1 --instance-type t1.micro --key-name spike-keypair --security-groups spike-security-group | python -c "import sys; import json; data = sys.stdin.readlines(); obj=json.loads(''.join(data)); print obj['Instances'][0]['InstanceId'];"`
+        instance_info=`aws ec2 run-instances --image-id ami-d9a98cb0 --count 1 --instance-type t1.micro --key-name spike-keypair --security-groups spike-security-group`
+        instance_id=`echo -n "$instance_info" | python -c "import sys; import json; data = sys.stdin.readlines(); obj=json.loads(''.join(data)); print obj['Instances'][0]['InstanceId'];"`
         instance_ids+=("${instance_id}")
         echo "Launched instance ${instance_id}"
     done
 
     wait_for_state "running"
+
+    install_software_on_nodes
     #  Save the instance ids for when we want to delete them
     echo "${instance_ids[@]}" > instance_ids
 }
