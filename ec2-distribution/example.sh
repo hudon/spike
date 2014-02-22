@@ -1,6 +1,8 @@
 #! /bin/bash
 set -e
 
+#  Example that sets up the hosts file for a cluster.  Now we can just do 'make test' on the admin cluster and everything runs distributed.
+
 dns_names=`cat public_dns_names`
 
 instances=( ${dns_names} ) 

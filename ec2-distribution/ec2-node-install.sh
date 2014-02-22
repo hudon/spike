@@ -1,6 +1,7 @@
 #! /bin/bash
 set -e
 
+#  This script will install everything that is needed on a specific ec2 host to run the spike unit tests
 sudo apt-get update
 sudo apt-get install python-pip python-dev build-essential -y
 sudo pip install quantities

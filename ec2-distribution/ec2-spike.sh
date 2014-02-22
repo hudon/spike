@@ -1,6 +1,10 @@
 #! /bin/bash
 set -e
 
+#  This script is designed to make it easy to launch a number of ec2 instances and configure them to run
+#  as a single distributed system that runs the spike simulations.
+#  You can envoke this script by specifying 'create-cluster' or 'delete-cluster' and a number for the number of nodes the cluster should have.
+#  After creating the cluster, information about the instances is stored in files so that we can access it later when we decide to terminate the instance.
 
 declare -a instance_ids
 declare -A public_dns_names
