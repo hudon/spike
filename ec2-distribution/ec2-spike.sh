@@ -1,6 +1,9 @@
 #! /bin/bash
 set -e
 
+#  The only pre-requisite for this script is that you set up your shell to work with the AWS CLI:
+#  http://aws.amazon.com/cli/
+#
 #  This script is designed to make it easy to launch a number of ec2 instances and configure them to run
 #  as a single distributed system that runs the spike simulations.
 #  You can envoke this script by specifying 'create-cluster' or 'delete-cluster' and a number for the number of nodes the cluster should have.
