@@ -2,7 +2,7 @@ import random
 from _collections import OrderedDict
 import quantities
 
-import theano
+import theano, time as timer, sys
 from theano import tensor as TT
 import numpy as np
 
@@ -472,6 +472,7 @@ class Network(object):
         :param float time: the amount of time (in seconds) to run
         :param float dt: the timestep of the update
         """         
+        start_time = timer.time()
         # if theano graph hasn't been calculated yet, retrieve it
         if self.theano_tick is None:
             self.theano_tick = self.make_theano_tick() 
@@ -490,6 +491,9 @@ class Network(object):
 
         # update run_time variable
         self.run_time += time
+        sys.stderr.write("run() seconds simulated:" + str(time))
+        sys.stderr.write("\nrun() seconds on wall clock:")
+        sys.stderr.write(str(timer.time() - start_time) + "\n")
 
     def write_data_to_hdf5(self, filename='data'):
         """This is a function to call after simulation that writes the 
