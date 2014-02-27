@@ -1,7 +1,11 @@
 #! /bin/bash
 set -e
 
-#  Example that sets up the hosts file for a cluster.  Now we can just do 'make test' on the admin cluster and everything runs distributed.
+#  Example that creates a cluster, sets up the network topology, performs a simulation, then deletes the cluster.
+
+echo "Creating an EC2 cluster with 3 nodes..."
+./ec2-spike.sh create-cluster 3
+
 
 dns_names=`cat public_dns_names`
 
@@ -27,3 +31,12 @@ do
     echo "Started daemon on host ${instances[${i}]} and added a reference to it from the admin (${admin_host})"
 done
 
+echo "Starting a simulation on admin host ${admin_host}."
+echo "First 20 lines of output from simulation:"
+ssh -i spike-keypair ubuntu@${admin_host} "/usr/bin/python2 /home/ubuntu/spike/test/nengo_tests/test_array.py    /home/ubuntu/spike/test/../src --hosts=/home/ubuntu/spike/test/remote_hosts.txt" | sed -n 1,20p
+echo "Finished a simulation on admin host ${admin_host}."
+echo "Deleting cluster..."
+
+./ec2-spike.sh delete-cluster
+
+echo "Cluster has been deleted successfully.  Example complete."

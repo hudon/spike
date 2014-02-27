@@ -1,15 +1,30 @@
 #! /bin/bash
 set -e
 
+#  --- USAGE ---
+#  
+#  Creating a cluster:
+#  ./ec2-spike create-cluster [number of instances]
+#  
+#  Deleting a cluster:
+#  ./ec2-spike delete-cluster 
+#  
+#  
+#  This script was written for GNU bash, version 4.2.25(1)-release (x86_64-pc-linux-gnu)
+#  Modification may be necessary if you are using a different shell version.
+#  
 #  The only pre-requisite for this script is that you set up your shell to work with the AWS CLI:
 #  http://aws.amazon.com/cli/
+#  When you set up the aws CLI you will specify your AWS credentials so that a call to something like 'aws ec2 describe-instances' will succeed in your shell
 #
 #  This script is designed to make it easy to launch a number of ec2 instances and configure them to run
 #  as a single distributed system that runs the spike simulations.
 #  You can envoke this script by specifying 'create-cluster' or 'delete-cluster' and a number for the number of nodes the cluster should have.
 #  After creating the cluster, information about the instances is stored in files so that we can access it later when we decide to terminate the instance.
 
+#  Store all the AWS ec2 instance ids
 declare -a instance_ids
+#  The public DNS names used to access our instances.
 declare -A public_dns_names
 
 sortkeys() {
@@ -21,11 +36,13 @@ wait_for_state ()
     local num_in_state=0
     local -A observed_instances=()
 
+    #  To begin with, all instances are not in the desired state
     for a in "${instance_ids[@]}"
     do
         observed_instances["${a}"]="not-in-state"
     done
 
+    #  Sort the array keys (instance ids) so that we always iterate over them in a specific order
     eval keys=\${instance_ids[@]}
     local -a sorted_instance_ids=$(sortkeys "$keys")
 
@@ -46,6 +63,7 @@ wait_for_state ()
             if [ "${1}" == "installed" ]
             then
                 sleep 8
+                #  Log into the instance and check to see how many lines of ps -ef match the install script is running.
                 num_scripts_running=`ssh ubuntu@${public_dns_names["${ins_id}"]} -i spike-keypair "ps -ef" | grep ec2-node-install | wc -l`
                 if [ ${num_scripts_running} -eq 0 ]
                 then
@@ -54,6 +72,7 @@ wait_for_state ()
                     state="not-installed"
                 fi
             else
+                #  Do describe instances and pipe the output into a simple python script that navigates the JSON object to get the state of our specific instance.
                 state=`aws ec2 describe-instances --instance-ids "${ins_id}" | python -c "exec(\"import sys \nimport json \ndata = sys.stdin.readlines() \nobj=json.loads(''.join(data)) \nfor res in obj['Reservations']: \n for ins in res['Instances']: \n  if ins['InstanceId']: \n   print ins['State']['Name']\")"`
             fi
 
@@ -83,6 +102,7 @@ install_software_on_nodes ()
 {
     for ins_id in "${instance_ids[@]}"
     do
+        #  Pipe the output of describe instances into a simple python script that picks out the DNS name.
         public_dns=`aws ec2 describe-instances --instance-ids "${ins_id}" | python -c "exec(\"import sys \nimport json \ndata = sys.stdin.readlines() \nobj=json.loads(''.join(data)) \nfor res in obj['Reservations']: \n for ins in res['Instances']: \n  if ins['InstanceId']: \n   print ins['PublicDnsName']\")"`
         public_dns_names["${ins_id}"]="${public_dns}"
         echo "Obtained public DNS name of ${public_dns} from instance id ${ins_id}"
@@ -90,12 +110,14 @@ install_software_on_nodes ()
         echo "Installing git and cloning repo on host ${public_dns} with instance id ${ins_id}..."
         while true
         do
-            ssh -oStrictHostKeyChecking=no ubuntu@${public_dns} -i spike-keypair "sudo apt-get install git -y && git clone https://github.com/Hudon/spike.git && cd spike && git branch ec2-distribution && git checkout ec2-distribution && git pull origin ec2-distribution" > /dev/null 2>&1 && if [ $? -eq 0 ]; then break; fi
+            #  If the DNS for this instance is not set up yet, this command will fail which is why we do the while trye thing.
+            ssh -oStrictHostKeyChecking=no ubuntu@${public_dns} -i spike-keypair "sudo apt-get install git -y && git clone https://github.com/Hudon/spike.git && cd spike" > /dev/null 2>&1 && if [ $? -eq 0 ]; then break; fi
             sleep 5
             echo "ssh to node ${public_dns} failed. retrying (this is usually expected)"
         done
         echo "ssh to node ${public_dns} was successful.  Initiating installation of spike software stack..."
 
+        #  We've successfully accessed the instance before, so start the installation script now
         ssh ubuntu@${public_dns} -f -i spike-keypair "cd spike/ec2-distribution && nohup ./ec2-node-install.sh > /dev/null 2>&1 &" > /dev/null
     done
     #  Wait for all the software to install before returning to the user
