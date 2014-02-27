@@ -9,6 +9,8 @@ from . import origin
 import zmq
 import zmq_utils
 
+NP_FLOAT_TYPE=np.float64
+
 class Input(object):
     """Inputs are objects that provide real-valued input to ensembles.
 
@@ -69,13 +71,13 @@ class Input(object):
         # zero output
         if self.zero_after_time is not None and self.t > self.zero_after_time:
             self.origin['X'].decoded_output.set_value(
-                np.asarray(np.zeros(self.origin['X'].dimensions), dtype=np.float64))
+                np.asarray(np.zeros(self.origin['X'].dimensions), dtype=NP_FLOAT_TYPE))
             self.zeroed = True
 
         # change value
         if self.change_time is not None and self.t > self.change_time:
             self.origin['X'].decoded_output.set_value(
-                np.asarray(np.array([self.values[self.change_time]]), dtype=np.float64))
+                np.asarray(np.array([self.values[self.change_time]]), dtype=NP_FLOAT_TYPE))
             index = sorted(self.values.keys()).index(self.change_time)
             if index < len(self.values) - 1:
                 self.change_time = sorted(self.values.keys())[index+1]
@@ -88,9 +90,9 @@ class Input(object):
             if isinstance(value, Number):
                 value = [value]
 
-            # cast as float64 for consistency / speed,
+            # cast as float for consistency / speed,
             # but _after_ it's been made a list
-            self.origin['X'].decoded_output.set_value(np.asarray(value, dtype=np.float64))
+            self.origin['X'].decoded_output.set_value(np.asarray(value, dtype=NP_FLOAT_TYPE))
 
         for o in self.origin.values():
             o.tick()

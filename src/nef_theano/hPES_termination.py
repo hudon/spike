@@ -7,6 +7,9 @@ import theano.tensor as TT
 from . import neuron
 from .learned_termination import LearnedTermination
 
+FLOAT_TYPE='float64'
+NP_FLOAT_TYPE=np.float64
+
 class hPESTermination(LearnedTermination):
     """
     # learning_rate = 5e-7      # from nengo
@@ -32,12 +35,12 @@ class hPESTermination(LearnedTermination):
         self.error_value = self.error.decoded_output
 
         # get gains (alphas) for post neurons
-        self.encoders = self.post.encoders.astype('float64')
+        self.encoders = self.post.encoders.astype(FLOAT_TYPE)
         self.gains = np.sqrt(
-            (self.post.encoders ** 2).sum(axis=-1)).astype('float64')
+            (self.post.encoders ** 2).sum(axis=-1)).astype(FLOAT_TYPE)
 
         self.initial_theta = np.asarray(np.random.uniform(low=5e-5, high=15e-5,
-            size=(self.post.array_size, self.post.neurons_num)), dtype=np.float64)
+            size=(self.post.array_size, self.post.neurons_num)), dtype=NP_FLOAT_TYPE)
         # Assumption: high gain -> high theta
         self.initial_theta *= self.gains
         self.theta = theano.shared(self.initial_theta, name='hPES.theta')
@@ -69,7 +72,7 @@ class hPESTermination(LearnedTermination):
             for i in range(self.post.array_size * self.pre.array_size) ]
 
         unsupervised_rate = TT.cast(
-            self.learning_rate * self.scaling_factor, dtype='float64')
+            self.learning_rate * self.scaling_factor, dtype=FLOAT_TYPE)
         #TODO: more efficient rewrite with theano batch command?
         delta_unsupervised = [
             unsupervised_rate * self.pre_filtered[self.pre_index(i)][None,:] *
@@ -83,8 +86,8 @@ class hPESTermination(LearnedTermination):
             ) for i in range(self.post.array_size * self.pre.array_size) ]
 
         new_wm = (self.weight_matrix
-                + TT.cast(self.supervision_ratio, 'float64') * delta_supervised
-                + TT.cast(1. - self.supervision_ratio, 'float64')
+                + TT.cast(self.supervision_ratio, FLOAT_TYPE) * delta_supervised
+                + TT.cast(1. - self.supervision_ratio, FLOAT_TYPE)
                 * delta_unsupervised)
 
         return new_wm
@@ -109,14 +112,14 @@ class hPESTermination(LearnedTermination):
         """
         """
         # update filtered inputs
-        alpha = TT.cast(dt / self.pstc, dtype='float64')
+        alpha = TT.cast(dt / self.pstc, dtype=FLOAT_TYPE)
         new_pre = self.pre_filtered + alpha * (
             self.pre_spikes - self.pre_filtered)
         new_post = self.post_filtered + alpha * (
             self.post_spikes - self.post_filtered)
 
         # update theta
-        alpha = TT.cast(dt / self.theta_tau, dtype='float64')
+        alpha = TT.cast(dt / self.theta_tau, dtype=FLOAT_TYPE)
         new_theta = self.theta + alpha * (new_post - self.theta)
 
         return OrderedDict({

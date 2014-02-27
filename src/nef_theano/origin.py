@@ -7,6 +7,8 @@ import theano
 import zmq
 import zmq_utils
 
+NP_FLOAT_TYPE=np.float64
+
 class Origin(object):
     """An origin is an object that provides a signal. Origins project
     to terminations.
@@ -39,7 +41,7 @@ class Origin(object):
         # if scalar, make it a list
         if isinstance(initial_value, Number):
             initial_value = [initial_value]
-        initial_value = np.asarray(initial_value, dtype=np.float64)
+        initial_value = np.asarray(initial_value, dtype=NP_FLOAT_TYPE)
 
         # theano internal state defining output value
         self.decoded_output = theano.shared(initial_value,
