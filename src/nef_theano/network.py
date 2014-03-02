@@ -184,20 +184,11 @@ class Network(object):
             array_size=array_size, **kwargs)
 
     def make_input(self, *args, **kwargs):
-        #worker = self.distributor.new_worker(args[0])
         kwargs['dt'] = self.dt
 
         inode = input.Input(*args, **kwargs)
         self.local_workers[inode.name] = \
             self.distributor.new_worker(inode.name, True, inode)
-        #self.listener_socket.send_pyobj({'result': 'ack'})
-        #kwargs['dt'] = self.dt
-        #worker.send_command({
-            #'cmd': 'make_input',
-            #'args': args,
-            #'kwargs': kwargs
-        #})
-        #self.workers[args[0]] = worker
 
     def _make_probe(self, target, name, dt_sample=0.01, data_type='decoded', **kwargs):
         probe_worker = self.distributor.new_worker(name)
