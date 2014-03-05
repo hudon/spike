@@ -81,7 +81,7 @@ The virtual machine uses an arch linux image: archlinux-2013.11.01-dual.iso
 Because the virtual machines used for the distribution were unable to acquire their own IP address, they used NAT.  This was problematic, because it required that any servers offered by the virtual machine require that port forwarding rules be added so that machines from the external world can interact with the services offered in the virtual machine.  The VM setup script creates port forwarding rules for ports 8000-9000.  Additionally, it was necessary to change the ephemeral port range of the arch installation the VMs used, so that the ephemeral port range could be port forwarded too.  This was necessary because responses from incomming connections are sent back to the client's ephemeral port.  The new ephemeral ports are 10000-10100 which only provides about 100 ephemeral ports.  This works for now, but it might become a problem in the future.  After the virtual machine has been configured, it is booted in headless mode.  We use the keyboardputscancode virtualbox API function to send keystrokes to the virtual machine, and through this method we can pass the start menu and start the ssh daemon.  After this point, we can directly ssh into the virtual machine from the host machine.  At this point we install all the necessary dependencies like theano and scipy that we require for the simulation.
 
 
-Running Spike in on AWS
+Running Spike on AWS
 ------------
 
 Spike can be run on the ec2 cloud.  This can be done with the scripts located at spike/ec2-distribution.
@@ -111,7 +111,7 @@ The install instructions for each node are in  ec2-node-install.sh
 
 The kill-daemon.sh script is used to kill the daemon on each of the nodes.  This is useful when re-starting a simulation.
 
-Monitoring you simulation
+Monitoring your simulation
 ------------
 
 You can monitor the resource performance of all nodes in your simulation.  This will likely have require some changes for your specific use case.
