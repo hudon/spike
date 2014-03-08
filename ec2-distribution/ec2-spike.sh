@@ -128,8 +128,11 @@ create_cluster ()
 {
     echo "Creating security group 'spike-security-group'..."
     aws ec2 create-security-group --group-name spike-security-group --description "This is not a very secure security group." > /dev/null
-    echo "Authorizing ingress for security group 'spike-security-group'..."
+    echo "Authorizing ingress with tcp for security group 'spike-security-group'..."
     aws ec2 authorize-security-group-ingress --group-name spike-security-group --ip-permissions '{"FromPort":0,"ToPort":65535,"IpProtocol":"tcp","IpRanges":[{"CidrIp": "0.0.0.0/0"}]}' > /dev/null
+    echo "Authorizing ingress for icmp security group 'spike-security-group'..."
+    aws ec2 authorize-security-group-ingress --group-name spike-security-group --ip-permissions '{ "IpProtocol":"icmp","IpRanges":[{"CidrIp": "0.0.0.0/0"}]}' > /dev/null
+    #aws ec2 create-placement-group --group-name spike-placement-group --strategy '' 
     echo "Creating keypair 'spike-keypair'..."
     aws ec2 create-key-pair --key-name spike-keypair | python -c "import sys; import json; data = sys.stdin.readlines(); obj=json.loads(''.join(data)); print obj['KeyMaterial'];" > spike-keypair
 
@@ -139,7 +142,7 @@ create_cluster ()
     echo "Launching ${NUM_INSTANCES} instances..."
     for (( i=1; i<=${NUM_INSTANCES}; i++ ))
     do
-        instance_info=`aws ec2 run-instances --image-id ami-83dee0ea --count 1 --instance-type m1.small --key-name spike-keypair --security-groups spike-security-group`
+        instance_info=`aws ec2 run-instances --image-id ami-83dee0ea --count 1 --instance-type c3.large --key-name spike-keypair --security-groups spike-security-group --placement 'AvailabilityZone=us-east-1a,GroupName=spike-placement-group,Tenancy=default'`
         instance_id=`echo -n "$instance_info" | python -c "import sys; import json; data = sys.stdin.readlines(); obj=json.loads(''.join(data)); print obj['Instances'][0]['InstanceId'];"`
         instance_ids+=("${instance_id}")
         echo "Launched instance ${instance_id}"
