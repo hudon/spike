@@ -108,12 +108,12 @@ B = [-0.0070677433391332966, -0.14798361048090658, -0.37178897344892375, -0.4297
 net.make_input('inA', A)
 net.make_input('inB', B)
 
-net.make_array('A', N*subD, D/subD, dimensions=subD)
-net.make_array('B', N*subD, D/subD, dimensions=subD)
-net.make_array('D', N*subD, D/subD, dimensions=subD)
+net.make_array('A', N*subD, D/subD, dimensions=subD, num_subs=2)
+net.make_array('B', N*subD, D/subD, dimensions=subD, num_subs=2)
+net.make_array('D', N*subD, D/subD, dimensions=subD, num_subs=2)
 
 net.make_array('C', N_C, (D/2+1)*4, dimensions=2,
-                   encoders=[[1,1],[1,-1],[-1,1],[-1,-1]], radius=3)
+                   encoders=[[1,1],[1,-1],[-1,1],[-1,-1]], radius=3, num_subs=2)
 
 AT = input_transform(D, True, False)
 BT = input_transform(D, False, False)
@@ -128,7 +128,7 @@ net.connect('C', 'D', func=funcs.product, transform=ifftm2, pstc=0.01)
 net.connect('inA', 'A')
 net.connect('inB', 'B')
 
-timesteps = 100
+timesteps = 10000
 dt_step = 0.01
 pstc = 0.01
 
