@@ -3,7 +3,7 @@
 import math
 
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 import sys
 sys.path.append(sys.argv[1])
@@ -48,10 +48,10 @@ print "ensemble 'B' probe data"
 for x in bp_data:
     print x
 # plot the results
-#plt.ioff(); plt.clf(); plt.hold(1);
-#plt.plot(Ip.get_data())
-#plt.plot(Ap.get_data())
-#plt.plot(Bp.get_data())
-#plt.legend(['Input','A','B0','B1','B2'])
-#plt.tight_layout()
-#plt.show()
+plt.ioff(); plt.clf(); plt.hold(1);
+plt.plot(Ip.get_data())
+plt.plot(Ap.get_data())
+plt.plot(Bp.get_data())
+plt.legend(['Input','A','B0','B1','B2'])
+plt.tight_layout()
+plt.show()
