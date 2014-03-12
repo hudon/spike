@@ -76,7 +76,7 @@ def input_transform(dimensions, first, invert=False):
 def circconv(a, b):
     return np.fft.ifft(np.fft.fft(a)*np.fft.fft(b)).real
 
-D = 256
+D = 32
 subD = 16
 N = 100
 N_C = 500
