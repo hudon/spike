@@ -132,7 +132,8 @@ create_cluster ()
     aws ec2 authorize-security-group-ingress --group-name spike-security-group --ip-permissions '{"FromPort":0,"ToPort":65535,"IpProtocol":"tcp","IpRanges":[{"CidrIp": "0.0.0.0/0"}]}' > /dev/null
     echo "Authorizing ingress for icmp security group 'spike-security-group'..."
     aws ec2 authorize-security-group-ingress --group-name spike-security-group --ip-permissions '{ "IpProtocol":"icmp","IpRanges":[{"CidrIp": "0.0.0.0/0"}]}' > /dev/null
-    #aws ec2 create-placement-group --group-name spike-placement-group --strategy '' 
+    echo "Creating placement group..."
+    aws ec2 create-placement-group --group-name spike-placement-group --strategy cluster > /dev/null
     echo "Creating keypair 'spike-keypair'..."
     aws ec2 create-key-pair --key-name spike-keypair | python -c "import sys; import json; data = sys.stdin.readlines(); obj=json.loads(''.join(data)); print obj['KeyMaterial'];" > spike-keypair
 
@@ -175,6 +176,8 @@ delete_cluster ()
     aws ec2 delete-key-pair --key-name spike-keypair > /dev/null
     echo "Deleting spike-security-group..."
     aws ec2 delete-security-group --group-name spike-security-group > /dev/null
+    echo "Deleting spike-placement-group..."
+    aws ec2 delete-placement-group --group-name spike-placement-group > /dev/null
     echo "Cluster has been deleted successfully."
 }
 
