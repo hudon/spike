@@ -111,6 +111,8 @@ The install instructions for each node are in  ec2-node-install.sh
 
 The kill-daemon.sh script is used to kill the daemon on each of the nodes.  This is useful when re-starting a simulation.
 
+A significant bug relating to some ec2 instances was discovered.  It appears that not all ec2 instances are running on the same hardware, and some are using a newer physical processor (E5-2650), than others (E5430).  This is significant, because all instances are really supposed to be equal, but these newer ones have a CPU flag set claiming that they support the AXV instructions (check /proc/cpuinfo).  When you compile stuff on these instances like numpy and scipy, they check to see if that flag is enabled, and if it is they take advantage of some optimizations offered by this instruction (http://software.intel.com/en-us/blogs/2013/avx-512-instructions).  The problem is that the hypervisor running on these ec2 instances disables these instructions for the guest operating system, so when you run your code, you just get "Illegal instruciton", because those instructions are turned off.  In reality, the ec2 instance shouldn't present this flag to the guest operating system, but it does.  This is either a configuration issue on the part of Amazon, or a bug in the Xen hypervisor.
+
 Monitoring your simulation
 ------------
 
