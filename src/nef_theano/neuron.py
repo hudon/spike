@@ -7,6 +7,8 @@ import numpy as np
 # to sub-classes in lif.py and lif_rate.py
 types = {}
 
+FLOAT_TYPE='float64'
+
 
 def accumulate(J, neurons, dt, time=1.0, init_time=0.05):
     """Accumulates neuron output over time.
@@ -25,13 +27,13 @@ def accumulate(J, neurons, dt, time=1.0, init_time=0.05):
 
     """
     # create internal state variable to keep track of number of spikes
-    total = theano.shared(np.zeros(neurons.size).astype('float64'),
+    total = theano.shared(np.zeros(neurons.size).astype(FLOAT_TYPE),
                           name='neuron.total')
 
     ### make the standard neuron update function
 
     # updates is dictionary of variables returned by neuron.update
-    updates = neurons.update(J.astype('float64'), dt)
+    updates = neurons.update(J.astype(FLOAT_TYPE), dt)
 
     # update all internal state variables listed in updates
     tick = theano.function([], [], updates=updates)
@@ -50,7 +52,7 @@ def accumulate(J, neurons, dt, time=1.0, init_time=0.05):
     # call the accumulator version a bunch of times
     accumulate_spikes.fn(n_calls = int(time / dt))
 
-    return total.get_value().astype('float64') / time
+    return total.get_value().astype(FLOAT_TYPE) / time
 
 
 class Neuron(object):
@@ -69,12 +71,12 @@ class Neuron(object):
         """
         self.size = size
         # set up theano internal state variable
-        self.output = theano.shared(np.zeros(size).astype('float64'),
+        self.output = theano.shared(np.zeros(size).astype(FLOAT_TYPE),
                                     name='neuron.output')
 
     def reset(self):
         """Reset the state of the neuron."""
-        self.output.set_value(np.zeros(self.size).astype('float64'))
+        self.output.set_value(np.zeros(self.size).astype(FLOAT_TYPE))
 
     def update(self, input_current):
         """All neuron subclasses must have an update function.

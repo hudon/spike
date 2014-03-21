@@ -11,6 +11,8 @@ from . import cache
 from .origin import Origin
 from helpers import map_gemv
 
+FLOAT_TYPE='float64'
+
 class EnsembleOrigin(Origin):
     def __init__(self, ensemble, dt, func=None, eval_points=None):
         """The output from a population of neurons (ensemble),
@@ -173,7 +175,7 @@ class EnsembleOrigin(Origin):
             # compute decoders - least squares method
             decoders[index] = np.dot(Ginv, U)
 
-        self.decoders = theano.shared(decoders.astype('float64'),
+        self.decoders = theano.shared(decoders.astype(FLOAT_TYPE),
             name='ensemble_origin.decoders')
         return target_values.shape[0]
 
@@ -215,7 +217,7 @@ class EnsembleOrigin(Origin):
         # to put us back in the right range
         r = self.ensemble.radius
         # weighted summation over neural activity to get decoded_output
-        z = TT.zeros((self.ensemble.array_size, self.func_size), dtype='float64')
+        z = TT.zeros((self.ensemble.array_size, self.func_size), dtype=FLOAT_TYPE)
         decoded_output = TT.flatten(
             map_gemv(r / dt, self.decoders.dimshuffle(0,2,1), spikes, 1.0, z))
 

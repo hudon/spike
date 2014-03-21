@@ -5,6 +5,8 @@ from theano import tensor as TT
 
 import neuron
 
+FLOAT_TYPE='float64'
+
 
 class LIFRateNeuron(neuron.Neuron):
     def __init__(self, size, tau_rc=0.02, tau_ref=0.002):
@@ -54,7 +56,7 @@ class LIFRateNeuron(neuron.Neuron):
 
         # return dictionary of internal variables to update
         return OrderedDict({
-                self.output: TT.unbroadcast(rate.astype('float64'), 0)
+                self.output: TT.unbroadcast(rate.astype(FLOAT_TYPE), 0)
                 })
 
 neuron.types['lif-rate'] = LIFRateNeuron

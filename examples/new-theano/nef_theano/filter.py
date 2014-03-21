@@ -4,6 +4,8 @@ import numpy as np
 import theano
 import theano.tensor as TT
 
+FLOAT_TYPE='float64'
+
 class Filter:
     """Filter an arbitrary theano.shared"""
 
@@ -26,7 +28,7 @@ class Filter:
             if name is None:
                 name = 'filtered_%s' % source.name
         elif shape is not None:
-            value = np.zeros(shape, dtype='float64')
+            value = np.zeros(shape, dtype=FLOAT_TYPE)
         else:
             raise Exception("Either \"source\" or \"shape\" must define filter shape")
 
@@ -49,7 +51,7 @@ class Filter:
         if self.pstc >= dt:
             decay = TT.cast(np.exp(-dt / self.pstc), self.value.dtype)
             value_new = decay * self.value + (1 - decay) * self.source
-            return OrderedDict([(self.value, value_new.astype('float64'))])
+            return OrderedDict([(self.value, value_new.astype(FLOAT_TYPE))])
         else:
             ### no filtering, so just make the value the source
-            return OrderedDict([(self.value, self.source.astype('float64'))])
+            return OrderedDict([(self.value, self.source.astype(FLOAT_TYPE))])
